@@ -15,16 +15,16 @@ public class RotateRegisterLeft implements Instruction {
     }
 
     public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int carry = flags.isSet(Flags.Flag.CARRY) ? 1 : 0;
-        int value = reader.apply(registers);
+        int addOldCarry = flags.isSet(Flags.Flag.CARRY) ? 1 : 0;
+        int n = reader.apply(registers);
 
-        if ((value & 0b10000000) == 1) {
-            flags.set(Flags.Flag.CARRY);
-        } else {
-            flags.set();
-        }
+        int result = ((n << 1) + addOldCarry) & 0xFF;
 
-        writer.accept(registers, ((value << 1) + carry) & 0xFF);
+        boolean zero = result == 0;
+        boolean carry = (n & 0b1000_0000) != 0;
+
+        writer.accept(registers, result);
+        flags.set(Flags.flags(zero, false, carry));
     }
 
     public static Instruction C() {

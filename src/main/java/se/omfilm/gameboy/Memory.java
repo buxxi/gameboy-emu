@@ -14,7 +14,7 @@ public class Memory {
         this.rom = rom;
         this.videoRam = MemoryType.VIDEO_RAM.allocate();
         this.io = MemoryType.IO.allocate();
-        this.zeroPage = MemoryType.IO.allocate();
+        this.zeroPage = MemoryType.ZERO_PAGE.allocate();
     }
 
     public int readByte(int address) {
@@ -33,6 +33,8 @@ public class Memory {
                     return 0x90;
                 }
                 return unsigned(io[virtualAddress]);
+            case VIDEO_RAM:
+                return unsigned(videoRam[virtualAddress]);
             default:
                 throw new UnsupportedOperationException("Can't read from " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));
         }
