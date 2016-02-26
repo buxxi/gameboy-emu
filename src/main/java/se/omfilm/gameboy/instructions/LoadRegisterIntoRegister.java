@@ -23,14 +23,6 @@ public class LoadRegisterIntoRegister implements Instruction {
         return new LoadRegisterIntoRegister(Registers::readB, Registers::writeA);
     }
 
-    public static Instruction fromCToA() {
-        return new LoadRegisterIntoRegister(Registers::readC, Registers::writeA);
-    }
-
-    public static Instruction fromDToA() {
-        return new LoadRegisterIntoRegister(Registers::readD, Registers::writeA);
-    }
-
     public static Instruction fromEToA() {
         return new LoadRegisterIntoRegister(Registers::readE, Registers::writeA);
     }
@@ -41,6 +33,14 @@ public class LoadRegisterIntoRegister implements Instruction {
 
     public static Instruction fromLToA() {
         return new LoadRegisterIntoRegister(Registers::readL, Registers::writeA);
+    }
+
+    public static Instruction fromAToC() {
+        return new LoadRegisterIntoRegister(Registers::readA, Registers::writeC);
+    }
+
+    public static Instruction fromAToD() {
+        return new LoadRegisterIntoRegister(Registers::readA, Registers::writeD);
     }
 
     public static Instruction fromAToH() {

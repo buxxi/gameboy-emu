@@ -7,14 +7,16 @@ import java.nio.file.Path;
 public class Gameboy {
     private final Memory memory;
     private final CPU cpu;
+    private GPU gpu;
 
     public Gameboy(Path bootPath, Path romPath) throws IOException {
-        this(new Memory(Files.readAllBytes(bootPath), verifyRom(Files.readAllBytes(romPath))), new CPU());
+        this(new Memory(Files.readAllBytes(bootPath), verifyRom(Files.readAllBytes(romPath)), new IORegisters()), new CPU(), new GPU());
     }
 
-    public Gameboy(Memory memory, CPU cpu) {
+    public Gameboy(Memory memory, CPU cpu, GPU gpu) {
         this.memory = memory;
         this.cpu = cpu;
+        this.gpu = gpu;
     }
 
     public void run() {
@@ -30,6 +32,8 @@ public class Gameboy {
             }
             System.err.println(e);
             System.err.println(InstructionType.values().length + " instructions implemented of 512");
+
+            GPU.printTiles(memory);
         }
     }
 

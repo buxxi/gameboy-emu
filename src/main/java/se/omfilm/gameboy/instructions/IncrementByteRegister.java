@@ -17,7 +17,7 @@ public class IncrementByteRegister implements Instruction {
     @Override
     public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int n = reader.apply(registers);
-        int result = (n + 1) % 0xFF;
+        int result = (n + 1) & 0xFF;
         writer.accept(registers, result);
 
         boolean zero = result == 0;

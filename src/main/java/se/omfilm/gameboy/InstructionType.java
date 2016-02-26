@@ -38,9 +38,9 @@ public enum InstructionType {
     DEC_A(      0x3D, DecrementByteRegister::A), //Page 89
     LD_A_n(     0x3E, LoadByteIntoRegister::toA), //Page 68
 
-    LD_C_A(     0x4F, LoadRegisterIntoRegister::fromCToA), //Page 69
+    LD_C_A(     0x4F, LoadRegisterIntoRegister::fromAToC), //Page 69
 
-    LD_D_A(     0x57, LoadRegisterIntoRegister::fromDToA), //Page 69
+    LD_D_A(     0x57, LoadRegisterIntoRegister::fromAToD), //Page 69
 
     LD_H_A(     0x67, LoadRegisterIntoRegister::fromAToH), //Page 69
 

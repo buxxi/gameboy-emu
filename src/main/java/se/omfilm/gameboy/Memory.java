@@ -2,18 +2,20 @@ package se.omfilm.gameboy;
 
 public class Memory {
     private final byte[] boot;
-    private final byte[] videoRam;
-    private final byte[] io;
     private final byte[] rom;
+
+    private final byte[] videoRam;
     private final byte[] zeroPage;
+
+    private final IORegisters ioRegisters;
 
     private boolean isBooting = true;
 
-    public Memory(byte[] boot, byte[] rom) {
+    public Memory(byte[] boot, byte[] rom, IORegisters ioRegisters) {
         this.boot = boot;
         this.rom = rom;
+        this.ioRegisters = ioRegisters;
         this.videoRam = MemoryType.VIDEO_RAM.allocate();
-        this.io = MemoryType.IO.allocate();
         this.zeroPage = MemoryType.ZERO_PAGE.allocate();
     }
 
@@ -28,13 +30,10 @@ public class Memory {
                 return unsigned(rom[virtualAddress]);
             case ZERO_PAGE:
                 return unsigned(zeroPage[virtualAddress]);
-            case IO:
-                if (address == 0xFF65) { //TODO: hardcoded value since it got stuck in an infinite loop, waiting for screen
-                    return 0x90;
-                }
-                return unsigned(io[virtualAddress]);
             case VIDEO_RAM:
                 return unsigned(videoRam[virtualAddress]);
+            case IO_REGISTERS:
+                return ioRegisters.readByte(address);
             default:
                 throw new UnsupportedOperationException("Can't read from " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));
         }
@@ -51,11 +50,11 @@ public class Memory {
             case VIDEO_RAM:
                 videoRam[virtualAddress] = (byte) data;
                 return;
-            case IO:
-                io[virtualAddress] = (byte) data;
-                return;
             case ZERO_PAGE:
                 zeroPage[virtualAddress] = (byte) data;
+                return;
+            case IO_REGISTERS:
+                ioRegisters.writeByte(address, data);
                 return;
             default:
                 throw new UnsupportedOperationException("Can't write to " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));

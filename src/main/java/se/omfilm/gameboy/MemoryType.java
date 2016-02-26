@@ -3,7 +3,7 @@ package se.omfilm.gameboy;
 public enum MemoryType {
     ROM(0x0000, 0x3FFF),
     VIDEO_RAM(0x8000, 0x9FFF),
-    IO(0xFF00, 0xFF7F),
+    IO_REGISTERS(0xFF00, 0xFF7F),
     ZERO_PAGE(0xFF80, 0xFFFE);
 
     public final int from;
