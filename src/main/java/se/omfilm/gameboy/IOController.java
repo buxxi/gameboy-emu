@@ -1,6 +1,6 @@
 package se.omfilm.gameboy;
 
-public class IORegisters {
+public class IOController implements Memory {
     private int soundOnOff = 0;
     private int soundFrequencyLow = 0;
     private int soundFrequencyHigh = 0;

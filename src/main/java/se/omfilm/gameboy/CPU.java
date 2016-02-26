@@ -17,23 +17,23 @@ public class CPU implements Registers {
     private int d = 0;
     private int e = 0;
 
-    private final Map<InstructionType, Instruction> instructionMap;
+    private final Map<Instruction.InstructionType, Instruction> instructionMap;
 
     public CPU() {
-        instructionMap = new EnumMap<>(InstructionType.class);
-        for (InstructionType type : InstructionType.values()) {
+        instructionMap = new EnumMap<>(Instruction.InstructionType.class);
+        for (Instruction.InstructionType type : Instruction.InstructionType.values()) {
             instructionMap.put(type, type.instruction().get());
         }
     }
 
-    public void runNext(Memory memory) {
+    public void runNext(MMU memory) {
         if (programCounter.read() == 0x100) {
             memory.bootSuccess();
             DebugPrinter.verifyBoot(this, this.stackPointer);
         }
-        InstructionType instructionType = InstructionType.fromOpCode(memory.readByte(programCounter.increase()));
-        if (instructionType == InstructionType.CB) {
-            instructionType = InstructionType.fromOpCode(instructionType.opcode(), memory.readByte(programCounter.increase()));
+        Instruction.InstructionType instructionType = Instruction.InstructionType.fromOpCode(memory.readByte(programCounter.increase()));
+        if (instructionType == Instruction.InstructionType.CB) {
+            instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), memory.readByte(programCounter.increase()));
         }
 
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
@@ -43,7 +43,7 @@ public class CPU implements Registers {
         DebugPrinter.debug(this);
     }
 
-    private Instruction unmappedInstruction(InstructionType instructionType) {
+    private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
         return (memory, registers, flags, programCounter, stackPointer) -> {
             throw new UnsupportedOperationException(instructionType + " not implemented");
         };

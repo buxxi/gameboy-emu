@@ -5,19 +5,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Gameboy {
-    private final Memory memory;
+    private final MMU memory;
     private final CPU cpu;
-    private GPU gpu;
+    private final GPU gpu;
 
     public Gameboy(Path bootPath, Path romPath) throws IOException {
-        this(new Memory(Files.readAllBytes(bootPath), verifyRom(Files.readAllBytes(romPath)), new IORegisters()), new CPU(), new GPU());
+        IOController ioController = new IOController();
+        this.gpu = new GPU(new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate()), ioController);
+        memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), verifyRom(Files.readAllBytes(romPath)), ioController, this.gpu);
+        this.cpu = new CPU();
     }
 
-    public Gameboy(Memory memory, CPU cpu, GPU gpu) {
-        this.memory = memory;
-        this.cpu = cpu;
-        this.gpu = gpu;
-    }
 
     public void run() {
         try {
@@ -31,13 +29,13 @@ public class Gameboy {
                 e1.printStackTrace();
             }
             System.err.println(e);
-            System.err.println(InstructionType.values().length + " instructions implemented of 512");
+            System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
 
             GPU.printTiles(memory);
         }
     }
 
-    private static byte[] verifyRom(byte[] rom) {
+    private static Memory verifyRom(byte[] rom) {
         System.out.println("Game:\t\t" + readGameName(rom));
         if (rom[0x146] != 0) {
             throw new IllegalArgumentException("Can only handle the original GameBoy");
@@ -57,7 +55,7 @@ public class Gameboy {
         System.out.println("Region:\t\t" + (rom[0x14A] == 0 ? "Japan" : "International"));
         System.out.println("C-check:\t" + (rom[0x14D]));
         System.out.println("Checksum:\t" + DebugPrinter.hex((rom[0x14E] << 8) + rom[0x14F], 4));
-        return rom;
+        return new ByteArrayMemory(rom);
     }
 
     private static String readGameName(byte[] rom) {

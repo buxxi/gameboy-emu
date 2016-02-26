@@ -1,76 +1,49 @@
 package se.omfilm.gameboy;
 
-public class Memory {
-    private final byte[] boot;
-    private final byte[] rom;
+public interface Memory {
+    int readByte(int address);
 
-    private final byte[] videoRam;
-    private final byte[] zeroPage;
+    void writeByte(int address, int data);
 
-    private final IORegisters ioRegisters;
-
-    private boolean isBooting = true;
-
-    public Memory(byte[] boot, byte[] rom, IORegisters ioRegisters) {
-        this.boot = boot;
-        this.rom = rom;
-        this.ioRegisters = ioRegisters;
-        this.videoRam = MemoryType.VIDEO_RAM.allocate();
-        this.zeroPage = MemoryType.ZERO_PAGE.allocate();
-    }
-
-    public int readByte(int address) {
-        MemoryType type = MemoryType.fromAddress(address);
-        int virtualAddress = address - type.from;
-        switch (type) {
-            case ROM:
-                if (isBooting && virtualAddress < boot.length) {
-                    return unsigned(boot[virtualAddress]);
-                }
-                return unsigned(rom[virtualAddress]);
-            case ZERO_PAGE:
-                return unsigned(zeroPage[virtualAddress]);
-            case VIDEO_RAM:
-                return unsigned(videoRam[virtualAddress]);
-            case IO_REGISTERS:
-                return ioRegisters.readByte(address);
-            default:
-                throw new UnsupportedOperationException("Can't read from " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));
-        }
-    }
-
-    public int readWord(int address) {
+    default int readWord(int address) {
         return readByte(address) + ((readByte(address + 1) << 8));
     }
 
-    public void writeByte(int address, int data) {
-        MemoryType type = MemoryType.fromAddress(address);
-        int virtualAddress = address - type.from;
-        switch (type) {
-            case VIDEO_RAM:
-                videoRam[virtualAddress] = (byte) data;
-                return;
-            case ZERO_PAGE:
-                zeroPage[virtualAddress] = (byte) data;
-                return;
-            case IO_REGISTERS:
-                ioRegisters.writeByte(address, data);
-                return;
-            default:
-                throw new UnsupportedOperationException("Can't write to " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));
-        }
-    }
-
-    public void writeWord(int address, int data) {
-        writeByte(address, data & 255);
+    default void writeWord(int address, int data) {
+        writeByte(address, data & 0xFF);
         writeByte(address + 1, data >> 8);
     }
 
-    private int unsigned(byte input) {
-        return input & 0xFF;
-    }
+    enum MemoryType {
+        ROM(0x0000, 0x3FFF),
+        VIDEO_RAM(0x8000, 0x9FFF),
+        IO_REGISTERS(0xFF00, 0xFF7F),
+        ZERO_PAGE(0xFF80, 0xFFFE);
 
-    public void bootSuccess() {
-        isBooting = false;
+        public final int from;
+        public final int to;
+
+        MemoryType(int from, int to) {
+            this.from = from;
+            this.to = to;
+        }
+
+        public static MemoryType fromAddress(int address) {
+            for (MemoryType type : MemoryType.values()) {
+                if (address >= type.from && address <= type.to) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("No such memory mapped " + DebugPrinter.hex(address, 4));
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() + " (" + DebugPrinter.hex(from, 4) + "-" + DebugPrinter.hex(to, 4) + ")";
+        }
+
+        public byte[] allocate() {
+            return new byte[this.to - this.from + 1];
+        }
     }
 }

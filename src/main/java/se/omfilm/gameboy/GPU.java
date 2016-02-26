@@ -5,7 +5,23 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-public class GPU {
+public class GPU implements Memory {
+    private final Memory videoRam;
+    private final IOController ioController;
+
+    public GPU(Memory videoRam, IOController ioController) {
+        this.videoRam = videoRam;
+        this.ioController = ioController;
+    }
+
+    public int readByte(int address) {
+        return videoRam.readByte(address);
+    }
+
+    public void writeByte(int address, int data) {
+        videoRam.writeByte(address, data);
+    }
+
     public static void printTiles(Memory memory) {
         int[][][] tiles = readTiles(memory);
 
@@ -41,7 +57,7 @@ public class GPU {
     }
 
     private static int[][][] readTiles(Memory memory) {
-        MemoryType type = MemoryType.VIDEO_RAM;
+        Memory.MemoryType type = Memory.MemoryType.VIDEO_RAM;
         int[][][] tiles = new int[384][8][8];
         for (int i = type.from; i < 0x97FF; i = i + 2) {
             int tile = (i >> 4) & 0x1FF;
