@@ -2,17 +2,15 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-import java.util.function.Function;
-
 public class SubtractRegisterFromA implements Instruction {
-    private final Function<Registers, Integer> reader;
+    private final RegisterReader source;
 
-    private SubtractRegisterFromA(Function<Registers, Integer> reader) {
-        this.reader = reader;
+    private SubtractRegisterFromA(RegisterReader source) {
+        this.source = source;
     }
 
     public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int n = reader.apply(registers);
+        int n = source.read(registers);
         int a = registers.readA();
 
         int result = (a - n) & 0xFF;

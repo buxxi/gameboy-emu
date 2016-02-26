@@ -6,19 +6,19 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class IncrementByteRegister implements Instruction {
-    private final Function<Registers, Integer> reader;
-    private final BiConsumer<Registers, Integer> writer;
+    private final RegisterReader source;
+    private final RegisterWriter target;
 
-    public IncrementByteRegister(Function<Registers, Integer> reader, BiConsumer<Registers, Integer> writer) {
-        this.reader = reader;
-        this.writer = writer;
+    public IncrementByteRegister(RegisterReader source, RegisterWriter target) {
+        this.source = source;
+        this.target = target;
     }
 
     @Override
     public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int n = reader.apply(registers);
+        int n = source.read(registers);
         int result = (n + 1) & 0xFF;
-        writer.accept(registers, result);
+        target.write(registers, result);
 
         boolean zero = result == 0;
         boolean halfCarry = (n & 0x0F) == 0x0F;

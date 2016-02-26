@@ -2,22 +2,19 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-
 public class IncrementWordRegister implements Instruction {
-    private final Function<Registers, Integer> reader;
-    private final BiConsumer<Registers, Integer> writer;
+    private final RegisterReader source;
+    private final RegisterWriter target;
 
-    public IncrementWordRegister(Function<Registers, Integer> reader, BiConsumer<Registers, Integer> writer) {
-        this.reader = reader;
-        this.writer = writer;
+    public IncrementWordRegister(RegisterReader source, RegisterWriter target) {
+        this.source = source;
+        this.target = target;
     }
 
     @Override
     public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int val = (reader.apply(registers) + 1) % 0xFFFF;
-        writer.accept(registers, val);
+        int val = (source.read(registers) + 1) % 0xFFFF;
+        target.write(registers, val);
     }
 
     public static Instruction HL() {

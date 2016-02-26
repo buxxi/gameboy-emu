@@ -2,18 +2,16 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-import java.util.function.BiConsumer;
-
 public class PopStackIntoRegister implements Instruction {
-    private BiConsumer<Registers, Integer> apply;
+    private RegisterWriter target;
 
-    public PopStackIntoRegister(BiConsumer<Registers, Integer> apply) {
-        this.apply = apply;
+    public PopStackIntoRegister(RegisterWriter target) {
+        this.target = target;
     }
 
     public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int pointer = stackPointer.read();
-        apply.accept(registers, memory.readWord(pointer));
+        target.write(registers, memory.readWord(pointer));
         stackPointer.write(pointer + 2);
     }
 

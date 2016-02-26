@@ -7,6 +7,14 @@ import java.util.function.Supplier;
 public interface Instruction {
     void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer);
 
+    interface RegisterWriter {
+        void write(Registers registers, int value);
+    }
+
+    interface RegisterReader {
+        int read(Registers registers);
+    }
+
     /**
      * See this file for reference: http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
      */

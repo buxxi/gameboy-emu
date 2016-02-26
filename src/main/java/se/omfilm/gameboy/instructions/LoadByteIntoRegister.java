@@ -2,17 +2,15 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-import java.util.function.BiConsumer;
-
 public class LoadByteIntoRegister implements Instruction {
-    private BiConsumer<Registers, Integer> apply;
+    private final RegisterWriter target;
 
-    private LoadByteIntoRegister(BiConsumer<Registers, Integer> apply) {
-        this.apply = apply;
+    private LoadByteIntoRegister(RegisterWriter target) {
+        this.target = target;
     }
 
     public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        apply.accept(registers, memory.readByte(programCounter.increase()));
+        target.write(registers, memory.readByte(programCounter.increase()));
     }
 
     public static Instruction toA() {

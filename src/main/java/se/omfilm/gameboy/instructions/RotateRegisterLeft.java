@@ -2,28 +2,25 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-
 public class RotateRegisterLeft implements Instruction {
-    private final Function<Registers, Integer> reader;
-    private final BiConsumer<Registers, Integer> writer;
+    private final RegisterReader source;
+    private final RegisterWriter target;
 
-    public RotateRegisterLeft(Function<Registers, Integer> reader, BiConsumer<Registers, Integer> writer) {
-        this.reader = reader;
-        this.writer = writer;
+    public RotateRegisterLeft(RegisterReader source, RegisterWriter target) {
+        this.source = source;
+        this.target = target;
     }
 
     public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int addOldCarry = flags.isSet(Flags.Flag.CARRY) ? 1 : 0;
-        int n = reader.apply(registers);
+        int n = source.read(registers);
 
         int result = ((n << 1) + addOldCarry) & 0xFF;
 
         boolean zero = result == 0;
         boolean carry = (n & 0b1000_0000) != 0;
 
-        writer.accept(registers, result);
+        target.write(registers, result);
         flags.set(Flags.flags(zero, false, carry));
     }
 
