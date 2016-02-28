@@ -14,6 +14,10 @@ public class GPU implements Memory {
         this.ioController = ioController;
     }
 
+    public void step(int cycles) {
+
+    }
+
     public int readByte(int address) {
         return videoRam.readByte(address);
     }
@@ -22,8 +26,8 @@ public class GPU implements Memory {
         videoRam.writeByte(address, data);
     }
 
-    public static void printTiles(Memory memory) {
-        int[][][] tiles = readTiles(memory);
+    public void dumpTiles() {
+        int[][][] tiles = readTiles();
 
         int tilesPerRow = (int) Math.ceil(Math.sqrt(383));
         BufferedImage result = new BufferedImage(tilesPerRow * 8, tilesPerRow * 8, BufferedImage.TYPE_INT_RGB);
@@ -56,10 +60,9 @@ public class GPU implements Memory {
         }
     }
 
-    private static int[][][] readTiles(Memory memory) {
-        Memory.MemoryType type = Memory.MemoryType.VIDEO_RAM;
+    private int[][][] readTiles() {
         int[][][] tiles = new int[384][8][8];
-        for (int i = type.from; i < 0x97FF; i = i + 2) {
+        for (int i = 0x8000; i < 0x97FF; i = i + 2) {
             int tile = (i >> 4) & 0x1FF;
             int y = (i >> 1) & 7;
 
@@ -67,7 +70,7 @@ public class GPU implements Memory {
             for (x = 0; x < 8; x++) {
                 bitIndex = 1 << (7 - x);
 
-                tiles[tile][y][x] = ((memory.readByte(i) & bitIndex) != 0 ? 1 : 0) + ((memory.readByte(i + 1) & bitIndex) != 0 ? 2 : 0);
+                tiles[tile][y][x] = ((readByte(i - 0x8000) & bitIndex) != 0 ? 1 : 0) + ((readByte(i + 1 - 0x8000) & bitIndex) != 0 ? 2 : 0);
             }
         }
         return tiles;

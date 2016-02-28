@@ -9,8 +9,9 @@ public class LoadByteIntoRegister implements Instruction {
         this.target = target;
     }
 
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         target.write(registers, memory.readByte(programCounter.increase()));
+        return 8;
     }
 
     public static Instruction toA() {

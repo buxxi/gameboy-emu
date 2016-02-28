@@ -9,7 +9,7 @@ public class SubtractRegisterFromA implements Instruction {
         this.source = source;
     }
 
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int n = source.read(registers);
         int a = registers.readA();
 
@@ -19,6 +19,8 @@ public class SubtractRegisterFromA implements Instruction {
         boolean halfCarry = (n & 0x0F) > (a & 0x0F);
         registers.writeA(result);
         flags.set(Flags.withNegative(zero, halfCarry, carry));
+
+        return 4;
     }
 
 

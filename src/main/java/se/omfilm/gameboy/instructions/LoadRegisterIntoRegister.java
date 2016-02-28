@@ -12,8 +12,10 @@ public class LoadRegisterIntoRegister implements Instruction {
     }
 
     @Override
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         target.write(registers, source.read(registers));
+
+        return 4;
     }
 
     public static Instruction fromBToA() {

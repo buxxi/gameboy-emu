@@ -11,7 +11,7 @@ public class DecrementByteRegister implements Instruction {
         this.target = target;
     }
 
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int value = source.read(registers);
         boolean halfCarry = (value & 0x0F) == 0;
         value = (value - 1) & 0xFF;
@@ -19,6 +19,7 @@ public class DecrementByteRegister implements Instruction {
 
         flags.set(Flags.flags(halfCarry, zero));
         target.write(registers, value);
+        return 4;
     }
 
     public static Instruction A() { return new DecrementByteRegister(Registers::readA, Registers::writeA); }

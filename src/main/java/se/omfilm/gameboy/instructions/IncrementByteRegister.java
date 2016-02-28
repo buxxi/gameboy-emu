@@ -15,7 +15,7 @@ public class IncrementByteRegister implements Instruction {
     }
 
     @Override
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int n = source.read(registers);
         int result = (n + 1) & 0xFF;
         target.write(registers, result);
@@ -24,6 +24,7 @@ public class IncrementByteRegister implements Instruction {
         boolean halfCarry = (n & 0x0F) == 0x0F;
 
         flags.set(Flags.flags(zero, halfCarry, false));
+        return 4;
     }
 
     public static Instruction C() {

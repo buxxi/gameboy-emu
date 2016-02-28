@@ -12,9 +12,11 @@ public class IncrementWordRegister implements Instruction {
     }
 
     @Override
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int val = (source.read(registers) + 1) % 0xFFFF;
         target.write(registers, val);
+
+        return 8;
     }
 
     public static Instruction HL() {

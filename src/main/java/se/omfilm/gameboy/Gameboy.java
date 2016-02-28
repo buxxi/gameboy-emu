@@ -20,7 +20,8 @@ public class Gameboy {
     public void run() {
         try {
             while (true) {
-                cpu.runNext(memory);
+                int cycles = cpu.step(memory);
+                gpu.step(cycles);
             }
         } catch (IllegalArgumentException e) {
             try {
@@ -31,7 +32,7 @@ public class Gameboy {
             System.err.println(e);
             System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
 
-            GPU.printTiles(memory);
+            gpu.dumpTiles();
         }
     }
 

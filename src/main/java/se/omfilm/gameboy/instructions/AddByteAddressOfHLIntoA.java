@@ -3,7 +3,7 @@ package se.omfilm.gameboy.instructions;
 import se.omfilm.gameboy.*;
 
 public class AddByteAddressOfHLIntoA implements Instruction {
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int n = memory.readByte(registers.readHL());
         int a = registers.readA();
         int result = n + a;
@@ -15,5 +15,7 @@ public class AddByteAddressOfHLIntoA implements Instruction {
 
         registers.writeA(result);
         flags.set(Flags.flags(zero, halfCarry, carry));
+
+        return 8;
     }
 }

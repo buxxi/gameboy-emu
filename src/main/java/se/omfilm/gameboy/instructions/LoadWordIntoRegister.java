@@ -9,8 +9,10 @@ public class LoadWordIntoRegister implements Instruction {
         this.target = target;
     }
 
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         target.write(registers, memory.readWord(programCounter.increase(2)));
+
+        return 12;
     }
 
     public static Instruction toDE() {

@@ -9,10 +9,12 @@ public class PopStackIntoRegister implements Instruction {
         this.target = target;
     }
 
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int pointer = stackPointer.read();
         target.write(registers, memory.readWord(pointer));
         stackPointer.write(pointer + 2);
+
+        return 12;
     }
 
     public static Instruction toBC() {

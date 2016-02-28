@@ -11,7 +11,7 @@ public class RotateRegisterLeft implements Instruction {
         this.target = target;
     }
 
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int addOldCarry = flags.isSet(Flags.Flag.CARRY) ? 1 : 0;
         int n = source.read(registers);
 
@@ -22,6 +22,8 @@ public class RotateRegisterLeft implements Instruction {
 
         target.write(registers, result);
         flags.set(Flags.flags(zero, false, carry));
+
+        return 8;
     }
 
     public static Instruction C() {

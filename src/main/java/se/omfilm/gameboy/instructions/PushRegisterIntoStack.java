@@ -10,9 +10,11 @@ public class PushRegisterIntoStack implements Instruction {
     }
 
     @Override
-    public void execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         stackPointer.write(stackPointer.read() - 2);
         memory.writeWord(stackPointer.read(), source.read(registers));
+
+        return 16;
     }
 
     public static Instruction fromBC() {

@@ -26,7 +26,7 @@ public class CPU implements Registers {
         }
     }
 
-    public void runNext(MMU memory) {
+    public int step(MMU memory) {
         if (programCounter.read() == 0x100) {
             memory.bootSuccess();
             DebugPrinter.verifyBoot(this, this.stackPointer);
@@ -38,9 +38,10 @@ public class CPU implements Registers {
 
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
         System.out.println("Running instruction " + instructionType);
-        instruction.execute(memory, this, this.flags, this.programCounter, this.stackPointer);
+        int cycles = instruction.execute(memory, this, this.flags, this.programCounter, this.stackPointer);
         DebugPrinter.debug(this.stackPointer, this.programCounter);
         DebugPrinter.debug(this);
+        return cycles;
     }
 
     private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
