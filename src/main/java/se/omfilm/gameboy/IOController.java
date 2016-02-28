@@ -1,6 +1,7 @@
 package se.omfilm.gameboy;
 
 public class IOController implements Memory {
+    private final GPU gpu;
     private int soundOnOff = 0;
     private int soundFrequencyLow = 0;
     private int soundFrequencyHigh = 0;
@@ -8,18 +9,19 @@ public class IOController implements Memory {
     private int soundEnvelope = 0;
     private int soundOutputTerminal = 0;
     private int soundChannelControl = 0;
-    private int paletteData = 0;
     private int soundSweep = 0;
-    private int scrollY = 0;
-    private int lcdControl = 0;
+
+    public IOController(GPU gpu) {
+        this.gpu = gpu;
+    }
 
     public int readByte(int address) {
         IORegister register = IORegister.fromAddress(address);
         switch (register) {
             case SCROLL_Y:
-                return scrollY;
-            case LCD_Y:
-                return 144; //TODO: fix hardcoded value
+                return gpu.scrollY();
+            case LCD_SCANLINE:
+                return gpu.scanline();
             default:
                 throw new UnsupportedOperationException("Unhandled read for " + IORegister.class.getSimpleName() + " of type " + register);
         }
@@ -53,13 +55,13 @@ public class IOController implements Memory {
                 soundSweep = data;
                 return;
             case PALETTE_DATA:
-                paletteData = data;
+                gpu.setPaletteData(data);
                 return;
             case SCROLL_Y:
-                scrollY = data;
+                gpu.scrollY(data);
                 return;
             case LCD_CONTROL:
-                lcdControl = data;
+                gpu.setLCDControl(data);
                 return;
             default:
                 throw new UnsupportedOperationException("Unhandled write of value " + DebugPrinter.hex(data, 2) + " for " + IORegister.class.getSimpleName() + " of type " + register);
@@ -76,7 +78,7 @@ public class IOController implements Memory {
         SOUND_ON_OFF(0xFF26),
         LCD_CONTROL(0xFF40),
         SCROLL_Y(0xFF42),
-        LCD_Y(0xFF44),
+        LCD_SCANLINE(0xFF44),
         PALETTE_DATA(0xFF47),
         SOUND_SWEEP(0xFF50);
 

@@ -37,10 +37,10 @@ public class CPU implements Registers {
         }
 
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
-        System.out.println("Running instruction " + instructionType);
+        //System.out.println("Running instruction " + instructionType);
         int cycles = instruction.execute(memory, this, this.flags, this.programCounter, this.stackPointer);
-        DebugPrinter.debug(this.stackPointer, this.programCounter);
-        DebugPrinter.debug(this);
+        //DebugPrinter.debug(this.stackPointer, this.programCounter);
+        //DebugPrinter.debug(this);
         return cycles;
     }
 

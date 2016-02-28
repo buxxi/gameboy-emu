@@ -10,8 +10,8 @@ public class Gameboy {
     private final GPU gpu;
 
     public Gameboy(Path bootPath, Path romPath) throws IOException {
-        IOController ioController = new IOController();
-        this.gpu = new GPU(new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate()), ioController);
+        this.gpu = new GPU(new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate()));
+        IOController ioController = new IOController(this.gpu);
         memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), verifyRom(Files.readAllBytes(romPath)), ioController, this.gpu);
         this.cpu = new CPU();
     }
