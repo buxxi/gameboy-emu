@@ -6,20 +6,19 @@ import java.io.File;
 import java.io.IOException;
 
 public class GPU implements Memory {
-    private static final int SCANLINE_TOTAL_CYCLE_COUNT = 456;
-    private static final int SCANLINE_OAM_CYCLE_COUNT = 80;
-    private static final int SCANLINE_VRAM_CYCLE_COUNT = 172;
-    private static final int HEIGHT = 144;
-
+    public static final int HEIGHT = 144;
     private final Memory videoRam;
 
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollY;
     private int paletteData;
 
-    private int scanlineCounter = SCANLINE_TOTAL_CYCLE_COUNT;
+    private int cycleCounter = 0;
     private int scanline = 0;
     private int lcdControl = 0;
+
+    private int q = 0;
+    private int w = 0;
 
     public GPU(Memory videoRam) {
         this.videoRam = videoRam;
@@ -29,35 +28,45 @@ public class GPU implements Memory {
         if (!isLcdOn()) {
             return;
         }
-        scanlineCounter -= cycles;
+        cycleCounter += cycles;
 
-        if (scanlineCounter <= 0) {
-            scanline = (scanline + 1) & 0xFF;
-            scanlineCounter = SCANLINE_TOTAL_CYCLE_COUNT;
+        if (cycleCounter <= mode.minimumCycles) {
+            return;
+        }
 
-            if (scanline == HEIGHT) {
-                mode = GPUMode.VBLANK;
-                drawToScreen();
-            } else if (scanline > (HEIGHT + 9)) {
+        cycleCounter = 0;
+
+        switch (mode) {
+            case HBLANK:
+                scanline++;
+                mode = GPUMode.OAM;
+                break;
+            case VBLANK:
                 scanline = 0;
-            } else {
-                drawScanline();
-            }
-        } else if ((SCANLINE_TOTAL_CYCLE_COUNT - SCANLINE_OAM_CYCLE_COUNT + cycles) >= scanlineCounter) {
-            mode = GPUMode.OAM;
-        } else if ((SCANLINE_TOTAL_CYCLE_COUNT - SCANLINE_OAM_CYCLE_COUNT - SCANLINE_VRAM_CYCLE_COUNT + cycles) >= scanlineCounter) {
-            mode = GPUMode.VRAM;
-        } else {
-            mode = GPUMode.HBLANK;
+                mode = GPUMode.OAM;
+                break;
+            case OAM:
+                mode = GPUMode.VRAM;
+                break;
+            case VRAM:
+                mode = GPUMode.HBLANK;
+                if (scanline > (HEIGHT + 10)) {
+                    scanline = 0;
+                } else if (scanline <= HEIGHT) {
+                    drawScanline();
+                } else if (scanline == (HEIGHT + 1)) {
+                    drawToScreen();
+                }
+                break;
         }
     }
 
     private void drawToScreen() {
-
+        System.out.println();
     }
 
     private void drawScanline() {
-
+        System.out.print("*");
     }
 
     public int readByte(int address) {
@@ -149,19 +158,21 @@ public class GPU implements Memory {
     }
 
     private enum GPUMode {
-        HBLANK(0b00, true, true),
-        VBLANK(0b01, true, true),
-        OAM(0b10, false, true),
-        VRAM(0b11, false, false);
+        HBLANK(0b00, true, true, 204),
+        VBLANK(0b01, true, true, 456),
+        OAM(0b10, false, true, 80),
+        VRAM(0b11, false, false, 172);
 
         private final int bitMask;
         private final boolean accessOAM;
         private final boolean accessVideoRAM;
+        private int minimumCycles;
 
-        GPUMode(int bitMask, boolean accessOAM, boolean accessVideoRAM) {
+        GPUMode(int bitMask, boolean accessOAM, boolean accessVideoRAM, int minimumCycles) {
             this.bitMask = bitMask;
             this.accessOAM = accessOAM;
             this.accessVideoRAM = accessVideoRAM;
+            this.minimumCycles = minimumCycles;
         }
     }
 }
