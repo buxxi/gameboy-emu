@@ -8,6 +8,7 @@ public class Gameboy {
     private final MMU memory;
     private final CPU cpu;
     private final GPU gpu;
+    private final Screen screen = new ConsoleScreen();
 
     public Gameboy(Path bootPath, Path romPath) throws IOException {
         this.gpu = new GPU(new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate()));
@@ -16,12 +17,11 @@ public class Gameboy {
         this.cpu = new CPU();
     }
 
-
     public void run() {
         try {
             while (true) {
                 int cycles = cpu.step(memory);
-                gpu.step(cycles);
+                gpu.step(cycles, screen);
             }
         } catch (IllegalArgumentException e) {
             try {
@@ -31,8 +31,6 @@ public class Gameboy {
             }
             System.err.println(e);
             System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
-
-            gpu.dumpTiles();
         }
     }
 

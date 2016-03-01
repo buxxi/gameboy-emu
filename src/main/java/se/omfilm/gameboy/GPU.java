@@ -1,9 +1,6 @@
 package se.omfilm.gameboy;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.awt.*;
 
 public class GPU implements Memory {
     public static final int HEIGHT = 144;
@@ -17,14 +14,11 @@ public class GPU implements Memory {
     private int scanline = 0;
     private int lcdControl = 0;
 
-    private int q = 0;
-    private int w = 0;
-
     public GPU(Memory videoRam) {
         this.videoRam = videoRam;
     }
 
-    public void step(int cycles) {
+    public void step(int cycles, Screen screen) {
         if (!isLcdOn()) {
             return;
         }
@@ -53,20 +47,34 @@ public class GPU implements Memory {
                 if (scanline > (HEIGHT + 10)) {
                     scanline = 0;
                 } else if (scanline <= HEIGHT) {
-                    drawScanline();
+                    drawScanline(screen);
                 } else if (scanline == (HEIGHT + 1)) {
-                    drawToScreen();
+                    drawToScreen(screen);
                 }
                 break;
         }
     }
 
-    private void drawToScreen() {
-        System.out.println();
+    private void drawToScreen(Screen screen) {
+        int[][][] tiles = readTiles();
+
+        int tilesPerRow = (int) Math.ceil(Math.sqrt(383));
+        screen.initialize(tilesPerRow * 8, tilesPerRow * 8);
+        for (int tile = 0; tile < tiles.length; tile++) {
+            int yOffset = (tile / tilesPerRow) * 8;
+            int xOffset = (tile % tilesPerRow) * 8;
+
+            for (int y = 0; y < tiles[tile].length; y++) {
+                for (int x = 0; x < tiles[tile][y].length; x++) {
+                    screen.setPixel(xOffset + x, yOffset + y, color(tiles[tile][y][x]));
+                }
+            }
+        }
+        screen.draw();
     }
 
-    private void drawScanline() {
-        System.out.print("*");
+    private void drawScanline(Screen screen) {
+
     }
 
     public int readByte(int address) {
@@ -81,40 +89,6 @@ public class GPU implements Memory {
             throw new IllegalStateException("The CPU can't access VideoRAM while in mode " + mode);
         }
         videoRam.writeByte(address, data);
-    }
-
-    public void dumpTiles() {
-        int[][][] tiles = readTiles();
-
-        int tilesPerRow = (int) Math.ceil(Math.sqrt(383));
-        BufferedImage result = new BufferedImage(tilesPerRow * 8, tilesPerRow * 8, BufferedImage.TYPE_INT_RGB);
-        for (int tile = 0; tile < tiles.length; tile++) {
-            int yOffset = (tile / tilesPerRow) * 8;
-            int xOffset = (tile % tilesPerRow) * 8;
-
-            for (int y = 0; y < tiles[tile].length; y++) {
-                for (int x = 0; x < tiles[tile][y].length; x++) {
-                    switch (tiles[tile][y][x]) {
-                        case 0:
-                            result.setRGB(xOffset + x, yOffset + y, 0xFFFFFF);
-                            break;
-                        case 1:
-                            result.setRGB(xOffset + x, yOffset + y, 0xAAAAAA);
-                            break;
-                        case 2:
-                            result.setRGB(xOffset + x, yOffset + y, 0x555555);
-                            break;
-                        case 3:
-                            result.setRGB(xOffset + x, yOffset + y, 0x000000);
-                    }
-                }
-            }
-        }
-        try {
-            ImageIO.write(result, "png", File.createTempFile("gameboy", ".png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void scrollY(int data) {
@@ -139,6 +113,20 @@ public class GPU implements Memory {
 
     private boolean isLcdOn() {
         return lcdControl == 0x91; //TODO: fix magic value by checking bits individually
+    }
+
+    private Color color(int input) {
+        switch (input) {
+            case 0:
+            default:
+                return Color.WHITE;
+            case 1:
+                return Color.LIGHT_GRAY;
+            case 2:
+                return Color.DARK_GRAY;
+            case 3:
+                return Color.BLACK;
+        }
     }
 
     private int[][][] readTiles() {
