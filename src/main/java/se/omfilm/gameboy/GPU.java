@@ -3,11 +3,11 @@ package se.omfilm.gameboy;
 import java.awt.*;
 
 public class GPU implements Memory {
-    public static final int HEIGHT = 144;
     private final Memory videoRam;
 
     private GPUMode mode = GPUMode.HBLANK;
-    private int scrollY;
+    private int scrollX = 0;
+    private int scrollY = 0;
     private int paletteData;
 
     private int cycleCounter = 0;
@@ -44,11 +44,11 @@ public class GPU implements Memory {
                 break;
             case VRAM:
                 mode = GPUMode.HBLANK;
-                if (scanline > (HEIGHT + 10)) {
+                if (scanline > (Screen.HEIGHT + 10)) {
                     scanline = 0;
-                } else if (scanline <= HEIGHT) {
+                } else if (scanline <= Screen.HEIGHT) {
                     drawScanline(screen);
-                } else if (scanline == (HEIGHT + 1)) {
+                } else if (scanline == (Screen.HEIGHT + 1)) {
                     drawToScreen(screen);
                 }
                 break;
@@ -56,25 +56,36 @@ public class GPU implements Memory {
     }
 
     private void drawToScreen(Screen screen) {
-        int[][][] tiles = readTiles();
-
-        int tilesPerRow = (int) Math.ceil(Math.sqrt(383));
-        screen.initialize(tilesPerRow * 8, tilesPerRow * 8);
-        for (int tile = 0; tile < tiles.length; tile++) {
-            int yOffset = (tile / tilesPerRow) * 8;
-            int xOffset = (tile % tilesPerRow) * 8;
-
-            for (int y = 0; y < tiles[tile].length; y++) {
-                for (int x = 0; x < tiles[tile][y].length; x++) {
-                    screen.setPixel(xOffset + x, yOffset + y, color(tiles[tile][y][x]));
-                }
-            }
-        }
-        screen.draw();
+        //screen.draw();
     }
 
     private void drawScanline(Screen screen) {
+        if (true) { //TODO: check bit on lcd status
+            drawTiles(screen);
+        }
+    }
 
+    private void drawTiles(Screen screen) {
+        for (int i = 0; i < Screen.WIDTH; i++) {
+            int y = scanline + scrollY;
+            int x = i + scrollX;
+            int tileNumber = resolveTileNumber(y, x);
+            int rowData = resolveRowData(tileNumber, y);
+            Color color = color(colorData(rowData, x % 8)); //TODO: handle palette to get the correct color
+            screen.setPixel(x, y, color);
+        }
+    }
+
+    private int resolveRowData(int tileNumber, int y) {
+        int tileDataAddressFrom = 0x8000 - MemoryType.VIDEO_RAM.from; //TODO: check bit on lcd status, this is now unsigned
+        int tileLocation = tileDataAddressFrom + (tileNumber * 8 * 2); //Since each tile is 2 bytes and 8 rows long
+        return videoRam.readWord(tileLocation + ((y % 8) * 2));
+    }
+
+    private int resolveTileNumber(int y, int x) {
+        int tileMapAddressFrom = 0x9800 - MemoryType.VIDEO_RAM.from; //TODO: check bit on lcd status
+        int address = tileMapAddressFrom + ((y / 8) * 32) + (x / 8); //Each row contains 32 sprites
+        return videoRam.readByte(address);
     }
 
     public int readByte(int address) {
@@ -104,6 +115,9 @@ public class GPU implements Memory {
     }
 
     public void setLCDControl(int data) {
+        if (data != 0x91) {
+            throw new IllegalArgumentException("Can only handle 0x91 as lcd control value for now");
+        }
         this.lcdControl = data;
     }
 
@@ -113,6 +127,11 @@ public class GPU implements Memory {
 
     private boolean isLcdOn() {
         return lcdControl == 0x91; //TODO: fix magic value by checking bits individually
+    }
+
+    private int colorData(int rowData, int x) {
+        int colorBit = 1 << (7 - x);
+        return ((rowData & colorBit) != 0 ? 0b10 : 0b00) | (((rowData >> 8) & colorBit) != 0 ? 0b01 : 0b00);
     }
 
     private Color color(int input) {
@@ -127,22 +146,6 @@ public class GPU implements Memory {
             case 3:
                 return Color.BLACK;
         }
-    }
-
-    private int[][][] readTiles() {
-        int[][][] tiles = new int[384][8][8];
-        for (int i = 0x8000; i < 0x97FF; i = i + 2) {
-            int tile = (i >> 4) & 0x1FF;
-            int y = (i >> 1) & 7;
-
-            int x, bitIndex;
-            for (x = 0; x < 8; x++) {
-                bitIndex = 1 << (7 - x);
-
-                tiles[tile][y][x] = ((readByte(i - 0x8000) & bitIndex) != 0 ? 1 : 0) + ((readByte(i + 1 - 0x8000) & bitIndex) != 0 ? 2 : 0);
-            }
-        }
-        return tiles;
     }
 
     private enum GPUMode {

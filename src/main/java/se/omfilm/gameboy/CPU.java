@@ -4,6 +4,8 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class CPU implements Registers {
+    public static int FREQUENCY = 4 * 1024 * 1024;
+
     private Flags flags = new FlagsImpl();
     private ProgramCounter programCounter = new ProgramCounterImpl();
     private StackPointer stackPointer = new StackPointerImpl();

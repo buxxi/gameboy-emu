@@ -1,4 +1,6 @@
-package se.omfilm.gameboy;
+package se.omfilm.gameboy.io;
+
+import se.omfilm.gameboy.Screen;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -10,8 +12,8 @@ public class ConsoleScreen implements Screen {
 
     private Map<Color, Character> colorMapping = new HashMap<>();
 
-    public void initialize(int width, int height) {
-        data = new char[height][width];
+    public void initialize() {
+        data = new char[Screen.HEIGHT][Screen.WIDTH];
         colorMapping.put(Color.BLACK, 'x');
         colorMapping.put(Color.DARK_GRAY, '+');
         colorMapping.put(Color.LIGHT_GRAY, 'o');
@@ -19,7 +21,9 @@ public class ConsoleScreen implements Screen {
     }
 
     public void setPixel(int x, int y, Color color) {
-        data[y][x] = colorMapping.get(color);
+        try {
+            data[y][x] = colorMapping.get(color);
+        } catch (Exception e) {} //TODO: should never call this while index out of bounds
     }
 
     @Override

@@ -1,5 +1,7 @@
 package se.omfilm.gameboy;
 
+import se.omfilm.gameboy.io.ConsoleScreen;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,23 +17,27 @@ public class Gameboy {
         IOController ioController = new IOController(this.gpu);
         memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), verifyRom(Files.readAllBytes(romPath)), ioController, this.gpu);
         this.cpu = new CPU();
+        screen.initialize(); //TODO: do this when the lcd is turned on
     }
 
-    public void run() {
+    public void run() throws InterruptedException {
         try {
-            while (true) {
-                int cycles = cpu.step(memory);
-                gpu.step(cycles, screen);
-            }
-        } catch (IllegalArgumentException e) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
+            Timer.runForever(() -> {
+                Timer.runTimes(this::step, CPU.FREQUENCY / Screen.FREQUENCY);
+                return null;
+            }, Screen.FREQUENCY);
+        } catch (Exception e) {
+            Thread.sleep(100);
             System.err.println(e);
             System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
+            screen.draw();
         }
+    }
+
+    private Integer step() {
+        int cycles = cpu.step(memory);
+        gpu.step(cycles, screen);
+        return cycles;
     }
 
     private static Memory verifyRom(byte[] rom) {
