@@ -4,6 +4,7 @@ import se.omfilm.gameboy.Screen;
 
 import javax.imageio.*;
 import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -45,7 +46,7 @@ public class TempFileScreen implements Screen {
         try {
             ImageWriteParam iwp = writer.getDefaultWriteParam();
             IIOMetadata metadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(buffer), iwp);
-
+            metadata.mergeTree(metadata.getNativeMetadataFormatName(), getMetadataForDelayTime());
             IIOImage ii = new IIOImage(buffer, null, metadata);
             writer.writeToSequence(ii, null);
             //TODO: figure out to increase frame rate or drop frames to an acceptable speed
@@ -53,6 +54,18 @@ public class TempFileScreen implements Screen {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private IIOMetadataNode getMetadataForDelayTime() {
+        IIOMetadataNode root = new IIOMetadataNode("javax_imageio_gif_image_1.0");
+        IIOMetadataNode gce = new IIOMetadataNode("GraphicControlExtension");
+        gce.setAttribute("disposalMethod", "none");
+        gce.setAttribute("userInputFlag", "FALSE");
+        gce.setAttribute("transparentColorFlag", "FALSE");
+        gce.setAttribute("transparentColorIndex", "255");
+        gce.setAttribute("delayTime", "1");
+        root.appendChild(gce);
+        return root;
     }
 
     private void newFrame() {
