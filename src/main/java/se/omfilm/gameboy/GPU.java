@@ -56,7 +56,7 @@ public class GPU implements Memory {
     }
 
     private void drawToScreen(Screen screen) {
-        //screen.draw();
+        screen.draw();
     }
 
     private void drawScanline(Screen screen) {

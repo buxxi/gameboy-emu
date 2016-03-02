@@ -12,7 +12,7 @@ public class Timer {
             long diff = after - before;
             if (diff < expectedDiff) {
                 long l = expectedDiff - diff;
-                Thread.sleep(1);
+                Thread.sleep(l);
             }
         }
     }

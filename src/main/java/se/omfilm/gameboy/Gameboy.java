@@ -1,6 +1,6 @@
 package se.omfilm.gameboy;
 
-import se.omfilm.gameboy.io.ConsoleScreen;
+import se.omfilm.gameboy.io.SwingScreen;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,7 +10,7 @@ public class Gameboy {
     private final MMU memory;
     private final CPU cpu;
     private final GPU gpu;
-    private final Screen screen = new ConsoleScreen();
+    private final Screen screen = new SwingScreen();
 
     public Gameboy(Path bootPath, Path romPath) throws IOException {
         this.gpu = new GPU(new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate()));
@@ -30,7 +30,7 @@ public class Gameboy {
             Thread.sleep(100);
             System.err.println(e);
             System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
-            screen.draw();
+            System.exit(0);
         }
     }
 
