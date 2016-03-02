@@ -12,7 +12,7 @@ public class ConsoleScreen implements Screen {
 
     private Map<Color, Character> colorMapping = new HashMap<>();
 
-    public void initialize() {
+    public void turnOn() {
         data = new char[Screen.HEIGHT][Screen.WIDTH];
         colorMapping.put(Color.BLACK, 'x');
         colorMapping.put(Color.DARK_GRAY, '+');
@@ -20,15 +20,17 @@ public class ConsoleScreen implements Screen {
         colorMapping.put(Color.WHITE, ' ');
     }
 
+    public void turnOff() {
+
+    }
+
     public void setPixel(int x, int y, Color color) {
-        try {
-            data[y][x] = colorMapping.get(color);
-        } catch (Exception e) {} //TODO: should never call this while index out of bounds
+        data[y][x] = colorMapping.get(color);
     }
 
     @Override
     public void draw() {
-        if (!written) {
+        if (!written) { //TODO: figure out how to clear console and then maybe lower the framerate
             written = true;
             for (int y = 0; y < data.length; y++) {
                 for (int x = 0; x < data[y].length; x++) {

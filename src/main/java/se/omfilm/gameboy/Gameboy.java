@@ -1,6 +1,7 @@
 package se.omfilm.gameboy;
 
 import se.omfilm.gameboy.io.SwingScreen;
+import se.omfilm.gameboy.io.TempFileScreen;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,7 +18,7 @@ public class Gameboy {
         IOController ioController = new IOController(this.gpu);
         memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), verifyRom(Files.readAllBytes(romPath)), ioController, this.gpu);
         this.cpu = new CPU();
-        screen.initialize(); //TODO: do this when the lcd is turned on
+        screen.turnOn(); //TODO: do this when the lcd is turned on
     }
 
     public void run() throws InterruptedException {
@@ -30,6 +31,7 @@ public class Gameboy {
             Thread.sleep(100);
             System.err.println(e);
             System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
+            screen.turnOff();
             System.exit(0);
         }
     }

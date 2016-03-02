@@ -7,7 +7,9 @@ public interface Screen {
     int WIDTH = 160;
     int FREQUENCY = 60;
 
-    void initialize();
+    void turnOn();
+
+    void turnOff();
 
     void setPixel(int x, int y, Color color);
 

@@ -72,7 +72,7 @@ public class GPU implements Memory {
             int tileNumber = resolveTileNumber(y, x);
             int rowData = resolveRowData(tileNumber, y);
             Color color = color(colorData(rowData, x % 8)); //TODO: handle palette to get the correct color
-            screen.setPixel(x, y, color);
+            screen.setPixel(x, scanline - 1, color);
         }
     }
 

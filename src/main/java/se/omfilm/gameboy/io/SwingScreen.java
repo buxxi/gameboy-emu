@@ -11,8 +11,7 @@ public class SwingScreen extends JPanel implements Screen {
     private JFrame frame;
     private long last = 0;
 
-    @Override
-    public void initialize() {
+    public void turnOn() {
         data = new Color[Screen.HEIGHT][Screen.WIDTH];
         frame = new JFrame();
         frame.setSize(Screen.WIDTH * SCALE, Screen.HEIGHT * SCALE);
@@ -20,11 +19,12 @@ public class SwingScreen extends JPanel implements Screen {
         frame.setVisible(true);
     }
 
-    @Override
+    public void turnOff() {
+        frame.dispose();
+    }
+
     public void setPixel(int x, int y, Color color) {
-        try {
-            data[y][x] = color;
-        } catch (Exception e) {} //TODO: should never call this while index out of bounds
+        data[y][x] = color;
     }
 
     @Override
@@ -39,11 +39,10 @@ public class SwingScreen extends JPanel implements Screen {
         int fps = (int) (1000 / Math.max(System.currentTimeMillis() - last, 1));
         last = System.currentTimeMillis();
         g.setColor(Color.RED);
-        g.setFont(new Font("Verdana", Font.PLAIN, 9));
-        g.drawString("fps: " + fps, 1, 10);
+        g.setFont(new Font("Verdana", Font.PLAIN, 13));
+        g.drawString("fps: " + fps, 1, 14);
     }
 
-    @Override
     public void draw() {
         frame.repaint();
     }
