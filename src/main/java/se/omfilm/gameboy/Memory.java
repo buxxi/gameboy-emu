@@ -1,5 +1,7 @@
 package se.omfilm.gameboy;
 
+import se.omfilm.gameboy.util.DebugPrinter;
+
 public interface Memory {
     int readByte(int address);
 

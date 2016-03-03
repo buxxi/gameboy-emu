@@ -1,6 +1,4 @@
-package se.omfilm.gameboy.io;
-
-import se.omfilm.gameboy.Screen;
+package se.omfilm.gameboy.io.screen;
 
 import javax.imageio.*;
 import javax.imageio.metadata.IIOMetadata;

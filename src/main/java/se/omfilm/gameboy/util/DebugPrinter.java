@@ -1,4 +1,6 @@
-package se.omfilm.gameboy;
+package se.omfilm.gameboy.util;
+
+import se.omfilm.gameboy.*;
 
 public class DebugPrinter {
     public static void debug(StackPointer stackPointer, ProgramCounter programCounter) {
@@ -22,6 +24,13 @@ public class DebugPrinter {
             result = "0" + result;
         }
         return "0x" + result;
+    }
+
+    public static void debugException(Exception e) throws InterruptedException {
+        Thread.sleep(100);
+        System.err.println(e);
+        System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
+        System.exit(0);
     }
 
     public static void verifyBoot(CPU cpu, StackPointer stackPointer) {

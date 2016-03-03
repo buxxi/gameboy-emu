@@ -1,6 +1,7 @@
 package se.omfilm.gameboy;
 
 import se.omfilm.gameboy.instructions.*;
+import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.util.function.Supplier;
 

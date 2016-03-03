@@ -1,4 +1,7 @@
-package se.omfilm.gameboy;
+package se.omfilm.gameboy.io;
+
+import se.omfilm.gameboy.util.DebugPrinter;
+import se.omfilm.gameboy.Memory;
 
 public class IOController implements Memory {
     private final GPU gpu;

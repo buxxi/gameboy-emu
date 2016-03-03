@@ -1,5 +1,7 @@
 package se.omfilm.gameboy;
 
+import se.omfilm.gameboy.util.DebugPrinter;
+
 import java.util.EnumMap;
 import java.util.Map;
 

@@ -1,4 +1,4 @@
-package se.omfilm.gameboy;
+package se.omfilm.gameboy.io.screen;
 
 import java.awt.*;
 

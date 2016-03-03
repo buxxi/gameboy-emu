@@ -1,24 +1,29 @@
-package se.omfilm.gameboy;
+package se.omfilm.gameboy.io;
+
+import se.omfilm.gameboy.ByteArrayMemory;
+import se.omfilm.gameboy.Memory;
+import se.omfilm.gameboy.io.screen.Screen;
 
 import java.awt.*;
 
 public class GPU implements Memory {
     private final Memory videoRam;
+    private final Screen screen;
 
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollX = 0;
     private int scrollY = 0;
     private int paletteData;
-
     private int cycleCounter = 0;
     private int scanline = 0;
     private int lcdControl = 0;
 
-    public GPU(Memory videoRam) {
-        this.videoRam = videoRam;
+    public GPU(Screen screen) {
+        this.videoRam = new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate());
+        this.screen = screen;
     }
 
-    public void step(int cycles, Screen screen) {
+    public void step(int cycles) {
         if (!isLcdOn()) {
             return;
         }
@@ -47,19 +52,19 @@ public class GPU implements Memory {
                 if (scanline > (Screen.HEIGHT + 10)) {
                     scanline = 0;
                 } else if (scanline <= Screen.HEIGHT) {
-                    drawScanline(screen);
+                    drawScanline();
                 } else if (scanline == (Screen.HEIGHT + 1)) {
-                    drawToScreen(screen);
+                    drawToScreen();
                 }
                 break;
         }
     }
 
-    private void drawToScreen(Screen screen) {
+    private void drawToScreen() {
         screen.draw();
     }
 
-    private void drawScanline(Screen screen) {
+    private void drawScanline() {
         if (true) { //TODO: check bit on lcd status
             drawTiles(screen);
         }
@@ -119,6 +124,7 @@ public class GPU implements Memory {
             throw new IllegalArgumentException("Can only handle 0x91 as lcd control value for now");
         }
         this.lcdControl = data;
+        screen.turnOn();
     }
 
     public int scanline() {

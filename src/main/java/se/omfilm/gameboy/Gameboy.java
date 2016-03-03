@@ -1,7 +1,10 @@
 package se.omfilm.gameboy;
 
-import se.omfilm.gameboy.io.SwingScreen;
-import se.omfilm.gameboy.io.TempFileScreen;
+import se.omfilm.gameboy.io.GPU;
+import se.omfilm.gameboy.io.IOController;
+import se.omfilm.gameboy.io.screen.Screen;
+import se.omfilm.gameboy.util.DebugPrinter;
+import se.omfilm.gameboy.util.Timer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,14 +14,12 @@ public class Gameboy {
     private final MMU memory;
     private final CPU cpu;
     private final GPU gpu;
-    private final Screen screen = new SwingScreen();
 
-    public Gameboy(Path bootPath, Path romPath) throws IOException {
-        this.gpu = new GPU(new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate()));
+    public Gameboy(Path bootPath, Path romPath, Screen screen) throws IOException {
+        this.gpu = new GPU(screen);
         IOController ioController = new IOController(this.gpu);
-        memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), verifyRom(Files.readAllBytes(romPath)), ioController, this.gpu);
+        memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), new ROM(Files.readAllBytes(romPath)), ioController, this.gpu);
         this.cpu = new CPU();
-        screen.turnOn(); //TODO: do this when the lcd is turned on
     }
 
     public void run() throws InterruptedException {
@@ -28,66 +29,13 @@ public class Gameboy {
                 return null;
             }, Screen.FREQUENCY);
         } catch (Exception e) {
-            Thread.sleep(100);
-            System.err.println(e);
-            System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
-            screen.turnOff();
-            System.exit(0);
+            DebugPrinter.debugException(e);
         }
     }
 
     private Integer step() {
         int cycles = cpu.step(memory);
-        gpu.step(cycles, screen);
+        gpu.step(cycles);
         return cycles;
-    }
-
-    private static Memory verifyRom(byte[] rom) {
-        System.out.println("Game:\t\t" + readGameName(rom));
-        if (rom[0x146] != 0) {
-            throw new IllegalArgumentException("Can only handle the original GameBoy");
-        }
-        if (rom[0x147] != 0) {
-            throw new IllegalArgumentException("Can only handle Cartridge Types of ROM Only");
-        }
-        ROM_SIZE rom_size = ROM_SIZE.values()[rom[0x148]];
-        if (rom_size.expectedSize != rom.length) {
-            throw new IllegalArgumentException("Roms actual size doesn't match the expected " + rom_size.expectedSize + "!=" + rom.length);
-        }
-        System.out.println("ROM Size:\t" + rom_size);
-        if (rom[0x149] != 0) {
-            throw new IllegalArgumentException("Can only handle RAM Size None");
-        }
-
-        System.out.println("Region:\t\t" + (rom[0x14A] == 0 ? "Japan" : "International"));
-        System.out.println("C-check:\t" + (rom[0x14D]));
-        System.out.println("Checksum:\t" + DebugPrinter.hex((rom[0x14E] << 8) + rom[0x14F], 4));
-        return new ByteArrayMemory(rom);
-    }
-
-    private static String readGameName(byte[] rom) {
-        byte[] name = new byte[16];
-        System.arraycopy(rom, 0x0134, name, 0, 16);
-        return new String(name);
-    }
-
-    private enum ROM_SIZE {
-        _32KB(32 * 1024),
-        _64KB(64 * 1024),
-        _128KB(128 * 1024),
-        _256KB(256 * 1024),
-        _512KB(512 * 1024),
-        _1MB(1024 * 1024),
-        _2MB(2048 * 1024);
-
-        private final int expectedSize;
-
-        ROM_SIZE(int expectedSize) {
-            this.expectedSize = expectedSize;
-        }
-
-        public String toString() {
-            return super.toString().substring(1);
-        }
     }
 }

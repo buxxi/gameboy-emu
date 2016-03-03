@@ -1,5 +1,8 @@
 package se.omfilm.gameboy;
 
+import se.omfilm.gameboy.io.IOController;
+import se.omfilm.gameboy.util.DebugPrinter;
+
 public class MMU implements Memory {
     private final Memory boot;
     private final Memory rom;
