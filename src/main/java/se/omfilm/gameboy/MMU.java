@@ -9,6 +9,7 @@ public class MMU implements Memory {
     private final Memory zeroPage;
     private final Memory ioController;
     private final Memory gpu;
+    private final Memory ram;
 
     private boolean isBooting = true;
 
@@ -18,6 +19,7 @@ public class MMU implements Memory {
         this.ioController = ioController;
         this.gpu = gpu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
+        this.ram = new ByteArrayMemory(MemoryType.RAM.allocate());
     }
 
     public int readByte(int address) {
@@ -53,8 +55,14 @@ public class MMU implements Memory {
             case IO_REGISTERS:
                 ioController.writeByte(address, data);
                 return;
+            case RAM:
+                ram.writeByte(virtualAddress, data);
+                return;
+            case INTERRUPT_ENABLE:
+                System.out.println(MemoryType.INTERRUPT_ENABLE + " not implemented but called with " + DebugPrinter.hex(data, 4));
+                return;
             default:
-                throw new UnsupportedOperationException("Can't write to " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));
+                throw new UnsupportedOperationException("Can't write to " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4) + " with value " + DebugPrinter.hex(data, 4));
         }
     }
 

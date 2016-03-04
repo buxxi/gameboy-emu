@@ -28,7 +28,7 @@ public class DebugPrinter {
 
     public static void debugException(Exception e) throws InterruptedException {
         Thread.sleep(100);
-        System.err.println(e);
+        e.printStackTrace();
         System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
         System.exit(0);
     }

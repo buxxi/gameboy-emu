@@ -57,14 +57,35 @@ public class IOController implements Memory {
             case SOUND_SWEEP:
                 soundSweep = data;
                 return;
-            case PALETTE_DATA:
-                gpu.setPaletteData(data);
+            case BACKGROUND_PALETTE_DATA:
+                gpu.setBackgroundPaletteData(data);
+                return;
+            case OBJECT_PALETTE_0_DATA:
+                gpu.setObjectPalette0Data(data);
+                return;
+            case OBJECT_PALETTE_1_DATA:
+                gpu.setObjectPalette1Data(data);
                 return;
             case SCROLL_Y:
                 gpu.scrollY(data);
                 return;
+            case SCROLL_X:
+                gpu.scrollX(data);
+                return;
+            case LCD_STATUS:
+                System.out.println(IORegister.LCD_STATUS + " not implemented, but called with value " + DebugPrinter.hex(data, 4)); //TODO
+                return;
             case LCD_CONTROL:
                 gpu.setLCDControl(data);
+                return;
+            case INTERRUPT:
+                System.out.println(IORegister.INTERRUPT + " not implemented, but called with value " + DebugPrinter.hex(data, 4)); //TODO
+                return;
+            case SERIAL_TRANSFER_DATA:
+                System.out.println(IORegister.SERIAL_TRANSFER_DATA + " not implemented, but called with value " + DebugPrinter.hex(data, 4)); //TODO
+                return;
+            case SERIAL_TRANSFER_CONTROL:
+                System.out.println(IORegister.SERIAL_TRANSFER_CONTROL + " not implemented, but called with value " + DebugPrinter.hex(data, 4)); //TODO
                 return;
             default:
                 throw new UnsupportedOperationException("Unhandled write of value " + DebugPrinter.hex(data, 2) + " for " + IORegister.class.getSimpleName() + " of type " + register);
@@ -72,6 +93,9 @@ public class IOController implements Memory {
     }
 
     private enum IORegister {
+        SERIAL_TRANSFER_DATA(0xFF01),
+        SERIAL_TRANSFER_CONTROL(0xFF02),
+        INTERRUPT(0xFF0F),
         SOUND_LENGTH_PATTERN_DUTY(0xFF11),
         SOUND_ENVELOPE(0xFF12),
         SOUND_FREQUENCY_LOW(0xFF13),
@@ -80,9 +104,13 @@ public class IOController implements Memory {
         SOUND_OUTPUT_TERMINAL(0xFF25),
         SOUND_ON_OFF(0xFF26),
         LCD_CONTROL(0xFF40),
+        LCD_STATUS(0xFF41),
         SCROLL_Y(0xFF42),
+        SCROLL_X(0xFF43),
         LCD_SCANLINE(0xFF44),
-        PALETTE_DATA(0xFF47),
+        BACKGROUND_PALETTE_DATA(0xFF47),
+        OBJECT_PALETTE_0_DATA(0xFF48),
+        OBJECT_PALETTE_1_DATA(0xFF49),
         SOUND_SWEEP(0xFF50);
 
         private final int address;

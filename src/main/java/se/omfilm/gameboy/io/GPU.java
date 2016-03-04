@@ -7,16 +7,31 @@ import se.omfilm.gameboy.io.screen.Screen;
 import java.awt.*;
 
 public class GPU implements Memory {
+    private static final int TILE_MAP_ADDRESS_0 = 0x9800;
+    private static final int TILE_MAP_ADDRESS_1 = 0x9C00;
+    private static final int TILE_DATA_ADDRESS_0 = 0x8800;
+    private static final int TILE_DATA_ADDRESS_1 = 0x8000;
+
     private final Memory videoRam;
     private final Screen screen;
 
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollX = 0;
     private int scrollY = 0;
-    private int paletteData;
+    private int backgroundPaletteData;
+    private int objectPalette0Data;
+    private int objectPalette1Data;
     private int cycleCounter = 0;
     private int scanline = 0;
-    private int lcdControl = 0;
+
+    private boolean lcdDisplay = false;
+    private int windowTileMapAddress = TILE_MAP_ADDRESS_0;
+    private boolean windowDisplay = false;
+    private int tileDataAddress = TILE_DATA_ADDRESS_0;
+    private int backgroundTileMapAddress = TILE_MAP_ADDRESS_0;
+    private boolean largeSprites = false;
+    private boolean spriteDisplay = false;
+    private boolean backgroundDisplay = false;
 
     public GPU(Screen screen) {
         this.videoRam = new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate());
@@ -24,7 +39,7 @@ public class GPU implements Memory {
     }
 
     public void step(int cycles) {
-        if (!isLcdOn()) {
+        if (!lcdDisplay) {
             return;
         }
         cycleCounter += cycles;
@@ -65,7 +80,7 @@ public class GPU implements Memory {
     }
 
     private void drawScanline() {
-        if (true) { //TODO: check bit on lcd status
+        if (backgroundDisplay) {
             drawTiles(screen);
         }
     }
@@ -82,14 +97,12 @@ public class GPU implements Memory {
     }
 
     private int resolveRowData(int tileNumber, int y) {
-        int tileDataAddressFrom = 0x8000 - MemoryType.VIDEO_RAM.from; //TODO: check bit on lcd status, this is now unsigned
-        int tileLocation = tileDataAddressFrom + (tileNumber * 8 * 2); //Since each tile is 2 bytes and 8 rows long
+        int tileLocation = tileDataAddress - MemoryType.VIDEO_RAM.from + (tileNumber * 8 * 2); //Since each tile is 2 bytes and 8 rows long
         return videoRam.readWord(tileLocation + ((y % 8) * 2));
     }
 
     private int resolveTileNumber(int y, int x) {
-        int tileMapAddressFrom = 0x9800 - MemoryType.VIDEO_RAM.from; //TODO: check bit on lcd status
-        int address = tileMapAddressFrom + ((y / 8) * 32) + (x / 8); //Each row contains 32 sprites
+        int address = backgroundTileMapAddress - MemoryType.VIDEO_RAM.from + ((y / 8) * 32) + (x / 8); //Each row contains 32 sprites
         return videoRam.readByte(address);
     }
 
@@ -111,28 +124,45 @@ public class GPU implements Memory {
         this.scrollY = data;
     }
 
+    public void scrollX(int data) {
+        this.scrollX = data;
+    }
+
     public int scrollY() {
         return scrollY;
     }
 
-    public void setPaletteData(int paletteData) {
-        this.paletteData = paletteData;
+    public void setBackgroundPaletteData(int backgroundPaletteData) {
+        this.backgroundPaletteData = backgroundPaletteData;
+    }
+
+    public void setObjectPalette0Data(int data) {
+        this.objectPalette0Data = data;
+    }
+
+    public void setObjectPalette1Data(int data) {
+        this.objectPalette1Data = data;
     }
 
     public void setLCDControl(int data) {
-        if (data != 0x91) {
-            throw new IllegalArgumentException("Can only handle 0x91 as lcd control value for now");
+        lcdDisplay = (data & 0b1000_0000) != 0;
+        windowTileMapAddress = (data & 0b0100_0000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
+        windowDisplay = (data & 0b0010_0000) != 0;
+        tileDataAddress = (data & 0b0001_0000) != 0 ? TILE_DATA_ADDRESS_1 : TILE_DATA_ADDRESS_0;
+        backgroundTileMapAddress = (data & 0b0000_1000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
+        largeSprites = (data & 0b0000_0100) != 0;
+        spriteDisplay = (data & 0b0000_0010) != 0;
+        backgroundDisplay = (data & 0b0000_0001) != 0;
+
+        if (lcdDisplay) {
+            screen.turnOn();
+        } else {
+            screen.turnOff();
         }
-        this.lcdControl = data;
-        screen.turnOn();
     }
 
     public int scanline() {
         return scanline;
-    }
-
-    private boolean isLcdOn() {
-        return lcdControl == 0x91; //TODO: fix magic value by checking bits individually
     }
 
     private int colorData(int rowData, int x) {

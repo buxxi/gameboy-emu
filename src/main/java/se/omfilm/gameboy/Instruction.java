@@ -23,6 +23,7 @@ public interface Instruction {
      * See this file for reference: http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
      */
     enum InstructionType {
+        NOP(        0x00, NoOp::new), //Page 97
         INC_B(      0x04, IncrementByteRegister::B), //Page 88
         DEC_B(      0x05, DecrementByteRegister::B), //Page 89
         LD_B_n(     0x06, LoadByteIntoRegister::toB), //Page 65
@@ -74,6 +75,7 @@ public interface Instruction {
         CP_HL(      0xBE, CompareByteAddressOfHLAgainstA::new), //Page 87
 
         POP_BC(     0xC1, PopStackIntoRegister::toBC), //Page 79
+        JP_nn(      0xC3, JumpWord::new), //Page 111
         PUSH_BC(    0xC5, PushRegisterIntoStack::fromBC), //Page 78
         RET(        0xC9, Return::new), //Page 117
         CB(         0xCB, InvalidInstruction::new), //Page 99-110, special case (append 0xCB before CB-instructions)
@@ -84,6 +86,7 @@ public interface Instruction {
         LD_nn_A(    0xEA, LoadAIntoAddressOfWord::new), //Page 69
 
         LDH_A_n(    0xF0, LoadByteOffsetIntoA::new), //Page 75
+        DI(         0xF3, DisableInterrupts::new), //Page 98
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
 
         CB_RL_C(    0xCB11, RotateRegisterLeft::C), //Page 102
