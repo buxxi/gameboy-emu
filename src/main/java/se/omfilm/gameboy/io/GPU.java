@@ -84,11 +84,14 @@ public class GPU implements Memory {
 
     private void drawScanline() {
         if (backgroundDisplay) {
-            drawTiles(screen);
+            drawTiles();
+        }
+        if (spriteDisplay) {
+            drawSprites();
         }
     }
 
-    private void drawTiles(Screen screen) {
+    private void drawTiles() {
         for (int i = 0; i < Screen.WIDTH; i++) {
             int y = scanline + scrollY;
             int x = i + scrollX;
@@ -99,13 +102,17 @@ public class GPU implements Memory {
         }
     }
 
+    private void drawSprites() {
+        throw new UnsupportedOperationException("drawSprites() not implemented");
+    }
+
     private int resolveRowData(int tileNumber, int y) {
         int tileLocation = tileDataAddress - MemoryType.VIDEO_RAM.from + (tileNumber * 8 * 2); //Since each tile is 2 bytes and 8 rows long
         return videoRam.readWord(tileLocation + ((y % 8) * 2));
     }
 
     private int resolveTileNumber(int y, int x) {
-        int address = backgroundTileMapAddress - MemoryType.VIDEO_RAM.from + ((y / 8) * 32) + (x / 8); //Each row contains 32 sprites
+        int address = backgroundTileMapAddress - MemoryType.VIDEO_RAM.from + ((y / 8) * 32) + (x / 8); //Each row contains 32 tiles
         return videoRam.readByte(address);
     }
 

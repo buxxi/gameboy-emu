@@ -17,7 +17,7 @@ public interface Memory {
     }
 
     enum MemoryType {
-        ROM(0x0000, 0x3FFF),
+        ROM(0x0000, 0x7FFF),
         VIDEO_RAM(0x8000, 0x9FFF),
         IO_REGISTERS(0xFF00, 0xFF7F),
         ZERO_PAGE(0xFF80, 0xFFFE),

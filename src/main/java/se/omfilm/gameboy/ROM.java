@@ -15,11 +15,11 @@ public class ROM extends ByteArrayMemory {
         if (rom[0x147] != 0) {
             throw new IllegalArgumentException("Can only handle Cartridge Types of ROM Only");
         }
-        ROM_SIZE rom_size = ROM_SIZE.values()[rom[0x148]];
-        if (rom_size.expectedSize != rom.length) {
-            throw new IllegalArgumentException("Roms actual size doesn't match the expected " + rom_size.expectedSize + "!=" + rom.length);
+        ROM_SIZE romSize = ROM_SIZE.values()[rom[0x148]];
+        if (romSize.expectedSize != rom.length) {
+            throw new IllegalArgumentException("Roms actual size doesn't match the expected " + romSize.expectedSize + "!=" + rom.length);
         }
-        System.out.println("ROM Size:\t" + rom_size);
+        System.out.println("ROM Size:\t" + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
         if (rom[0x149] != 0) {
             throw new IllegalArgumentException("Can only handle RAM Size None");
         }

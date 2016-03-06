@@ -92,6 +92,7 @@ public interface Instruction {
 
         LDH_A_n(    0xF0, LoadByteOffsetIntoA::new), //Page 75
         DI(         0xF3, DisableInterrupts::new), //Page 98
+        EI(         0xFB, EnableInterrupts::new), //Page 98
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
 
         CB_RL_C(    0xCB11, RotateRegisterLeft::C), //Page 102
