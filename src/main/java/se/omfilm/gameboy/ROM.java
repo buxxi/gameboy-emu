@@ -1,14 +1,18 @@
 package se.omfilm.gameboy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 public class ROM extends ByteArrayMemory {
+    private static final Logger log = LoggerFactory.getLogger(ROM.class);
+
     public ROM(byte[] data) {
         super(verifyRom(data));
     }
 
     private static byte[] verifyRom(byte[] rom) {
-        System.out.println("Game:\t\t" + readGameName(rom));
+        log.info("Game:\t\t" + readGameName(rom));
         if (rom[0x146] != 0) {
             throw new IllegalArgumentException("Can only handle the original GameBoy");
         }
@@ -19,14 +23,14 @@ public class ROM extends ByteArrayMemory {
         if (romSize.expectedSize != rom.length) {
             throw new IllegalArgumentException("Roms actual size doesn't match the expected " + romSize.expectedSize + "!=" + rom.length);
         }
-        System.out.println("ROM Size:\t" + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
+        log.info("ROM Size:\t" + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
         if (rom[0x149] != 0) {
             throw new IllegalArgumentException("Can only handle RAM Size None");
         }
 
-        System.out.println("Region:\t\t" + (rom[0x14A] == 0 ? "Japan" : "International"));
-        System.out.println("C-check:\t" + (rom[0x14D]));
-        System.out.println("Checksum:\t" + DebugPrinter.hex((rom[0x14E] << 8) + rom[0x14F], 4));
+        log.info("Region:\t\t" + (rom[0x14A] == 0 ? "Japan" : "International"));
+        log.info("C-check:\t" + (rom[0x14D]));
+        log.info("Checksum:\t" + DebugPrinter.hex((rom[0x14E] << 8) + rom[0x14F], 4));
         return rom;
     }
 

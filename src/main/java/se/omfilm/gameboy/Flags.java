@@ -7,6 +7,8 @@ public interface Flags {
 
     void set(Flag... flags);
 
+    void setInterruptsDisabled(boolean disabled);
+
     static Flag[] flags(boolean zero, boolean halfCarry, boolean carry) {
         List<Flag> flags = new ArrayList<>();
         if (halfCarry) {

@@ -4,8 +4,7 @@ import se.omfilm.gameboy.*;
 
 public class DisableInterrupts implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        //TODO: implement me correctly when implementation interrupts
-        System.out.println(getClass().getName() + " not implemented");
+        flags.setInterruptsDisabled(true);
         return 4;
     }
 }

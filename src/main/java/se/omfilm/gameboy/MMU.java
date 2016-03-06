@@ -1,9 +1,13 @@
 package se.omfilm.gameboy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.io.IOController;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 public class MMU implements Memory {
+    private static final Logger log = LoggerFactory.getLogger(MMU.class);
+
     private final Memory boot;
     private final Memory rom;
     private final Memory zeroPage;
@@ -46,7 +50,7 @@ public class MMU implements Memory {
 
     public void writeByte(int address, int data) {
         if (address == 0x2000) {
-            System.out.println("ROM Banking not implemented but called with " + DebugPrinter.hex(data, 4));
+            log.warn("ROM Banking not implemented but called with " + DebugPrinter.hex(data, 4));
             return;
         }
         MemoryType type = MemoryType.fromAddress(address);
@@ -60,13 +64,11 @@ public class MMU implements Memory {
                 zeroPage.writeByte(virtualAddress, data);
                 return;
             case IO_REGISTERS:
+            case INTERRUPT_ENABLE:
                 ioController.writeByte(address, data);
                 return;
             case RAM:
                 ram.writeByte(virtualAddress, data);
-                return;
-            case INTERRUPT_ENABLE:
-                System.out.println(MemoryType.INTERRUPT_ENABLE + " not implemented but called with " + DebugPrinter.hex(data, 4));
                 return;
             default:
                 throw new UnsupportedOperationException("Can't write to " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4) + " with value " + DebugPrinter.hex(data, 4));

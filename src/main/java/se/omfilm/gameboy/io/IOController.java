@@ -1,9 +1,12 @@
 package se.omfilm.gameboy.io;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.Memory;
 
 public class IOController implements Memory {
+    private static final Logger log = LoggerFactory.getLogger(IOController.class);
     private final GPU gpu;
 
     public IOController(GPU gpu) {
@@ -18,7 +21,7 @@ public class IOController implements Memory {
             case LCD_SCANLINE:
                 return gpu.scanline();
             default:
-                throw new UnsupportedOperationException("Unhandled read for " + IORegister.class.getSimpleName() + " of type " + register);
+                throw new UnsupportedOperationException("Unhandled read for " + IOController.class.getSimpleName() + " of type " + register);
         }
     }
 
@@ -47,6 +50,7 @@ public class IOController implements Memory {
                 return;
             case LCD_STATUS:
             case INTERRUPT:
+            case INTERRUPT_ENABLE:
             case SERIAL_TRANSFER_DATA:
             case SERIAL_TRANSFER_CONTROL:
 
@@ -64,11 +68,15 @@ public class IOController implements Memory {
             case SOUND_ON_OFF:
             case SOUND_OUTPUT_TERMINAL:
             case SOUND_SWEEP:
-                System.out.println(register + " not implemented, but called with value " + DebugPrinter.hex(data, 4)); //TODO
+                log.warn(unhandledWriteMessage(data, register)); //TODO: this is only here to get somewhere without having to implement sound
                 return;
             default:
-                throw new UnsupportedOperationException("Unhandled write of value " + DebugPrinter.hex(data, 2) + " for " + IORegister.class.getSimpleName() + " of type " + register);
+                throw new UnsupportedOperationException(unhandledWriteMessage(data, register));
         }
+    }
+
+    private String unhandledWriteMessage(int data, IORegister register) {
+        return "Unhandled write for " + IOController.class.getSimpleName() + " of type " + register + " with value " + DebugPrinter.hex(data, 4);
     }
 
     private enum IORegister {
@@ -97,7 +105,8 @@ public class IOController implements Memory {
         OBJECT_PALETTE_0_DATA(0xFF48),
         OBJECT_PALETTE_1_DATA(0xFF49),
         SOUND_SWEEP(0xFF50),
-        UNKNOWN(0xFF7F);
+        UNKNOWN(0xFF7F),
+        INTERRUPT_ENABLE(0xFFFF);
 
         private final int address;
 

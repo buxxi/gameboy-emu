@@ -1,16 +1,21 @@
 package se.omfilm.gameboy.util;
 
+import jdk.nashorn.internal.runtime.Debug;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.*;
 
 public class DebugPrinter {
+    private static final Logger log = LoggerFactory.getLogger(DebugPrinter.class);
+
     public static void debug(StackPointer stackPointer, ProgramCounter programCounter) {
-        System.out.println(
+        log.debug(
             "PC:\t" + hex(programCounter.read(), 4) + "\tSP:\t" + hex(stackPointer.read(), 4)
         );
     }
 
     public static void debug(Registers registers) {
-        System.out.println(
+        log.debug(
             "A:\t" + hex(registers.readA(), 2) + "\tF:\t" + hex(registers.readF(), 2) + "\tAF:\t" + hex(registers.readAF(), 4) + "\n" +
             "B:\t" + hex(registers.readB(), 2) + "\tC:\t" + hex(registers.readC(), 2) + "\tBC:\t" + hex(registers.readBC(), 4) + "\n" +
             "H:\t" + hex(registers.readH(), 2) + "\tL:\t" + hex(registers.readL(), 2) + "\tHL:\t" + hex(registers.readHL(), 4) + "\n" +
@@ -29,7 +34,7 @@ public class DebugPrinter {
     public static void debugException(Exception e) throws InterruptedException {
         Thread.sleep(100);
         e.printStackTrace();
-        System.err.println(Instruction.InstructionType.values().length + " instructions implemented of 512");
+        log.error(Instruction.InstructionType.values().length + " instructions implemented of 512");
         System.exit(0);
     }
 

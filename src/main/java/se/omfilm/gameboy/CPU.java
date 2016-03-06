@@ -1,11 +1,15 @@
 package se.omfilm.gameboy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.util.EnumMap;
 import java.util.Map;
 
 public class CPU implements Registers {
+    private static final Logger log = LoggerFactory.getLogger(CPU.class);
+
     public static int FREQUENCY = 4 * 1024 * 1024;
 
     private Flags flags = new FlagsImpl();
@@ -42,7 +46,7 @@ public class CPU implements Registers {
         }
 
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
-        //System.out.println("Running instruction " + instructionType + " @ " + DebugPrinter.hex(sourceProgramCounter, 4));
+        //log.debug("Running instruction " + instructionType + " @ " + DebugPrinter.hex(sourceProgramCounter, 4));
         int cycles = instruction.execute(memory, this, this.flags, this.programCounter, this.stackPointer);
         //DebugPrinter.debug(this.stackPointer, this.programCounter);
         //DebugPrinter.debug(this);
@@ -201,6 +205,8 @@ public class CPU implements Registers {
     }
 
     private class FlagsImpl implements Flags {
+        private boolean interruptsDisabled = false;
+
         public boolean isSet(Flag flag) {
             return (readF() & flag.mask) != 0;
         }
@@ -211,6 +217,10 @@ public class CPU implements Registers {
                 result = result | flag.mask;
             }
             writeF(result);
+        }
+
+        public void setInterruptsDisabled(boolean disabled) {
+            interruptsDisabled = disabled;
         }
     }
 }
