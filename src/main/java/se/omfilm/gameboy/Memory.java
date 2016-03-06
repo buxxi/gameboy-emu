@@ -22,6 +22,7 @@ public interface Memory {
         IO_REGISTERS(0xFF00, 0xFF7F),
         ZERO_PAGE(0xFF80, 0xFFFE),
         RAM(0xC000, 0xDFFF),
+        OBJECT_ATTRIBUTE_MEMORY(0xFE00, 0xFFFE),
         INTERRUPT_ENABLE(0xFFFF, 0xFFFF);
 
         public final int from;

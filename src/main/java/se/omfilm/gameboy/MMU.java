@@ -31,6 +31,8 @@ public class MMU implements Memory {
                     return boot.readByte(virtualAddress);
                 }
                 return rom.readByte(virtualAddress);
+            case RAM:
+                return ram.readByte(virtualAddress);
             case ZERO_PAGE:
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:
@@ -43,11 +45,16 @@ public class MMU implements Memory {
     }
 
     public void writeByte(int address, int data) {
+        if (address == 0x2000) {
+            System.out.println("ROM Banking not implemented but called with " + DebugPrinter.hex(data, 4));
+            return;
+        }
         MemoryType type = MemoryType.fromAddress(address);
         int virtualAddress = address - type.from;
         switch (type) {
             case VIDEO_RAM:
-                gpu.writeByte(virtualAddress, data);
+            case OBJECT_ATTRIBUTE_MEMORY:
+                gpu.writeByte(address, data);
                 return;
             case ZERO_PAGE:
                 zeroPage.writeByte(virtualAddress, data);

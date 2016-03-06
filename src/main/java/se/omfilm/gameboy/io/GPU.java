@@ -3,6 +3,7 @@ package se.omfilm.gameboy.io;
 import se.omfilm.gameboy.ByteArrayMemory;
 import se.omfilm.gameboy.Memory;
 import se.omfilm.gameboy.io.screen.Screen;
+import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.awt.*;
 
@@ -13,6 +14,7 @@ public class GPU implements Memory {
     private static final int TILE_DATA_ADDRESS_1 = 0x8000;
 
     private final Memory videoRam;
+    private final Memory objectAttributeMemory;
     private final Screen screen;
 
     private GPUMode mode = GPUMode.HBLANK;
@@ -35,6 +37,7 @@ public class GPU implements Memory {
 
     public GPU(Screen screen) {
         this.videoRam = new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate());
+        this.objectAttributeMemory = new ByteArrayMemory(MemoryType.OBJECT_ATTRIBUTE_MEMORY.allocate());
         this.screen = screen;
     }
 
@@ -114,10 +117,24 @@ public class GPU implements Memory {
     }
 
     public void writeByte(int address, int data) {
-        if (!mode.accessVideoRAM) {
-            throw new IllegalStateException("The CPU can't access VideoRAM while in mode " + mode);
+        MemoryType type = MemoryType.fromAddress(address);
+        switch (type) {
+            case VIDEO_RAM:
+                if (!mode.accessVideoRAM) {
+                    throw new IllegalStateException("The CPU can't access VideoRAM while in mode " + mode);
+                }
+                videoRam.writeByte(address - type.from, data);
+                return;
+            case OBJECT_ATTRIBUTE_MEMORY:
+                if (mode.accessOAM) {
+                    throw new IllegalStateException("The CPU can't access OAM while in mode " + mode);
+                }
+                objectAttributeMemory.writeByte(address - type.from, data);
+                return;
+            default:
+                throw new UnsupportedOperationException("Can't write to address " + DebugPrinter.hex(address, 4) + " in " + getClass().getSimpleName());
         }
-        videoRam.writeByte(address, data);
+
     }
 
     public void scrollY(int data) {

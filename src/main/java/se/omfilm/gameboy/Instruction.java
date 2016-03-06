@@ -24,9 +24,11 @@ public interface Instruction {
      */
     enum InstructionType {
         NOP(        0x00, NoOp::new), //Page 97
+        LD_BC_nn(   0x01, LoadWordIntoRegister::toBC), //Page 76
         INC_B(      0x04, IncrementByteRegister::B), //Page 88
         DEC_B(      0x05, DecrementByteRegister::B), //Page 89
         LD_B_n(     0x06, LoadByteIntoRegister::toB), //Page 65
+        DEC_BC(     0x0B, DecrementWordRegister::BC), //Page 93
         INC_C(      0x0C, IncrementByteRegister::C), //Page 88
         DEC_C(      0x0D, DecrementByteRegister::C), //Page 89
         LD_C_n(     0x0E, LoadByteIntoRegister::toC), //Page 65
@@ -47,10 +49,12 @@ public interface Instruction {
         INC_HL(     0x23, IncrementWordRegister::HL), //Page 92,
         INC_H(      0x24, IncrementByteRegister::H), //Page 88
         JR_Z_n(     0x28, JumpRelativeIfLastZero::new), //Page 113
+        LDI_A_HL(   0x2A, LoadAddressOfHLIncreasedIntoA::new), //Page 73
         LD_L_n(     0x2E, LoadByteIntoRegister::toL), //Page 65
 
         LD_SP_nn(   0x31, LoadWordIntoSP::new), //Page 76
         LDD_HL_A(   0x32, LoadHLDecreaseIntoA::new), //Page 72
+        LD_HL_n(    0x36, LoadByteIntoAddressOfHL::new), //Page 67
         DEC_A(      0x3D, DecrementByteRegister::A), //Page 89
         LD_A_n(     0x3E, LoadByteIntoRegister::toA), //Page 68
 
@@ -72,6 +76,7 @@ public interface Instruction {
 
         XOR_A(      0xAF, XorA::new), //Page 86
 
+        OR_C(       0xB1, OrWithA::C), // Page 85
         CP_HL(      0xBE, CompareByteAddressOfHLAgainstA::new), //Page 87
 
         POP_BC(     0xC1, PopStackIntoRegister::toBC), //Page 79

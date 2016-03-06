@@ -87,6 +87,8 @@ public class IOController implements Memory {
             case SERIAL_TRANSFER_CONTROL:
                 System.out.println(IORegister.SERIAL_TRANSFER_CONTROL + " not implemented, but called with value " + DebugPrinter.hex(data, 4)); //TODO
                 return;
+            case UNKNOWN:
+                return;
             default:
                 throw new UnsupportedOperationException("Unhandled write of value " + DebugPrinter.hex(data, 2) + " for " + IORegister.class.getSimpleName() + " of type " + register);
         }
@@ -111,7 +113,8 @@ public class IOController implements Memory {
         BACKGROUND_PALETTE_DATA(0xFF47),
         OBJECT_PALETTE_0_DATA(0xFF48),
         OBJECT_PALETTE_1_DATA(0xFF49),
-        SOUND_SWEEP(0xFF50);
+        SOUND_SWEEP(0xFF50),
+        UNKNOWN(0xFF7F);
 
         private final int address;
 

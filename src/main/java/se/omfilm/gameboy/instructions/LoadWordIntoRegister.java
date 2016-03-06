@@ -22,4 +22,8 @@ public class LoadWordIntoRegister implements Instruction {
     public static Instruction toHL() {
         return new LoadWordIntoRegister(Registers::writeHL);
     }
+
+    public static Instruction toBC() {
+        return new LoadWordIntoRegister(Registers::writeBC);
+    }
 }

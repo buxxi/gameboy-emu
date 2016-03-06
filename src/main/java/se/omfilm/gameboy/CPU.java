@@ -35,13 +35,14 @@ public class CPU implements Registers {
             memory.bootSuccess();
             DebugPrinter.verifyBoot(this, this.stackPointer);
         }
-        Instruction.InstructionType instructionType = Instruction.InstructionType.fromOpCode(memory.readByte(programCounter.increase()));
+        int sourceProgramCounter = programCounter.increase();
+        Instruction.InstructionType instructionType = Instruction.InstructionType.fromOpCode(memory.readByte(sourceProgramCounter));
         if (instructionType == Instruction.InstructionType.CB) {
             instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), memory.readByte(programCounter.increase()));
         }
 
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
-        //System.out.println("Running instruction " + instructionType);
+        //System.out.println("Running instruction " + instructionType + " @ " + DebugPrinter.hex(sourceProgramCounter, 4));
         int cycles = instruction.execute(memory, this, this.flags, this.programCounter, this.stackPointer);
         //DebugPrinter.debug(this.stackPointer, this.programCounter);
         //DebugPrinter.debug(this);
