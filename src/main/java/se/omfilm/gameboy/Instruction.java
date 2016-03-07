@@ -51,6 +51,7 @@ public interface Instruction {
         JR_Z_n(     0x28, JumpRelativeIfLastZero::new), //Page 113
         LDI_A_HL(   0x2A, LoadAddressOfHLIncreasedIntoA::new), //Page 73
         LD_L_n(     0x2E, LoadByteIntoRegister::toL), //Page 65
+        CPL(        0x2F, ComplementA::new), //Page 95
 
         LD_SP_nn(   0x31, LoadWordIntoSP::new), //Page 76
         LDD_HL_A(   0x32, LoadHLDecreaseIntoA::new), //Page 72
@@ -58,6 +59,7 @@ public interface Instruction {
         DEC_A(      0x3D, DecrementByteRegister::A), //Page 89
         LD_A_n(     0x3E, LoadByteIntoRegister::toA), //Page 68
 
+        LD_B_A(     0x47, LoadRegisterIntoRegister::fromAToB), //Page 69
         LD_C_A(     0x4F, LoadRegisterIntoRegister::fromAToC), //Page 69
 
         LD_D_A(     0x57, LoadRegisterIntoRegister::fromAToD), //Page 69
@@ -66,6 +68,7 @@ public interface Instruction {
 
         LD_HL_A(    0x77, LoadAIntoAddressOfHL::new), //Page 69
         LD_A_B(     0x78, LoadRegisterIntoRegister::fromBToA), //Page 66
+        LD_A_C(     0x79, LoadRegisterIntoRegister::fromCToA), //Page 66
         LD_A_E(     0x7B, LoadRegisterIntoRegister::fromEToA), //Page 66
         LD_A_H(     0x7C, LoadRegisterIntoRegister::fromHToA), //Page 66
         LD_A_L(     0x7D, LoadRegisterIntoRegister::fromLToA), //Page 66
@@ -74,9 +77,12 @@ public interface Instruction {
 
         SUB_A_B(    0x90, SubtractRegisterFromA::fromB), //Page 82
 
-        XOR_A(      0xAF, XorA::new), //Page 86
+        AND_C(      0xA1, AndRegisterWithA::C), //Page 84
+        XOR_C(      0xA9, XorRegisterWithA::C), //Page 86
+        XOR_A(      0xAF, XorRegisterWithA::A), //Page 86
 
-        OR_C(       0xB1, OrWithA::C), // Page 85
+        OR_B(       0xB0, OrRegisterWithA::B), //Page 85
+        OR_C(       0xB1, OrRegisterWithA::C), // Page 85
         CP_HL(      0xBE, CompareByteAddressOfHLAgainstA::new), //Page 87
 
         POP_BC(     0xC1, PopStackIntoRegister::toBC), //Page 79
@@ -88,7 +94,9 @@ public interface Instruction {
 
         LDH_n_A(    0xE0, LoadAOffsetByte::new), //Page 75
         LDH_C_A(    0xE2, LoadAOffsetC::new), //Page 70,
+        AND_n(      0xE6, AndByteWithA::new), //Page 84
         LD_nn_A(    0xEA, LoadAIntoAddressOfWord::new), //Page 69
+        RST_28(     0xEF, Restart::to28), //Page 116
 
         LDH_A_n(    0xF0, LoadByteOffsetIntoA::new), //Page 75
         DI(         0xF3, DisableInterrupts::new), //Page 98
@@ -96,6 +104,7 @@ public interface Instruction {
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
 
         CB_RL_C(    0xCB11, RotateRegisterLeft::C), //Page 102
+        CB_SWAP_A(  0xCB37, SwapRegister::A), //Page 94
         CB_BIT_7H(  0xCB7C, CompareBit7::new); //Page 108
 
         private final int opcode;
