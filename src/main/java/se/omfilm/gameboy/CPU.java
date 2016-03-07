@@ -4,15 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 
 public class CPU implements Registers {
     private static final Logger log = LoggerFactory.getLogger(CPU.class);
 
     public static int FREQUENCY = 4 * 1024 * 1024;
 
-    private Flags flags = new FlagsImpl();
+    public Flags flags = new FlagsImpl();
     private ProgramCounter programCounter = new ProgramCounterImpl();
     private StackPointer stackPointer = new StackPointerImpl();
 
@@ -24,6 +23,10 @@ public class CPU implements Registers {
     private int l = 0;
     private int d = 0;
     private int e = 0;
+
+    private boolean interruptsDisabled = false;
+    private Collection<Flags.Interrupt> enabledInterrupts = Collections.emptySet();
+    private Collection<Flags.Interrupt> requestedInterrupts = Collections.emptySet();
 
     private final Map<Instruction.InstructionType, Instruction> instructionMap;
 
@@ -51,6 +54,14 @@ public class CPU implements Registers {
         //DebugPrinter.debug(this.stackPointer, this.programCounter);
         //DebugPrinter.debug(this);
         return cycles;
+    }
+
+    public void interruptStep() {
+        if (requestedInterrupts.isEmpty()) {
+            return;
+        }
+
+        throw new IllegalArgumentException("Interrupts not implemented");
     }
 
     private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
@@ -205,8 +216,6 @@ public class CPU implements Registers {
     }
 
     private class FlagsImpl implements Flags {
-        private boolean interruptsDisabled = false;
-
         public boolean isSet(Flag flag) {
             return (readF() & flag.mask) != 0;
         }
@@ -221,6 +230,20 @@ public class CPU implements Registers {
 
         public void setInterruptsDisabled(boolean disabled) {
             interruptsDisabled = disabled;
+        }
+
+        public void enable(Interrupt... interrupts) {
+            if (interruptsDisabled) {
+                return;
+            }
+            enabledInterrupts = Arrays.asList(interrupts);
+        }
+
+        public void request(Interrupt... interrupts) {
+            if (interruptsDisabled) {
+                return;
+            }
+            requestedInterrupts = Arrays.asList(interrupts);
         }
     }
 }

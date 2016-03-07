@@ -2,15 +2,21 @@ package se.omfilm.gameboy.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.omfilm.gameboy.Flags;
+import se.omfilm.gameboy.Timer;
 import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.Memory;
 
 public class IOController implements Memory {
     private static final Logger log = LoggerFactory.getLogger(IOController.class);
     private final GPU gpu;
+    private final Flags flags;
+    private final Timer timer;
 
-    public IOController(GPU gpu) {
+    public IOController(GPU gpu, Flags flags, Timer timer) {
         this.gpu = gpu;
+        this.flags = flags;
+        this.timer = timer;
     }
 
     public int readByte(int address) {
@@ -20,8 +26,11 @@ public class IOController implements Memory {
                 return gpu.scrollY();
             case LCD_SCANLINE:
                 return gpu.scanline();
+            case JOYPAD:
+                log.warn(unhandledReadMessage(register));
+                return 0; //TODO
             default:
-                throw new UnsupportedOperationException("Unhandled read for " + IOController.class.getSimpleName() + " of type " + register);
+                throw new UnsupportedOperationException(unhandledReadMessage(register));
         }
     }
 
@@ -43,14 +52,26 @@ public class IOController implements Memory {
             case SCROLL_X:
                 gpu.scrollX(data);
                 return;
+            case WINDOW_Y:
+                gpu.windowY(data);
+                return;
+            case WINDOW_X:
+                gpu.windowX(data);
+                return;
             case LCD_CONTROL:
                 gpu.setLCDControl(data);
                 return;
             case UNKNOWN:
                 return;
-            case LCD_STATUS:
-            case INTERRUPT:
+            case INTERRUPT_REQUEST:
+                flags.request(Flags.Interrupt.fromValue(data));
+                return;
             case INTERRUPT_ENABLE:
+                flags.enable(Flags.Interrupt.fromValue(data));
+                return;
+            case JOYPAD:
+            case TIMER_MODULO:
+            case LCD_STATUS:
             case SERIAL_TRANSFER_DATA:
             case SERIAL_TRANSFER_CONTROL:
 
@@ -79,10 +100,16 @@ public class IOController implements Memory {
         return "Unhandled write for " + IOController.class.getSimpleName() + " of type " + register + " with value " + DebugPrinter.hex(data, 4);
     }
 
+    private String unhandledReadMessage(IORegister register) {
+        return "Unhandled read for " + IOController.class.getSimpleName() + " of type " + register;
+    }
+
     private enum IORegister {
+        JOYPAD(0xFF00),
         SERIAL_TRANSFER_DATA(0xFF01),
         SERIAL_TRANSFER_CONTROL(0xFF02),
-        INTERRUPT(0xFF0F),
+        TIMER_MODULO(0xFF06),
+        INTERRUPT_REQUEST(0xFF0F),
         SOUND_1_SWEEP(0xFF10),
         SOUND_1_LENGTH_PATTERN_DUTY(0xFF11),
         SOUND_1_ENVELOPE(0xFF12),
@@ -104,6 +131,8 @@ public class IOController implements Memory {
         BACKGROUND_PALETTE_DATA(0xFF47),
         OBJECT_PALETTE_0_DATA(0xFF48),
         OBJECT_PALETTE_1_DATA(0xFF49),
+        WINDOW_Y(0xFF4A),
+        WINDOW_X(0xFF4B),
         SOUND_SWEEP(0xFF50),
         UNKNOWN(0xFF7F),
         INTERRUPT_ENABLE(0xFFFF);

@@ -20,6 +20,8 @@ public class GPU implements Memory {
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollX = 0;
     private int scrollY = 0;
+    private int windowY = 0;
+    private int windowX;
     private int backgroundPaletteData;
     private int objectPalette0Data;
     private int objectPalette1Data;
@@ -154,6 +156,14 @@ public class GPU implements Memory {
 
     public int scrollY() {
         return scrollY;
+    }
+
+    public void windowY(int data) {
+        this.windowY = data;
+    }
+
+    public void windowX(int data) {
+        this.windowX = data;
     }
 
     public void setBackgroundPaletteData(int backgroundPaletteData) {

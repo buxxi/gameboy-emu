@@ -2,8 +2,8 @@ package se.omfilm.gameboy.util;
 
 import java.util.concurrent.Callable;
 
-public class Timer {
-    public static void runForever(Callable<Void> callable, int fps) throws Exception {
+public class Runner {
+    public static void atFrequence(Callable<Void> callable, int fps) throws Exception {
         long expectedDiff = 1000 / fps;
         while (true) {
             long before = System.currentTimeMillis();
@@ -17,7 +17,7 @@ public class Timer {
         }
     }
 
-    public static void runTimes(Callable<Integer> callable, int times) throws Exception {
+    public static void times(Callable<Integer> callable, int times) throws Exception {
         int counter = 0;
         while (counter < times) {
             counter += callable.call();
