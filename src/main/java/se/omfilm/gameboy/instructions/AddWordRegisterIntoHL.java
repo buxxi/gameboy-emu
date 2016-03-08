@@ -19,7 +19,11 @@ public class AddWordRegisterIntoHL implements Instruction {
         boolean halfCarry = ((result ^ a ^ n) & 0x1000) != 0;
 
         registers.writeHL(result);
-        flags.set(Flags.flags(false, halfCarry, carry));
+
+        flags.set(Flags.Flag.ZERO, result == 0);
+        flags.reset(Flags.Flag.SUBTRACT);
+        flags.set(Flags.Flag.HALF_CARRY, halfCarry);
+        flags.set(Flags.Flag.CARRY, carry);
 
         return 4;
     }

@@ -21,7 +21,11 @@ public class RotateRegisterLeft implements Instruction {
         boolean carry = (n & 0b1000_0000) != 0;
 
         target.write(registers, result);
-        flags.set(Flags.flags(zero, false, carry));
+
+        flags.set(Flags.Flag.ZERO, zero);
+        flags.set(Flags.Flag.SUBTRACT, false);
+        flags.set(Flags.Flag.HALF_CARRY, false);
+        flags.set(Flags.Flag.CARRY, carry);
 
         return 8;
     }

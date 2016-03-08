@@ -8,7 +8,7 @@ public class ComplementA implements Instruction {
         a = ~ a & 0xFF;
         registers.writeA(a);
 
-        flags.set(Flags.flags(true, true, false));
+        flags.set(Flags.Flag.SUBTRACT, Flags.Flag.HALF_CARRY);
 
         return 4;
     }

@@ -10,7 +10,8 @@ public class AndByteWithA implements Instruction {
 
         boolean zero = n == 0;
 
-        flags.set(Flags.flags(zero, true, false));
+        flags.set(Flags.Flag.ZERO, zero);
+        flags.reset(Flags.Flag.SUBTRACT, Flags.Flag.HALF_CARRY, Flags.Flag.CARRY);
 
         return 8;
     }

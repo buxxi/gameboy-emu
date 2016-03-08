@@ -14,7 +14,9 @@ public class OrRegisterWithA implements Instruction {
         int result = a | n;
 
         registers.writeA(result);
-        flags.set(Flags.flags(result == 0, false, false));
+
+        flags.set(Flags.Flag.ZERO, result == 0);
+        flags.reset(Flags.Flag.SUBTRACT, Flags.Flag.HALF_CARRY, Flags.Flag.CARRY);
 
         return 4;
     }

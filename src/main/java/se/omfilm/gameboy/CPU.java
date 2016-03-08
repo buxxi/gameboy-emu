@@ -224,12 +224,14 @@ public class CPU implements Registers {
             return (readF() & flag.mask) != 0;
         }
 
-        public void set(Flag... flags) {
-            int result = 0;
-            for (Flag flag : flags) {
-                result = result | flag.mask;
+        public void set(Flag flag, boolean value) {
+            int f = readF();
+            if (value) {
+                f = f | flag.mask;
+            } else {
+                f = f & (~flag.mask);
             }
-            writeF(result);
+            writeF(f);
         }
 
         public void setInterruptsDisabled(boolean disabled) {

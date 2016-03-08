@@ -18,7 +18,8 @@ public class SwapRegister implements Instruction {
 
         boolean zero = result == 0;
 
-        flags.set(Flags.flags(zero, false, false));
+        flags.set(Flags.Flag.ZERO, zero);
+        flags.reset(Flags.Flag.SUBTRACT, Flags.Flag.HALF_CARRY, Flags.Flag.CARRY);
 
         return 8;
     }

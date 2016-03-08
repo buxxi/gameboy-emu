@@ -12,7 +12,10 @@ public class CompareByteAgainstA implements Instruction {
         boolean carry = a < n;
         boolean halfCarry = (n & 0x0F) > (a & 0x0F);
 
-        flags.set(Flags.withNegative(zero, halfCarry, carry));
+        flags.set(Flags.Flag.ZERO, zero);
+        flags.set(Flags.Flag.SUBTRACT, true);
+        flags.set(Flags.Flag.HALF_CARRY, halfCarry);
+        flags.set(Flags.Flag.CARRY, carry);
 
         return 8;
     }

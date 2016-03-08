@@ -20,7 +20,11 @@ public class AddRegisterIntoA implements Instruction {
         boolean zero = result == 0;
 
         registers.writeA(result);
-        flags.set(Flags.flags(zero, halfCarry, carry));
+
+        flags.set(Flags.Flag.ZERO, zero);
+        flags.set(Flags.Flag.SUBTRACT, false);
+        flags.set(Flags.Flag.HALF_CARRY, halfCarry);
+        flags.set(Flags.Flag.CARRY, carry);
 
         return 4;
     }

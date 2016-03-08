@@ -17,8 +17,12 @@ public class DecrementByteRegister implements Instruction {
         value = (value - 1) & 0xFF;
         boolean zero = value == 0;
 
-        flags.set(Flags.flags(halfCarry, zero));
         target.write(registers, value);
+
+        flags.set(Flags.Flag.ZERO, zero);
+        flags.set(Flags.Flag.SUBTRACT, true);
+        flags.set(Flags.Flag.HALF_CARRY, halfCarry);
+
         return 4;
     }
 

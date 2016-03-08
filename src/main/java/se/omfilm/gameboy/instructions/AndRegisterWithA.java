@@ -15,7 +15,10 @@ public class AndRegisterWithA implements Instruction {
         int result = a & n;
 
         registers.writeA(result);
-        flags.set(Flags.flags(result == 0, true, false));
+
+        flags.set(Flags.Flag.ZERO, result == 0);
+        flags.set(Flags.Flag.HALF_CARRY, true);
+        flags.reset(Flags.Flag.SUBTRACT, Flags.Flag.CARRY);
 
         return 4;
     }

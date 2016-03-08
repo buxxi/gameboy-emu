@@ -18,7 +18,11 @@ public class SubtractRegisterFromA implements Instruction {
         boolean carry = n > a;
         boolean halfCarry = (n & 0x0F) > (a & 0x0F);
         registers.writeA(result);
-        flags.set(Flags.withNegative(zero, halfCarry, carry));
+
+        flags.set(Flags.Flag.ZERO, zero);
+        flags.set(Flags.Flag.SUBTRACT, true);
+        flags.set(Flags.Flag.HALF_CARRY, halfCarry);
+        flags.set(Flags.Flag.CARRY, carry);
 
         return 4;
     }

@@ -2,9 +2,6 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-
 public class IncrementByteRegister implements Instruction {
     private final RegisterReader source;
     private final RegisterWriter target;
@@ -23,7 +20,10 @@ public class IncrementByteRegister implements Instruction {
         boolean zero = result == 0;
         boolean halfCarry = (n & 0x0F) == 0x0F;
 
-        flags.set(Flags.flags(zero, halfCarry, false));
+        flags.set(Flags.Flag.ZERO, zero);
+        flags.set(Flags.Flag.SUBTRACT, false);
+        flags.set(Flags.Flag.HALF_CARRY, halfCarry);
+
         return 4;
     }
 
