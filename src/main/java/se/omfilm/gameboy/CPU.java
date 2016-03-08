@@ -259,7 +259,7 @@ public class CPU implements Registers {
 
         private void execute(Interrupt interrupt, MMU memory) {
             stackPointer.decreaseWord();
-            memory.writeByte(stackPointer.read(), programCounter.read());
+            memory.writeWord(stackPointer.read(), programCounter.read());
 
             switch (interrupt) {
                 case VBLANK:
