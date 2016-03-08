@@ -2,10 +2,10 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-public class LoadAIntoAddressOfHL implements Instruction {
+public class JumpToValueOfHL implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        memory.writeByte(registers.readHL(), registers.readA());
+        programCounter.write(registers.readHL());
 
-        return 8;
+        return 4;
     }
 }

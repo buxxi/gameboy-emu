@@ -21,6 +21,11 @@ public class SwingScreen extends JPanel implements Screen {
         frame.dispose();
     }
 
+    @Override
+    public boolean isOn() {
+        return data != null;
+    }
+
     public void setPixel(int x, int y, Color color) {
         data[y][x] = color;
     }

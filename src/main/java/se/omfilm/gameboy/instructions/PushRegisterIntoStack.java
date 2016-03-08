@@ -20,4 +20,8 @@ public class PushRegisterIntoStack implements Instruction {
     public static Instruction fromBC() {
         return new PushRegisterIntoStack(Registers::readBC);
     }
+
+    public static Instruction fromDE() {
+        return new PushRegisterIntoStack(Registers::readDE);
+    }
 }

@@ -50,6 +50,10 @@ public class LoadRegisterIntoRegister implements Instruction {
         return new LoadRegisterIntoRegister(Registers::readA, Registers::writeD);
     }
 
+    public static Instruction fromAToE() {
+        return new LoadRegisterIntoRegister(Registers::readA, Registers::writeE);
+    }
+
     public static Instruction fromAToH() {
         return new LoadRegisterIntoRegister(Registers::readA, Registers::writeH);
     }

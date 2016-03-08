@@ -1,0 +1,31 @@
+package se.omfilm.gameboy.instructions;
+
+import se.omfilm.gameboy.*;
+
+public class LoadByteAddressOfRegisterIntoRegister implements Instruction {
+    private final RegisterReader source;
+    private final RegisterWriter target;
+
+    public LoadByteAddressOfRegisterIntoRegister(RegisterReader source, RegisterWriter target) {
+        this.source = source;
+        this.target = target;
+    }
+
+    public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+        target.write(registers, memory.readByte(source.read(registers)));
+
+        return 8;
+    }
+
+    public static Instruction fromDEtoA() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readDE, Registers::writeA);
+    }
+
+    public static Instruction fromHLtoD() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeD);
+    }
+
+    public static Instruction fromHLtoE() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeE);
+    }
+}

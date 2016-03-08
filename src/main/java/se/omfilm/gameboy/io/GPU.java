@@ -94,6 +94,10 @@ public class GPU implements Memory {
     }
 
     private void drawTiles() {
+        if (windowDisplay) {
+            throw new UnsupportedOperationException("Window rendering not implemented");
+        }
+
         for (int i = 0; i < Screen.WIDTH; i++) {
             int y = scanline + scrollY;
             int x = i + scrollX;
@@ -179,19 +183,17 @@ public class GPU implements Memory {
     }
 
     public void setLCDControl(int data) {
-        lcdDisplay = (data & 0b1000_0000) != 0;
-        windowTileMapAddress = (data & 0b0100_0000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
-        windowDisplay = (data & 0b0010_0000) != 0;
-        tileDataAddress = (data & 0b0001_0000) != 0 ? TILE_DATA_ADDRESS_1 : TILE_DATA_ADDRESS_0;
-        backgroundTileMapAddress = (data & 0b0000_1000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
-        largeSprites = (data & 0b0000_0100) != 0;
-        spriteDisplay = (data & 0b0000_0010) != 0;
-        backgroundDisplay = (data & 0b0000_0001) != 0;
+        lcdDisplay =                (data & 0b1000_0000) != 0;
+        windowTileMapAddress =      (data & 0b0100_0000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
+        windowDisplay =             (data & 0b0010_0000) != 0;
+        tileDataAddress =           (data & 0b0001_0000) != 0 ? TILE_DATA_ADDRESS_1 : TILE_DATA_ADDRESS_0;
+        backgroundTileMapAddress =  (data & 0b0000_1000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
+        largeSprites =              (data & 0b0000_0100) != 0;
+        spriteDisplay =             (data & 0b0000_0010) != 0;
+        backgroundDisplay =         (data & 0b0000_0001) != 0;
 
-        if (lcdDisplay) {
+        if (lcdDisplay && !screen.isOn()) {
             screen.turnOn();
-        } else {
-            screen.turnOff();
         }
     }
 

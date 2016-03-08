@@ -22,6 +22,10 @@ public class ConsoleScreen implements Screen {
 
     }
 
+    public boolean isOn() {
+        return data != null;
+    }
+
     public void setPixel(int x, int y, Color color) {
         data[y][x] = colorMapping.get(color);
     }

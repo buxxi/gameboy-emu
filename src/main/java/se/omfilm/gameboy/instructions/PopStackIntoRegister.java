@@ -20,4 +20,8 @@ public class PopStackIntoRegister implements Instruction {
     public static Instruction toBC() {
         return new PopStackIntoRegister(Registers::writeBC);
     }
+
+    public static Instruction toHL() {
+        return new PopStackIntoRegister(Registers::writeHL);
+    }
 }

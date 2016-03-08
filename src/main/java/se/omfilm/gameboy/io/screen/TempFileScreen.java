@@ -40,6 +40,10 @@ public class TempFileScreen implements Screen {
         }
     }
 
+    public boolean isOn() {
+        return writer != null;
+    }
+
     public void draw() {
         try {
             ImageWriteParam iwp = writer.getDefaultWriteParam();

@@ -41,6 +41,7 @@ public class MMU implements Memory {
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:
                 return gpu.readByte(virtualAddress);
+            case INTERRUPT_ENABLE:
             case IO_REGISTERS:
                 return ioController.readByte(address);
             default:
@@ -68,6 +69,7 @@ public class MMU implements Memory {
                 ioController.writeByte(address, data);
                 return;
             case RAM:
+            case ECHO_RAM:
                 ram.writeByte(virtualAddress, data);
                 return;
             default:

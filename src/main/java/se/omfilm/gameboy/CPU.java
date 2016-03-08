@@ -11,7 +11,7 @@ public class CPU implements Registers {
 
     public static int FREQUENCY = 4 * 1024 * 1024;
 
-    public Flags flags = new FlagsImpl();
+    public FlagsImpl flags = new FlagsImpl();
     private ProgramCounter programCounter = new ProgramCounterImpl();
     private StackPointer stackPointer = new StackPointerImpl();
 
@@ -25,8 +25,8 @@ public class CPU implements Registers {
     private int e = 0;
 
     private boolean interruptsDisabled = false;
-    private Collection<Flags.Interrupt> enabledInterrupts = Collections.emptySet();
-    private Collection<Flags.Interrupt> requestedInterrupts = Collections.emptySet();
+    private Collection<Interrupts.Interrupt> enabledInterrupts = Collections.emptySet();
+    private Collection<Interrupts.Interrupt> requestedInterrupts = Collections.emptySet();
 
     private final Map<Instruction.InstructionType, Instruction> instructionMap;
 
@@ -57,11 +57,7 @@ public class CPU implements Registers {
     }
 
     public void interruptStep() {
-        if (requestedInterrupts.isEmpty()) {
-            return;
-        }
-
-        throw new IllegalArgumentException("Interrupts not implemented");
+        this.flags.step();
     }
 
     private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
@@ -215,7 +211,15 @@ public class CPU implements Registers {
         }
     }
 
-    private class FlagsImpl implements Flags {
+    private class FlagsImpl implements Flags, Interrupts {
+        public void step() {
+            if (requestedInterrupts.isEmpty()) {
+                return;
+            }
+
+            throw new IllegalArgumentException("Interrupts not implemented");
+        }
+
         public boolean isSet(Flag flag) {
             return (readF() & flag.mask) != 0;
         }
@@ -233,9 +237,6 @@ public class CPU implements Registers {
         }
 
         public void enable(Interrupt... interrupts) {
-            if (interruptsDisabled) {
-                return;
-            }
             enabledInterrupts = Arrays.asList(interrupts);
         }
 
@@ -244,6 +245,10 @@ public class CPU implements Registers {
                 return;
             }
             requestedInterrupts = Arrays.asList(interrupts);
+        }
+
+        public boolean enabled(Interrupt interrupt) {
+            return enabledInterrupts.contains(interrupt);
         }
     }
 }

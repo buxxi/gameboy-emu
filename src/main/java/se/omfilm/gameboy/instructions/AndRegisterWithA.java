@@ -4,6 +4,7 @@ import se.omfilm.gameboy.*;
 
 public class AndRegisterWithA implements Instruction {
     private final RegisterReader source;
+
     public AndRegisterWithA(RegisterReader source) {
         this.source = source;
     }

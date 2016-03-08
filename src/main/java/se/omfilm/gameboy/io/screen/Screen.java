@@ -14,4 +14,6 @@ public interface Screen {
     void setPixel(int x, int y, Color color);
 
     void draw();
+
+    boolean isOn();
 }

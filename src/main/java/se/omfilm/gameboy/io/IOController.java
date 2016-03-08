@@ -2,20 +2,22 @@ package se.omfilm.gameboy.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.omfilm.gameboy.Flags;
+import se.omfilm.gameboy.Interrupts;
+import se.omfilm.gameboy.Memory;
 import se.omfilm.gameboy.Timer;
 import se.omfilm.gameboy.util.DebugPrinter;
-import se.omfilm.gameboy.Memory;
 
 public class IOController implements Memory {
     private static final Logger log = LoggerFactory.getLogger(IOController.class);
     private final GPU gpu;
-    private final Flags flags;
+    private final Interrupts interrupts;
     private final Timer timer;
 
-    public IOController(GPU gpu, Flags flags, Timer timer) {
+    private int joypad = 0; //TODO
+
+    public IOController(GPU gpu, Interrupts interrupts, Timer timer) {
         this.gpu = gpu;
-        this.flags = flags;
+        this.interrupts = interrupts;
         this.timer = timer;
     }
 
@@ -27,8 +29,9 @@ public class IOController implements Memory {
             case LCD_SCANLINE:
                 return gpu.scanline();
             case JOYPAD:
-                log.warn(unhandledReadMessage(register));
-                return 0; //TODO
+                return joypad;
+            case INTERRUPT_ENABLE:
+                return Interrupts.Interrupt.toValue(interrupts);
             default:
                 throw new UnsupportedOperationException(unhandledReadMessage(register));
         }
@@ -64,12 +67,14 @@ public class IOController implements Memory {
             case UNKNOWN:
                 return;
             case INTERRUPT_REQUEST:
-                flags.request(Flags.Interrupt.fromValue(data));
+                interrupts.request(Interrupts.Interrupt.fromValue(data));
                 return;
             case INTERRUPT_ENABLE:
-                flags.enable(Flags.Interrupt.fromValue(data));
+                interrupts.enable(Interrupts.Interrupt.fromValue(data));
                 return;
             case JOYPAD:
+                joypad = data;
+                return;
             case TIMER_MODULO:
             case LCD_STATUS:
             case SERIAL_TRANSFER_DATA:
