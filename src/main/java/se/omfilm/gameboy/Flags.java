@@ -5,8 +5,6 @@ public interface Flags {
 
     void set(Flag flag, boolean set);
 
-    void setInterruptsDisabled(boolean disabled);
-
     default void set(Flag... flags) {
         for (Flag flag : flags) {
             set(flag, true);

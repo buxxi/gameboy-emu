@@ -1,6 +1,7 @@
 package se.omfilm.gameboy.io;
 
 import se.omfilm.gameboy.ByteArrayMemory;
+import se.omfilm.gameboy.Interrupts;
 import se.omfilm.gameboy.Memory;
 import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.util.DebugPrinter;
@@ -16,6 +17,7 @@ public class GPU implements Memory {
     private final Memory videoRam;
     private final Memory objectAttributeMemory;
     private final Screen screen;
+    private final Interrupts interrupts;
 
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollX = 0;
@@ -37,7 +39,8 @@ public class GPU implements Memory {
     private boolean spriteDisplay = false;
     private boolean backgroundDisplay = false;
 
-    public GPU(Screen screen) {
+    public GPU(Screen screen, Interrupts interrupts) {
+        this.interrupts = interrupts;
         this.videoRam = new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate());
         this.objectAttributeMemory = new ByteArrayMemory(MemoryType.OBJECT_ATTRIBUTE_MEMORY.allocate());
         this.screen = screen;
@@ -58,6 +61,10 @@ public class GPU implements Memory {
         switch (mode) {
             case HBLANK:
                 scanline++;
+                if (scanline == Screen.HEIGHT) {
+                    mode = GPUMode.VBLANK;
+                    interrupts.request(Interrupts.Interrupt.VBLANK);
+                }
                 mode = GPUMode.OAM;
                 break;
             case VBLANK:

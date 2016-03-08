@@ -16,9 +16,9 @@ public class Gameboy {
     private final GPU gpu;
 
     public Gameboy(Path bootPath, Path romPath, Screen screen) throws IOException {
-        this.gpu = new GPU(screen);
         this.cpu = new CPU();
-        IOController ioController = new IOController(this.gpu, this.cpu.flags, new Timer(this.cpu.flags));
+        this.gpu = new GPU(screen, this.cpu.interrupts);
+        IOController ioController = new IOController(this.gpu, this.cpu.interrupts, new Timer(this.cpu.flags));
         memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), new ROM(Files.readAllBytes(romPath)), ioController, this.gpu);
     }
 
@@ -36,7 +36,7 @@ public class Gameboy {
     private Integer step() {
         int cycles = cpu.step(memory);
         gpu.step(cycles);
-        cpu.interruptStep();
+        cpu.interruptStep(memory);
         return cycles;
     }
 }

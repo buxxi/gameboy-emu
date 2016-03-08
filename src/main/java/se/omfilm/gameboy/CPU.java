@@ -12,6 +12,7 @@ public class CPU implements Registers {
     public static int FREQUENCY = 4 * 1024 * 1024;
 
     public FlagsImpl flags = new FlagsImpl();
+    public InterruptsImpl interrupts = new InterruptsImpl();
     private ProgramCounter programCounter = new ProgramCounterImpl();
     private StackPointer stackPointer = new StackPointerImpl();
 
@@ -29,6 +30,7 @@ public class CPU implements Registers {
     private Collection<Interrupts.Interrupt> requestedInterrupts = Collections.emptySet();
 
     private final Map<Instruction.InstructionType, Instruction> instructionMap;
+    private Instruction previousInstruction;
 
     public CPU() {
         instructionMap = new EnumMap<>(Instruction.InstructionType.class);
@@ -53,11 +55,15 @@ public class CPU implements Registers {
         int cycles = instruction.execute(memory, this, this.flags, this.programCounter, this.stackPointer);
         //DebugPrinter.debug(this.stackPointer, this.programCounter);
         //DebugPrinter.debug(this);
+        if (previousInstruction instanceof DelayedInstruction) {
+            interruptsDisabled = ((DelayedInstruction) previousInstruction).disableInterrupts();
+        }
+        previousInstruction = instruction;
         return cycles;
     }
 
-    public void interruptStep() {
-        this.flags.step();
+    public void interruptStep(MMU memory) {
+        this.interrupts.step(memory);
     }
 
     private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
@@ -211,15 +217,7 @@ public class CPU implements Registers {
         }
     }
 
-    private class FlagsImpl implements Flags, Interrupts {
-        public void step() {
-            if (requestedInterrupts.isEmpty()) {
-                return;
-            }
-
-            throw new IllegalArgumentException("Interrupts not implemented");
-        }
-
+    private class FlagsImpl implements Flags {
         public boolean isSet(Flag flag) {
             return (readF() & flag.mask) != 0;
         }
@@ -233,9 +231,15 @@ public class CPU implements Registers {
             }
             writeF(f);
         }
+    }
 
-        public void setInterruptsDisabled(boolean disabled) {
-            interruptsDisabled = disabled;
+    private class InterruptsImpl implements Interrupts {
+        public void step(MMU memory) {
+            if (requestedInterrupts.isEmpty() || enabledInterrupts.isEmpty()) {
+                return;
+            }
+
+            requestedInterrupts.stream().filter(i -> enabledInterrupts.contains(i)).sorted().forEach(i -> execute(i, memory));
         }
 
         public void enable(Interrupt... interrupts) {
@@ -251,6 +255,19 @@ public class CPU implements Registers {
 
         public boolean enabled(Interrupt interrupt) {
             return enabledInterrupts.contains(interrupt);
+        }
+
+        private void execute(Interrupt interrupt, MMU memory) {
+            stackPointer.decreaseWord();
+            memory.writeByte(stackPointer.read(), programCounter.read());
+
+            switch (interrupt) {
+                case VBLANK:
+                    programCounter.write(0x40);
+                    return;
+                default:
+                    throw new UnsupportedOperationException("Interrupt " + interrupt + " not implemented");
+            }
         }
     }
 }
