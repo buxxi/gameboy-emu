@@ -17,8 +17,16 @@ public class PopStackIntoRegister implements Instruction {
         return 12;
     }
 
+    public static Instruction toAF() {
+        return new PopStackIntoRegister(Registers::writeAF);
+    }
+
     public static Instruction toBC() {
         return new PopStackIntoRegister(Registers::writeBC);
+    }
+
+    public static Instruction toDE() {
+        return new PopStackIntoRegister(Registers::writeDE);
     }
 
     public static Instruction toHL() {

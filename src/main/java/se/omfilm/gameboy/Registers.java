@@ -46,4 +46,6 @@ public interface Registers {
     void writeF(int val);
 
     int readAF();
+
+    void writeAF(int val);
 }

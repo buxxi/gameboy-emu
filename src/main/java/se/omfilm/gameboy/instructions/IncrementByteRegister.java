@@ -27,6 +27,8 @@ public class IncrementByteRegister implements Instruction {
         return 4;
     }
 
+    public static Instruction A() { return new IncrementByteRegister(Registers::readA, Registers::writeA); }
+
     public static Instruction C() {
         return new IncrementByteRegister(Registers::readC, Registers::writeC);
     }

@@ -17,11 +17,19 @@ public class PushRegisterIntoStack implements Instruction {
         return 16;
     }
 
+    public static Instruction fromAF() {
+        return new PushRegisterIntoStack(Registers::readAF);
+    }
+
     public static Instruction fromBC() {
         return new PushRegisterIntoStack(Registers::readBC);
     }
 
     public static Instruction fromDE() {
         return new PushRegisterIntoStack(Registers::readDE);
+    }
+
+    public static Instruction fromHL() {
+        return new PushRegisterIntoStack(Registers::readHL);
     }
 }

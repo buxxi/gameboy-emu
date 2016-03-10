@@ -23,6 +23,9 @@ public class AndRegisterWithA implements Instruction {
         return 4;
     }
 
+    public static Instruction A() {
+        return new AndRegisterWithA(Registers::readA);
+    }
 
     public static Instruction C() {
         return new AndRegisterWithA(Registers::readC);

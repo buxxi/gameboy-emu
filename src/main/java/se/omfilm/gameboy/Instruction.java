@@ -58,7 +58,9 @@ public interface Instruction {
 
         LD_SP_nn(   0x31, LoadWordIntoSP::new), //Page 76
         LDD_HL_A(   0x32, LoadHLDecreaseIntoA::new), //Page 72
+        INC_HL_n(   0x34, IncrementByteAddressOfHL::new), //Page 88
         LD_HL_n(    0x36, LoadByteIntoAddressOfHL::new), //Page 67
+        INC_A(      0x3C, IncrementByteRegister::A), //Page 88
         DEC_A(      0x3D, DecrementByteRegister::A), //Page 89
         LD_A_n(     0x3E, LoadByteIntoRegister::toA), //Page 68
 
@@ -86,6 +88,7 @@ public interface Instruction {
         SUB_A_B(    0x90, SubtractRegisterFromA::fromB), //Page 82
 
         AND_C(      0xA1, AndRegisterWithA::C), //Page 84
+        AND_A(      0xA7, AndRegisterWithA::A), //Page 84
         XOR_C(      0xA9, XorRegisterWithA::C), //Page 86
         XOR_A(      0xAF, XorRegisterWithA::A), //Page 86
 
@@ -93,25 +96,35 @@ public interface Instruction {
         OR_C(       0xB1, OrRegisterWithA::C), // Page 85
         CP_HL(      0xBE, CompareByteAddressOfHLAgainstA::new), //Page 87
 
+        RET_NZ(     0xC0, ReturnIfNotZero::new), //Page 117
         POP_BC(     0xC1, PopStackIntoRegister::toBC), //Page 79
         JP_nn(      0xC3, JumpWord::new), //Page 111
         PUSH_BC(    0xC5, PushRegisterIntoStack::fromBC), //Page 78
+        ADD_n(      0xC6, AddByteFromAddressIntoA::new), //Page 80
+        RET_Z(      0xC8, ReturnIfZero::new), //Page 117
         RET(        0xC9, Return::new), //Page 117
         CB(         0xCB, InvalidInstruction::new), //Page 99-110, special case (append 0xCB before CB-instructions)
         CALL_nn(    0xCD, CallRoutineImmediate::new), //Page 114
+        ADC_A_n(    0xCE, AddByteFromAddressWithCarryIntoA::new), //Page 81
 
+        POP_DE(     0xD1, PopStackIntoRegister::toDE), //Page 79
         PUSH_DE(    0xD5, PushRegisterIntoStack::fromDE), //Page 78
+        RETI(       0xD9, ReturnEnableInterrupts::new), //Page 118
 
         LDH_n_A(    0xE0, LoadAOffsetByte::new), //Page 75
         POP_HL(     0xE1, PopStackIntoRegister::toHL), //Page 79
         LDH_C_A(    0xE2, LoadAOffsetC::new), //Page 70
+        PUSH_HL(    0xE5, PushRegisterIntoStack::fromHL), //Page 78
         AND_n(      0xE6, AndByteWithA::new), //Page 84
         JP_HL(      0xE9, JumpToValueOfHL::new), //Page 112
         LD_nn_A(    0xEA, LoadAIntoAddressOfWord::new), //Page 69
         RST_28(     0xEF, Restart::to28), //Page 116
 
         LDH_A_n(    0xF0, LoadByteOffsetIntoA::new), //Page 75
+        POP_AF(     0xF1, PopStackIntoRegister::toAF), //Page 79
         DI(         0xF3, DisableInterrupts::new), //Page 98
+        PUSH_AF(    0xF5, PushRegisterIntoStack::fromAF), //Page 78
+        LD_A_nn(    0xFA, LoadAddressIntoA::new), //Page 68
         EI(         0xFB, EnableInterrupts::new), //Page 98
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
 

@@ -136,6 +136,12 @@ public class CPU implements Registers {
         return this.a << 8 | this.f;
     }
 
+    public void writeAF(int val) {
+        verify(val, 0xFFFF);
+        writeA(val >> 8);
+        writeF(val & 0x00FF);
+    }
+
     public void writeA(int val) {
         verify(val, 0xFF);
         this.a = val;
@@ -250,7 +256,7 @@ public class CPU implements Registers {
             if (interruptsDisabled) {
                 return;
             }
-            requestedInterrupts = Arrays.asList(interrupts);
+            requestedInterrupts = new ArrayList<>(Arrays.asList(interrupts));
         }
 
         public boolean enabled(Interrupt interrupt) {
@@ -258,6 +264,8 @@ public class CPU implements Registers {
         }
 
         private void execute(Interrupt interrupt, MMU memory) {
+            requestedInterrupts.remove(interrupt);
+
             stackPointer.decreaseWord();
             memory.writeWord(stackPointer.read(), programCounter.read());
 

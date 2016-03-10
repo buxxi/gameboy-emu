@@ -79,6 +79,7 @@ public class IOController implements Memory {
             case LCD_STATUS:
             case SERIAL_TRANSFER_DATA:
             case SERIAL_TRANSFER_CONTROL:
+            case DMA_TRANSFER:
 
             case SOUND_1_SWEEP:
             case SOUND_1_LENGTH_PATTERN_DUTY:
@@ -133,6 +134,7 @@ public class IOController implements Memory {
         SCROLL_Y(0xFF42),
         SCROLL_X(0xFF43),
         LCD_SCANLINE(0xFF44),
+        DMA_TRANSFER(0xFF46),
         BACKGROUND_PALETTE_DATA(0xFF47),
         OBJECT_PALETTE_0_DATA(0xFF48),
         OBJECT_PALETTE_1_DATA(0xFF49),
