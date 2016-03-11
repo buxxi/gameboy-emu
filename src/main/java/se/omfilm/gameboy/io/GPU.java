@@ -7,6 +7,7 @@ import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.awt.*;
+import java.util.stream.IntStream;
 
 public class GPU implements Memory {
     private static final int TILE_MAP_ADDRESS_0 = 0x9800;
@@ -18,6 +19,10 @@ public class GPU implements Memory {
     private final Memory objectAttributeMemory;
     private final Screen screen;
     private final Interrupts interrupts;
+
+    private final Tile[] tilesAddress0 = IntStream.range(0, 256).mapToObj(i -> new Tile(i, TILE_DATA_ADDRESS_0)).toArray(Tile[]::new);
+    private final Tile[] tilesAddress1 = IntStream.range(0, 256).mapToObj(i -> new Tile(i, TILE_DATA_ADDRESS_1)).toArray(Tile[]::new);
+    private Tile[] currentTiles = tilesAddress0;
 
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollX = 0;
@@ -33,7 +38,6 @@ public class GPU implements Memory {
     private boolean lcdDisplay = false;
     private int windowTileMapAddress = TILE_MAP_ADDRESS_0;
     private boolean windowDisplay = false;
-    private int tileDataAddress = TILE_DATA_ADDRESS_0;
     private int backgroundTileMapAddress = TILE_MAP_ADDRESS_0;
     private boolean largeSprites = false;
     private boolean spriteDisplay = false;
@@ -108,9 +112,8 @@ public class GPU implements Memory {
         for (int i = 0; i < Screen.WIDTH; i++) {
             int y = scanline + scrollY;
             int x = i + scrollX;
-            int tileNumber = resolveTileNumber(y, x);
-            int rowData = resolveRowData(tileNumber, y);
-            Color color = color(colorData(rowData, x % 8)); //TODO: handle palette to get the correct color
+            Tile tileNumber = resolveTile(y, x);
+            Color color = color(tileNumber.getColorData(x, y)); //TODO: handle palette to get the correct color
             screen.setPixel(x, scanline - 1, color);
         }
     }
@@ -119,14 +122,10 @@ public class GPU implements Memory {
         throw new UnsupportedOperationException("drawSprites() not implemented");
     }
 
-    private int resolveRowData(int tileNumber, int y) {
-        int tileLocation = tileDataAddress - MemoryType.VIDEO_RAM.from + (tileNumber * 8 * 2); //Since each tile is 2 bytes and 8 rows long
-        return videoRam.readWord(tileLocation + ((y % 8) * 2));
-    }
-
-    private int resolveTileNumber(int y, int x) {
+    private Tile resolveTile(int y, int x) {
         int address = backgroundTileMapAddress - MemoryType.VIDEO_RAM.from + ((y / 8) * 32) + (x / 8); //Each row contains 32 tiles
-        return videoRam.readByte(address);
+        int id = videoRam.readByte(address);
+        return currentTiles[id];
     }
 
     public int readByte(int address) {
@@ -193,7 +192,7 @@ public class GPU implements Memory {
         lcdDisplay =                (data & 0b1000_0000) != 0;
         windowTileMapAddress =      (data & 0b0100_0000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
         windowDisplay =             (data & 0b0010_0000) != 0;
-        tileDataAddress =           (data & 0b0001_0000) != 0 ? TILE_DATA_ADDRESS_1 : TILE_DATA_ADDRESS_0;
+        currentTiles =              (data & 0b0001_0000) != 0 ? tilesAddress1 : tilesAddress0;
         backgroundTileMapAddress =  (data & 0b0000_1000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
         largeSprites =              (data & 0b0000_0100) != 0;
         spriteDisplay =             (data & 0b0000_0010) != 0;
@@ -208,11 +207,6 @@ public class GPU implements Memory {
         return scanline;
     }
 
-    private int colorData(int rowData, int x) {
-        int colorBit = 1 << (7 - x);
-        return ((rowData & colorBit) != 0 ? 0b10 : 0b00) | (((rowData >> 8) & colorBit) != 0 ? 0b01 : 0b00);
-    }
-
     private Color color(int input) {
         switch (input) {
             case 0:
@@ -224,6 +218,27 @@ public class GPU implements Memory {
                 return Color.DARK_GRAY;
             case 3:
                 return Color.BLACK;
+        }
+    }
+
+    private class Tile {
+        private final int tileNumber;
+        private final int dataAddress;
+
+        public Tile(int tileNumber, int dataAddress) {
+            this.tileNumber = tileNumber;
+            this.dataAddress = dataAddress;
+        }
+
+        public int getColorData(int x, int y) {
+            int rowData = resolveRowData(tileNumber, y);
+            int colorBit = 1 << (7 - x % 8);
+            return ((rowData & colorBit) != 0 ? 0b10 : 0b00) | (((rowData >> 8) & colorBit) != 0 ? 0b01 : 0b00);
+        }
+
+        private int resolveRowData(int tileNumber, int y) {
+            int tileLocation = dataAddress - MemoryType.VIDEO_RAM.from + (tileNumber * 8 * 2); //Since each tile is 2 bytes and 8 rows long
+            return videoRam.readWord(tileLocation + ((y % 8) * 2));
         }
     }
 
