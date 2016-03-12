@@ -1,4 +1,4 @@
-package se.omfilm.gameboy.io;
+package se.omfilm.gameboy;
 
 import se.omfilm.gameboy.ByteArrayMemory;
 import se.omfilm.gameboy.Interrupts;
@@ -7,6 +7,8 @@ import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class GPU implements Memory {
@@ -23,6 +25,8 @@ public class GPU implements Memory {
     private final Tile[] tilesAddress0 = IntStream.range(0, 256).mapToObj(i -> new Tile(i, TILE_DATA_ADDRESS_0)).toArray(Tile[]::new);
     private final Tile[] tilesAddress1 = IntStream.range(0, 256).mapToObj(i -> new Tile(i, TILE_DATA_ADDRESS_1)).toArray(Tile[]::new);
     private Tile[] currentTiles = tilesAddress0;
+
+    private final Sprite[] sprites = IntStream.range(0, 40).mapToObj(i -> new Sprite(i)).toArray(Sprite[]::new);
 
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollX = 0;
@@ -42,6 +46,11 @@ public class GPU implements Memory {
     private boolean largeSprites = false;
     private boolean spriteDisplay = false;
     private boolean backgroundDisplay = false;
+
+    private boolean coincidence = false;
+    private boolean oamInterrupt = false;
+    private boolean vblankInterrupt = false;
+    private boolean hblankInterrupt = false;
 
     public GPU(Screen screen, Interrupts interrupts) {
         this.interrupts = interrupts;
@@ -119,6 +128,7 @@ public class GPU implements Memory {
     }
 
     private void drawSprites() {
+        System.out.println(Arrays.stream(sprites).filter(s -> s.isOnScanline(scanline)).collect(Collectors.toList()));
         throw new UnsupportedOperationException("drawSprites() not implemented");
     }
 
@@ -203,6 +213,17 @@ public class GPU implements Memory {
         }
     }
 
+    public void setInterruptEnables(int data) {
+        coincidence =       (data & 0b0100_0000) != 0;
+        oamInterrupt =      (data & 0b0010_0000) != 0;
+        vblankInterrupt =   (data & 0b0001_0000) != 0;
+        hblankInterrupt =   (data & 0b0000_1000) != 0;
+
+        if (coincidence || oamInterrupt || vblankInterrupt || hblankInterrupt) {
+            throw new UnsupportedOperationException("Unhandled value for setInterruptsEnables " + DebugPrinter.hex(data, 4));
+        }
+    }
+
     public int scanline() {
         return scanline;
     }
@@ -218,6 +239,12 @@ public class GPU implements Memory {
                 return Color.DARK_GRAY;
             case 3:
                 return Color.BLACK;
+        }
+    }
+
+    public void transferDMA(int offset, Memory ram) {
+        for (int i = 0; i < MemoryType.OBJECT_ATTRIBUTE_MEMORY.size(); i++) {
+            objectAttributeMemory.writeByte(i, ram.readByte(offset + i));
         }
     }
 
@@ -239,6 +266,30 @@ public class GPU implements Memory {
         private int resolveRowData(int tileNumber, int y) {
             int tileLocation = dataAddress - MemoryType.VIDEO_RAM.from + (tileNumber * 8 * 2); //Since each tile is 2 bytes and 8 rows long
             return videoRam.readWord(tileLocation + ((y % 8) * 2));
+        }
+    }
+
+    private class Sprite {
+        private final int spriteNum;
+
+        public Sprite(int spriteNum) {
+            this.spriteNum = spriteNum;
+        }
+
+        public boolean isOnScanline(int scanline) {
+            if (largeSprites) {
+                throw new UnsupportedOperationException("Not handling large sprites now");
+            }
+
+            return false;
+        }
+
+        private int x() {
+            return objectAttributeMemory.readByte((spriteNum * 4) + 1) - 8;
+        }
+
+        private int y() {
+            return objectAttributeMemory.readByte(spriteNum * 4) - 16;
         }
     }
 

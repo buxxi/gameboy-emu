@@ -23,7 +23,7 @@ public interface Memory {
         ZERO_PAGE(0xFF80, 0xFFFE),
         RAM(0xC000, 0xDFFF),
         ECHO_RAM(0xE000, 0xFDFF),
-        OBJECT_ATTRIBUTE_MEMORY(0xFE00, 0xFFFE),
+        OBJECT_ATTRIBUTE_MEMORY(0xFE00, 0xFFA0),
         INTERRUPT_ENABLE(0xFFFF, 0xFFFF);
 
         public final int from;
@@ -49,7 +49,11 @@ public interface Memory {
         }
 
         public byte[] allocate() {
-            return new byte[this.to - this.from + 1];
+            return new byte[size()];
+        }
+
+        public int size() {
+            return this.to - this.from + 1;
         }
     }
 }
