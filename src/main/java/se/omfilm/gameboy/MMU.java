@@ -72,6 +72,9 @@ public class MMU implements Memory {
             case INTERRUPT_ENABLE:
                 ioController.writeByte(address, data);
                 return;
+            case RAM_BANKS:
+                switchableRam[0].writeByte(virtualAddress, data);
+                return;
             case RAM:
             case ECHO_RAM:
                 ram.writeByte(virtualAddress, data);

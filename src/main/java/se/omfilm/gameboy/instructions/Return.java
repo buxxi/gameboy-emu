@@ -4,9 +4,7 @@ import se.omfilm.gameboy.*;
 
 public class Return implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int pointer = stackPointer.read();
-        programCounter.write(memory.readWord(pointer));
-        stackPointer.increaseWord();
+        programCounter.write(stackPointer.pop(memory));
 
         return 8;
     }

@@ -5,11 +5,15 @@ public interface StackPointer {
 
     int read();
 
-    default void decreaseWord() {
-        write(read() - 2);
+    default int pop(Memory memory) {
+        int value = memory.readWord(read());
+        write(read() + 2);
+        return value;
     }
 
-    default void increaseWord() {
-        write(read() + 2);
+    default void push(Memory memory, int value) {
+        int address = read() - 2;
+        write(address);
+        memory.writeWord(address, value);
     }
 }

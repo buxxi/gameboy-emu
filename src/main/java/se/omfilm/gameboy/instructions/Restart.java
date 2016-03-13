@@ -10,8 +10,7 @@ public class Restart implements Instruction {
     }
 
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        stackPointer.decreaseWord();
-        memory.writeByte(stackPointer.read(), programCounter.read());
+        stackPointer.push(memory, programCounter.read());
         programCounter.write(address);
 
         return 32;

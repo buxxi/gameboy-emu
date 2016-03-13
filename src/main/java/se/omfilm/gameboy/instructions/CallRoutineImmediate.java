@@ -4,8 +4,7 @@ import se.omfilm.gameboy.*;
 
 public class CallRoutineImmediate implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        stackPointer.decreaseWord();
-        memory.writeWord(stackPointer.read(), programCounter.read() + 2);
+        stackPointer.push(memory, programCounter.read() + 2);
         programCounter.write(memory.readWord(programCounter.read()));
 
         return 12;

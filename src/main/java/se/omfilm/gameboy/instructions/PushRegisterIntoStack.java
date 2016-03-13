@@ -11,8 +11,7 @@ public class PushRegisterIntoStack implements Instruction {
 
     @Override
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        stackPointer.decreaseWord();
-        memory.writeWord(stackPointer.read(), source.read(registers));
+        stackPointer.push(memory, source.read(registers));
 
         return 16;
     }
