@@ -20,4 +20,6 @@ public class Restart implements Instruction {
     public static Instruction to28() {
         return new Restart(0x28);
     }
+
+    public static Instruction to38() { return new Restart(0x38); }
 }

@@ -130,6 +130,7 @@ public interface Instruction {
         LD_A_nn(    0xFA, LoadAddressIntoA::new), //Page 68
         EI(         0xFB, EnableInterrupts::new), //Page 98
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
+        RST_38(     0xFF, Restart::to38), //Page 116
 
         CB_RL_C(    0xCB11, RotateRegisterLeft::C), //Page 102
         CB_SWAP_A(  0xCB37, SwapRegister::A), //Page 94

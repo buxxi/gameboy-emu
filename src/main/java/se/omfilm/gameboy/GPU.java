@@ -56,44 +56,54 @@ public class GPU implements Memory {
     }
 
     public void step(int cycles) {
-        if (!lcdDisplay) {
-            return;
-        }
-        cycleCounter += cycles;
-
-        if (cycleCounter <= mode.minimumCycles) {
+        if (!updateCurrentMode()) {
             return;
         }
 
-        cycleCounter = 0;
+        cycleCounter -= cycles;
 
-        switch (mode) {
-            case HBLANK:
-                scanline++;
-                if (scanline == Screen.HEIGHT) {
-                    mode = GPUMode.VBLANK;
-                    interrupts.request(Interrupts.Interrupt.VBLANK);
-                }
-                mode = GPUMode.OAM;
-                break;
-            case VBLANK:
+        if (cycleCounter <= 0) {
+            scanline++;
+
+            cycleCounter = GPUMode.VBLANK.minimumCycles;
+
+            if (scanline == Screen.HEIGHT) {
+                interrupts.request(Interrupts.Interrupt.VBLANK);
+            } else if (scanline >= Screen.HEIGHT + 10) {
                 scanline = 0;
-                mode = GPUMode.OAM;
-                break;
-            case OAM:
-                mode = GPUMode.VRAM;
-                break;
-            case VRAM:
-                mode = GPUMode.HBLANK;
-                if (scanline > (Screen.HEIGHT + 10)) {
-                    scanline = 0;
-                } else if (scanline <= Screen.HEIGHT) {
-                    drawScanline();
-                } else if (scanline == (Screen.HEIGHT + 1)) {
-                    drawToScreen();
-                }
-                break;
+                drawToScreen();
+            } else if (scanline < Screen.HEIGHT) {
+                drawScanline();
+            }
         }
+    }
+
+    private boolean updateCurrentMode() {
+        if (!lcdDisplay) {
+            cycleCounter = GPUMode.VBLANK.minimumCycles;
+            mode = GPUMode.VBLANK;
+            scanline = 0;
+            return false;
+        }
+
+        if (scanline >= Screen.HEIGHT) {
+            updateCurrentMode(GPUMode.VBLANK, vblankInterrupt);
+        } else if (cycleCounter >= GPUMode.VBLANK.minimumCycles - GPUMode.OAM.minimumCycles) {
+            updateCurrentMode(GPUMode.OAM, oamInterrupt);
+        } else if (cycleCounter >= GPUMode.VBLANK.minimumCycles - GPUMode.OAM.minimumCycles - GPUMode.VRAM.minimumCycles) {
+            updateCurrentMode(GPUMode.VRAM, false);
+        } else {
+            updateCurrentMode(GPUMode.HBLANK, hblankInterrupt);
+        }
+
+        return true;
+    }
+
+    private void updateCurrentMode(GPUMode newMode, boolean requestInterrupt) {
+        if (requestInterrupt && newMode != mode) {
+            interrupts.request(Interrupts.Interrupt.LCD);
+        }
+        mode = newMode;
     }
 
     private void drawToScreen() {
@@ -134,9 +144,6 @@ public class GPU implements Memory {
     }
 
     public int readByte(int address) {
-        /*if (!mode.accessVideoRAM) {
-            throw new IllegalStateException("The CPU can't access VideoRAM while in mode " + mode);
-        }*/
         return videoRam.readByte(address);
     }
 
@@ -144,15 +151,9 @@ public class GPU implements Memory {
         MemoryType type = MemoryType.fromAddress(address);
         switch (type) {
             case VIDEO_RAM:
-                /*if (!mode.accessVideoRAM) {
-                    throw new IllegalStateException("The CPU can't access VideoRAM while in mode " + mode);
-                }*/
                 videoRam.writeByte(address - type.from, data);
                 return;
             case OBJECT_ATTRIBUTE_MEMORY:
-                if (mode.accessOAM) {
-                    throw new IllegalStateException("The CPU can't access OAM while in mode " + mode);
-                }
                 objectAttributeMemory.writeByte(address - type.from, data);
                 return;
             default:
@@ -294,20 +295,16 @@ public class GPU implements Memory {
     }
 
     private enum GPUMode {
-        HBLANK(0b00, true, true, 204),
-        VBLANK(0b01, true, true, 456),
-        OAM(0b10, false, true, 80),
-        VRAM(0b11, false, false, 172);
+        HBLANK(0, 204),
+        VBLANK(1, 456),
+        OAM(2, 80),
+        VRAM(3, 172);
 
-        private final int bitMask;
-        private final boolean accessOAM;
-        private final boolean accessVideoRAM;
+        private final int id;
         private int minimumCycles;
 
-        GPUMode(int bitMask, boolean accessOAM, boolean accessVideoRAM, int minimumCycles) {
-            this.bitMask = bitMask;
-            this.accessOAM = accessOAM;
-            this.accessVideoRAM = accessVideoRAM;
+        GPUMode(int id, int minimumCycles) {
+            this.id = id;
             this.minimumCycles = minimumCycles;
         }
     }
