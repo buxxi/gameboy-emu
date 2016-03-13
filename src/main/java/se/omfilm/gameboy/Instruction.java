@@ -56,6 +56,7 @@ public interface Instruction {
         LD_L_n(     0x2E, LoadByteIntoRegister::toL), //Page 65
         CPL(        0x2F, ComplementA::new), //Page 95
 
+        JR_NC_n(    0x30, JumpRelativeIfLastNotCarry::new), //Page 113
         LD_SP_nn(   0x31, LoadWordIntoSP::new), //Page 76
         LDD_HL_A(   0x32, LoadHLDecreaseIntoA::new), //Page 72
         INC_HL_n(   0x34, IncrementByteAddressOfHL::new), //Page 88
@@ -134,7 +135,8 @@ public interface Instruction {
 
         CB_RL_C(    0xCB11, RotateRegisterLeft::C), //Page 102
         CB_SWAP_A(  0xCB37, SwapRegister::A), //Page 94
-        CB_BIT_7H(  0xCB7C, CompareBit7::new); //Page 108
+        CB_BIT_7H(  0xCB7C, CompareBit7::new), //Page 108
+        CB_RES_A0(  0xCB87, ResetBitInRegister::bit0InA); //Page 110
 
         private final int opcode;
         private final Supplier<Instruction> instructionSupplier;

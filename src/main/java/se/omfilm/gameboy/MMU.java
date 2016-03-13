@@ -38,12 +38,14 @@ public class MMU implements Memory {
                 }
                 return rom.readByte(virtualAddress);
             case RAM:
+            case ECHO_RAM:
                 return ram.readByte(virtualAddress);
             case RAM_BANKS:
                 return switchableRam[0].readByte(virtualAddress);
             case ZERO_PAGE:
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:
+            case OBJECT_ATTRIBUTE_MEMORY:
                 return gpu.readByte(virtualAddress);
             case INTERRUPT_ENABLE:
             case IO_REGISTERS:
@@ -110,6 +112,14 @@ public class MMU implements Memory {
                     return joypad;
                 case INTERRUPT_ENABLE:
                     return Interrupts.Interrupt.toValue(interrupts);
+                case LCD_CONTROL:
+                    return gpu.getLCDControl();
+                case LCD_STATUS:
+                    return gpu.getLCDStatus();
+                case SERIAL_TRANSFER_CONTROL:
+                case SERIAL_TRANSFER_DATA:
+                    log.warn(unhandledReadMessage(register));
+                    return 0;
                 default:
                     throw new UnsupportedOperationException(unhandledReadMessage(register));
             }

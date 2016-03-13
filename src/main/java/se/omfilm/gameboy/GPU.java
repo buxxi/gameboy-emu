@@ -209,6 +209,18 @@ public class GPU implements Memory {
         }
     }
 
+    public int getLCDControl() {
+        return  (lcdDisplay ?                                       0b1000_0000 : 0) |
+                (windowTileMapAddress == TILE_MAP_ADDRESS_1 ?       0b0100_0000 : 0) |
+                (windowDisplay ?                                    0b0010_0000 : 0) |
+                (currentTiles == tilesAddress1 ?                    0b0001_0000 : 0) |
+                (backgroundTileMapAddress == TILE_MAP_ADDRESS_1 ?   0b0000_1000 : 0) |
+                (largeSprites ?                                     0b0000_0100 : 0) |
+                (spriteDisplay ?                                    0b0000_0010 : 0) |
+                (backgroundDisplay ?                                0b0000_0001 : 0);
+
+    }
+
     public void setInterruptEnables(int data) {
         coincidence =       (data & 0b0100_0000) != 0;
         oamInterrupt =      (data & 0b0010_0000) != 0;
@@ -218,6 +230,10 @@ public class GPU implements Memory {
         if (coincidence || oamInterrupt || vblankInterrupt || hblankInterrupt) {
             throw new UnsupportedOperationException("Unhandled value for setInterruptsEnables " + DebugPrinter.hex(data, 4));
         }
+    }
+
+    public int getLCDStatus() {
+        return (coincidence ? 0b0000_0100 : 0) | mode.id;
     }
 
     public int scanline() {
