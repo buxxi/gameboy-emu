@@ -67,6 +67,7 @@ public interface Instruction {
         LD_B_A(     0x47, LoadRegisterIntoRegister::fromAToB), //Page 69
         LD_C_A(     0x4F, LoadRegisterIntoRegister::fromAToC), //Page 69
 
+        LD_D_H(     0x54, LoadRegisterIntoRegister::fromHtoD), //Page 69
         LD_D_HL(    0x56, LoadByteAddressOfRegisterIntoRegister::fromHLtoD), //Page 66
         LD_D_A(     0x57, LoadRegisterIntoRegister::fromAToD), //Page 69
         LD_E_HL(    0x5E, LoadByteAddressOfRegisterIntoRegister::fromHLtoE), //Page 66
@@ -85,7 +86,9 @@ public interface Instruction {
         ADD_A_A(    0x87, AddRegisterIntoA::A), //Page 80
         ADC_A_E(    0x8B, AddRegisterWithCarryIntoA::E), //Page 81
 
-        SUB_A_B(    0x90, SubtractRegisterFromA::fromB), //Page 82
+        SUB_B(      0x90, SubtractRegisterFromA::fromB), //Page 82
+        SUB_HL(     0x96, SubtractAddressOfHLFromA::new), //page 96
+        SUB_A(      0x97, SubtractRegisterFromA::fromA), //Page 82
 
         AND_C(      0xA1, AndRegisterWithA::C), //Page 84
         AND_A(      0xA7, AndRegisterWithA::A), //Page 84

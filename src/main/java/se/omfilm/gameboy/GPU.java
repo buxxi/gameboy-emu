@@ -1,14 +1,10 @@
 package se.omfilm.gameboy;
 
-import se.omfilm.gameboy.ByteArrayMemory;
-import se.omfilm.gameboy.Interrupts;
-import se.omfilm.gameboy.Memory;
 import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class GPU implements Memory {
@@ -26,7 +22,7 @@ public class GPU implements Memory {
     private final Tile[] tilesAddress1 = IntStream.range(0, 256).mapToObj(i -> new Tile(i, TILE_DATA_ADDRESS_1)).toArray(Tile[]::new);
     private Tile[] currentTiles = tilesAddress0;
 
-    private final Sprite[] sprites = IntStream.range(0, 40).mapToObj(i -> new Sprite(i)).toArray(Sprite[]::new);
+    private final Sprite[] sprites = IntStream.range(0, 40).mapToObj(Sprite::new).toArray(Sprite[]::new);
 
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollX = 0;
@@ -128,8 +124,7 @@ public class GPU implements Memory {
     }
 
     private void drawSprites() {
-        System.out.println(Arrays.stream(sprites).filter(s -> s.isOnScanline(scanline)).collect(Collectors.toList()));
-        throw new UnsupportedOperationException("drawSprites() not implemented");
+        Arrays.stream(sprites).filter(s -> s.isOnScanline(scanline)).forEach(Sprite::render);
     }
 
     private Tile resolveTile(int y, int x) {
@@ -139,9 +134,9 @@ public class GPU implements Memory {
     }
 
     public int readByte(int address) {
-        if (!mode.accessVideoRAM) {
+        /*if (!mode.accessVideoRAM) {
             throw new IllegalStateException("The CPU can't access VideoRAM while in mode " + mode);
-        }
+        }*/
         return videoRam.readByte(address);
     }
 
@@ -149,9 +144,9 @@ public class GPU implements Memory {
         MemoryType type = MemoryType.fromAddress(address);
         switch (type) {
             case VIDEO_RAM:
-                if (!mode.accessVideoRAM) {
+                /*if (!mode.accessVideoRAM) {
                     throw new IllegalStateException("The CPU can't access VideoRAM while in mode " + mode);
-                }
+                }*/
                 videoRam.writeByte(address - type.from, data);
                 return;
             case OBJECT_ATTRIBUTE_MEMORY:
@@ -281,7 +276,8 @@ public class GPU implements Memory {
                 throw new UnsupportedOperationException("Not handling large sprites now");
             }
 
-            return false;
+            int y = y();
+            return scanline >= y && scanline < (y + 8);
         }
 
         private int x() {
@@ -290,6 +286,10 @@ public class GPU implements Memory {
 
         private int y() {
             return objectAttributeMemory.readByte(spriteNum * 4) - 16;
+        }
+
+        public void render() {
+            throw new UnsupportedOperationException("Rendering of sprite not implemented");
         }
     }
 

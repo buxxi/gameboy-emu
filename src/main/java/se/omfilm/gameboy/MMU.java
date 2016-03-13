@@ -13,6 +13,7 @@ public class MMU implements Memory {
     private final Memory ioController;
     private final GPU gpu;
     private final Memory ram;
+    private final Memory[] switchableRam;
 
     private boolean isBooting = true;
 
@@ -23,6 +24,8 @@ public class MMU implements Memory {
         this.gpu = gpu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
         this.ram = new ByteArrayMemory(MemoryType.RAM.allocate());
+        this.switchableRam = new Memory[1];
+        this.switchableRam[0] = new ByteArrayMemory(MemoryType.RAM_BANKS.allocate()); //TODO: handle multiple ram banks
     }
 
     public int readByte(int address) {
@@ -36,6 +39,8 @@ public class MMU implements Memory {
                 return rom.readByte(virtualAddress);
             case RAM:
                 return ram.readByte(virtualAddress);
+            case RAM_BANKS:
+                return switchableRam[0].readByte(virtualAddress);
             case ZERO_PAGE:
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:

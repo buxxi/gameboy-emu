@@ -34,6 +34,10 @@ public class LoadRegisterIntoRegister implements Instruction {
         return new LoadRegisterIntoRegister(Registers::readH, Registers::writeA);
     }
 
+    public static Instruction fromHtoD() {
+        return new LoadRegisterIntoRegister(Registers::readH, Registers::writeD);
+    }
+
     public static Instruction fromLToA() {
         return new LoadRegisterIntoRegister(Registers::readL, Registers::writeA);
     }

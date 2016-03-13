@@ -24,8 +24,11 @@ public class ROM extends ByteArrayMemory {
             throw new IllegalArgumentException("Roms actual size doesn't match the expected " + romSize.expectedSize + "!=" + rom.length);
         }
         log.info("ROM Size:\t" + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
-        if (rom[0x149] != 0) {
-            throw new IllegalArgumentException("Can only handle RAM Size None");
+
+        RAM_SIZE ramSize = RAM_SIZE.values()[rom[0x149]];
+        log.info("RAM Size:\t" + ramSize + " (" + DebugPrinter.hex(ramSize.expectedSize, 4) + ")");
+        if (ramSize != RAM_SIZE._2KB) {
+            throw new IllegalArgumentException("Can only handle RAM Size " + RAM_SIZE._2KB);
         }
 
         log.info("Region:\t\t" + (rom[0x14A] == 0 ? "Japan" : "International"));
@@ -53,6 +56,25 @@ public class ROM extends ByteArrayMemory {
 
         ROM_SIZE(int expectedSize) {
             this.expectedSize = expectedSize;
+        }
+
+        public String toString() {
+            return super.toString().substring(1);
+        }
+    }
+
+    private enum RAM_SIZE {
+        _2KB(2 * 1024, 1),
+        _8KB(8 * 1024, 1),
+        _32KB(32 * 1024, 4),
+        _128KB(128 * 1024, 16);
+
+        private final int expectedSize;
+        private final int banks;
+
+        RAM_SIZE(int expectedSize, int banks) {
+            this.expectedSize = expectedSize;
+            this.banks = banks;
         }
 
         public String toString() {

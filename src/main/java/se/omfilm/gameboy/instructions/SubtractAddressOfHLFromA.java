@@ -2,15 +2,9 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-public class SubtractRegisterFromA implements Instruction {
-    private final RegisterReader source;
-
-    private SubtractRegisterFromA(RegisterReader source) {
-        this.source = source;
-    }
-
+public class SubtractAddressOfHLFromA implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int n = source.read(registers);
+        int n = memory.readByte(registers.readHL());
         int a = registers.readA();
 
         int result = (a - n) & 0xFF;
@@ -24,12 +18,6 @@ public class SubtractRegisterFromA implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 
-        return 4;
-    }
-
-    public static Instruction fromA() { return new SubtractRegisterFromA(Registers::readA); }
-
-    public static Instruction fromB() {
-        return new SubtractRegisterFromA(Registers::readB);
+        return 8;
     }
 }

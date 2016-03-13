@@ -21,6 +21,7 @@ public interface Memory {
         VIDEO_RAM(0x8000, 0x9FFF),
         IO_REGISTERS(0xFF00, 0xFF7F),
         ZERO_PAGE(0xFF80, 0xFFFE),
+        RAM_BANKS(0xA000, 0xBFFF),
         RAM(0xC000, 0xDFFF),
         ECHO_RAM(0xE000, 0xFDFF),
         OBJECT_ATTRIBUTE_MEMORY(0xFE00, 0xFFA0),
