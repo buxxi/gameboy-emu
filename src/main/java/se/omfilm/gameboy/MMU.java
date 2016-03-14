@@ -56,10 +56,6 @@ public class MMU implements Memory {
     }
 
     public void writeByte(int address, int data) {
-        if (address == 0x2000) {
-            log.warn("ROM Banking not implemented but called with " + DebugPrinter.hex(data, 4));
-            return;
-        }
         MemoryType type = MemoryType.fromAddress(address);
         int virtualAddress = address - type.from;
         switch (type) {
@@ -152,8 +148,6 @@ public class MMU implements Memory {
                 case LCD_CONTROL:
                     gpu.setLCDControl(data);
                     return;
-                case UNKNOWN:
-                    return;
                 case INTERRUPT_REQUEST:
                     interrupts.request(Interrupts.Interrupt.fromValue(data));
                     return;
@@ -166,6 +160,9 @@ public class MMU implements Memory {
                 case TIMER_MODULO:
                     timer.setModulo(data);
                     return;
+                case TIMER_CONTROL:
+                    timer.setControl(data);
+                    return;
                 case LCD_STATUS:
                     gpu.setInterruptEnables(data);
                     return;
@@ -174,6 +171,12 @@ public class MMU implements Memory {
                     return;
                 case SERIAL_TRANSFER_DATA:
                 case SERIAL_TRANSFER_CONTROL:
+
+                case UNKNOWN1:
+                case UNKNOWN2:
+                case UNKNOWN3:
+                case UNKNOWN4:
+                    //TODO: these shouldn't exist, somethings very wrong
 
                 case SOUND_1_SWEEP:
                 case SOUND_1_LENGTH_PATTERN_DUTY:
@@ -210,6 +213,7 @@ public class MMU implements Memory {
         SERIAL_TRANSFER_DATA(0xFF01),
         SERIAL_TRANSFER_CONTROL(0xFF02),
         TIMER_MODULO(0xFF06),
+        TIMER_CONTROL(0xFF07),
         INTERRUPT_REQUEST(0xFF0F),
         SOUND_1_SWEEP(0xFF10),
         SOUND_1_LENGTH_PATTERN_DUTY(0xFF11),
@@ -236,7 +240,10 @@ public class MMU implements Memory {
         WINDOW_Y(0xFF4A),
         WINDOW_X(0xFF4B),
         SOUND_SWEEP(0xFF50),
-        UNKNOWN(0xFF7F),
+        UNKNOWN1(0xFF68),
+        UNKNOWN2(0xFF69),
+        UNKNOWN3(0xFF7F),
+        UNKNOWN4(0xFF4F),
         INTERRUPT_ENABLE(0xFFFF);
 
         private final int address;

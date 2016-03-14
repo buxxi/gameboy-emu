@@ -16,4 +16,8 @@ public class Timer {
     public void setModulo(int data) {
         log.warn("Timer modulo set to " + DebugPrinter.hex(data, 4) + " but unhandled");
     }
+
+    public void setControl(int data) {
+        log.warn("Timer control set to " + DebugPrinter.hex(data, 4) + " but unhandled");
+    }
 }

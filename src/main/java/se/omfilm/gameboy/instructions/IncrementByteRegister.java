@@ -40,4 +40,8 @@ public class IncrementByteRegister implements Instruction {
     public static Instruction H() {
         return new IncrementByteRegister(Registers::readH, Registers::writeH);
     }
+
+    public static Instruction L() {
+        return new IncrementByteRegister(Registers::readL, Registers::writeL);
+    }
 }

@@ -37,6 +37,12 @@ public class CPU implements Registers {
         for (Instruction.InstructionType type : Instruction.InstructionType.values()) {
             instructionMap.put(type, type.instruction().get());
         }
+        instructionMap.put(Instruction.InstructionType.STOP, this::stop);
+    }
+
+    private int stop(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+        //TODO: handle me, stop until button is pressed
+        return 4;
     }
 
     public int step(MMU memory) {

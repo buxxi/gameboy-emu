@@ -19,6 +19,10 @@ public class IncrementWordRegister implements Instruction {
         return 8;
     }
 
+    public static Instruction BC() {
+        return new IncrementWordRegister(Registers::readBC, Registers::writeBC);
+    }
+
     public static Instruction HL() {
         return new IncrementWordRegister(Registers::readHL, Registers::writeHL);
     }

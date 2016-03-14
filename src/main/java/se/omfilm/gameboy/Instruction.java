@@ -26,6 +26,7 @@ public interface Instruction {
         NOP(        0x00, NoOp::new), //Page 97
         LD_BC_nn(   0x01, LoadWordIntoRegister::toBC), //Page 76
         LD_BC_A(    0x02, LoadAIntoAddressOfWordRegister::BC), //Page 69
+        INC_BC(     0x03, IncrementWordRegister::BC), //Page 92
         INC_B(      0x04, IncrementByteRegister::B), //Page 88
         DEC_B(      0x05, DecrementByteRegister::B), //Page 89
         LD_B_n(     0x06, LoadByteIntoRegister::toB), //Page 65
@@ -35,6 +36,7 @@ public interface Instruction {
         DEC_C(      0x0D, DecrementByteRegister::C), //Page 89
         LD_C_n(     0x0E, LoadByteIntoRegister::toC), //Page 65
 
+        STOP(       0x10, InvalidInstruction::new), //Page 97
         LD_DE_nn(   0x11, LoadWordIntoRegister::toDE), //Page 76
         INC_DE(     0x13, IncrementWordRegister::DE), //Page 92
         DEC_D(      0x15, DecrementByteRegister::D), //Page 89
@@ -53,12 +55,13 @@ public interface Instruction {
         INC_H(      0x24, IncrementByteRegister::H), //Page 88
         JR_Z_n(     0x28, JumpRelativeIfLastZero::new), //Page 113
         LDI_A_HL(   0x2A, LoadAddressOfHLIncreasedIntoA::new), //Page 73
+        INC_L(      0x2C, IncrementByteRegister::L), //Page 88
         LD_L_n(     0x2E, LoadByteIntoRegister::toL), //Page 65
         CPL(        0x2F, ComplementA::new), //Page 95
 
         JR_NC_n(    0x30, JumpRelativeIfLastNotCarry::new), //Page 113
         LD_SP_nn(   0x31, LoadWordIntoSP::new), //Page 76
-        LDD_HL_A(   0x32, LoadHLDecreaseIntoA::new), //Page 72
+        LDD_HL_A(   0x32, LoadAIntoAddressOfHLDecreased::new), //Page 72
         INC_HL_n(   0x34, IncrementByteAddressOfHL::new), //Page 88
         LD_HL_n(    0x36, LoadByteIntoAddressOfHL::new), //Page 67
         INC_A(      0x3C, IncrementByteRegister::A), //Page 88
@@ -103,16 +106,18 @@ public interface Instruction {
         RET_NZ(     0xC0, ReturnIfNotZero::new), //Page 117
         POP_BC(     0xC1, PopStackIntoRegister::toBC), //Page 79
         JP_nn(      0xC3, JumpWord::new), //Page 111
+        CALL_NZ(    0xC4, CallRoutineIfLastNotZero::new), //Page 115
         PUSH_BC(    0xC5, PushRegisterIntoStack::fromBC), //Page 78
         ADD_n(      0xC6, AddByteFromAddressIntoA::new), //Page 80
         RET_Z(      0xC8, ReturnIfZero::new), //Page 117
         RET(        0xC9, Return::new), //Page 117
         CB(         0xCB, InvalidInstruction::new), //Page 99-110, special case (append 0xCB before CB-instructions)
-        CALL_nn(    0xCD, CallRoutineImmediate::new), //Page 114
+        CALL_nn(    0xCD, CallRoutine::new), //Page 114
         ADC_A_n(    0xCE, AddByteFromAddressWithCarryIntoA::new), //Page 81
 
         POP_DE(     0xD1, PopStackIntoRegister::toDE), //Page 79
         PUSH_DE(    0xD5, PushRegisterIntoStack::fromDE), //Page 78
+        SUB_n(      0xD6, SubtractByteFromA::new), //Page 82
         RETI(       0xD9, ReturnEnableInterrupts::new), //Page 118
 
         LDH_n_A(    0xE0, LoadAOffsetByte::new), //Page 75

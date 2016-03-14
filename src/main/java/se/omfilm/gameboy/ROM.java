@@ -16,8 +16,9 @@ public class ROM extends ByteArrayMemory {
         if (rom[0x146] != 0) {
             throw new IllegalArgumentException("Can only handle the original GameBoy");
         }
-        if (rom[0x147] != 0) {
-            throw new IllegalArgumentException("Can only handle Cartridge Types of ROM Only");
+        ROM_TYPE type = ROM_TYPE.fromValue(rom[0x147]);
+        if (type.value > 3) {
+            throw new IllegalArgumentException("Can't handle rom of type " + type);
         }
         ROM_SIZE romSize = ROM_SIZE.values()[rom[0x148]];
         if (romSize.expectedSize != rom.length) {
@@ -79,6 +80,50 @@ public class ROM extends ByteArrayMemory {
 
         public String toString() {
             return super.toString().substring(1);
+        }
+    }
+
+    private enum ROM_TYPE {
+        ROM_ONLY(                       0x00),
+        ROM_MBC1(                       0x01),
+        ROM_MBC1_RAM(                   0x02),
+        ROM_MBC1_RAM_BATTERY(           0x03),
+        ROM_MBC2(                       0x05),
+        ROM_MBC2_BATTERY(               0x06),
+        ROM_RAM(                        0x08),
+        ROM_RAM_BATTERY(                0x09),
+        ROM_MMM01(                      0x0B),
+        ROM_MMM01_SRAM(                 0x0C),
+        ROM_MMM0_SRAM_BATTERY(          0x0D),
+        ROM_MBC3_TIMER_BATTERY(         0x0F),
+        ROM_MBC3_TIMER_RAM_BATTERY(     0x10),
+        ROM_MBC3(                       0x11),
+        ROM_MBC3_RAM(                   0x12),
+        ROM_MBC3_RAM_BATTERY(           0x13),
+        ROM_MBC5(                       0x19),
+        ROM_MBC5_RAM(                   0x1A),
+        ROM_MBC5_RAM_BATTERY(           0x1B),
+        ROM_MBC5_RUMBLE(                0x1C),
+        ROM_MBC5_RUMBLE_SRAM(           0x1D),
+        ROM_MBC5_RUMBLE_SRAM_BATTERY(   0x1E),
+        POCKET_CAMERA(                  0x1F),
+        BANDAI_TAMA5(                   0xFD),
+        HUDSON_HUC3(                    0xFE),
+        HUDSOM_HUC1(                    0xFF);
+
+        private final int value;
+
+        ROM_TYPE(int value) {
+            this.value = value;
+        }
+
+        public static ROM_TYPE fromValue(int value) {
+            for (ROM_TYPE v : values()) {
+                if (v.value == value) {
+                    return v;
+                }
+            }
+            throw new IllegalArgumentException("No " + ROM_TYPE.class.getSimpleName() + " with value " + DebugPrinter.hex(value, 2));
         }
     }
 }
