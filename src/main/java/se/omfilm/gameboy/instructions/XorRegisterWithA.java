@@ -28,4 +28,8 @@ public class XorRegisterWithA implements Instruction {
     public static Instruction C() {
         return new XorRegisterWithA(Registers::readC);
     }
+
+    public static Instruction L() {
+        return new XorRegisterWithA(Registers::readL);
+    }
 }

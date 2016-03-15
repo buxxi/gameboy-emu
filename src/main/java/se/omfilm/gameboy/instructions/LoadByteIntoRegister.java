@@ -34,6 +34,10 @@ public class LoadByteIntoRegister implements Instruction {
         return new LoadByteIntoRegister(Registers::writeE);
     }
 
+    public static Instruction toH() {
+        return new LoadByteIntoRegister(Registers::writeH);
+    }
+
     public static Instruction toL() {
         return new LoadByteIntoRegister(Registers::writeL);
     }

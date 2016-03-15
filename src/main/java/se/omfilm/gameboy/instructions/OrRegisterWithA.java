@@ -22,6 +22,10 @@ public class OrRegisterWithA implements Instruction {
         return 4;
     }
 
+    public static Instruction A() {
+        return new OrRegisterWithA(Registers::readA);
+    }
+
     public static Instruction B() {
         return new OrRegisterWithA(Registers::readB);
     }

@@ -18,30 +18,6 @@ public class LoadRegisterIntoRegister implements Instruction {
         return 4;
     }
 
-    public static Instruction fromBToA() {
-        return new LoadRegisterIntoRegister(Registers::readB, Registers::writeA);
-    }
-
-    public static Instruction fromCToA() {
-        return new LoadRegisterIntoRegister(Registers::readC, Registers::writeA);
-    }
-
-    public static Instruction fromEToA() {
-        return new LoadRegisterIntoRegister(Registers::readE, Registers::writeA);
-    }
-
-    public static Instruction fromHToA() {
-        return new LoadRegisterIntoRegister(Registers::readH, Registers::writeA);
-    }
-
-    public static Instruction fromHtoD() {
-        return new LoadRegisterIntoRegister(Registers::readH, Registers::writeD);
-    }
-
-    public static Instruction fromLToA() {
-        return new LoadRegisterIntoRegister(Registers::readL, Registers::writeA);
-    }
-
     public static Instruction fromAToB() {
         return new LoadRegisterIntoRegister(Registers::readA, Registers::writeB);
     }
@@ -60,5 +36,45 @@ public class LoadRegisterIntoRegister implements Instruction {
 
     public static Instruction fromAToH() {
         return new LoadRegisterIntoRegister(Registers::readA, Registers::writeH);
+    }
+
+    public static Instruction fromAToL() {
+        return new LoadRegisterIntoRegister(Registers::readA, Registers::writeL);
+    }
+
+    public static Instruction fromBToA() {
+        return new LoadRegisterIntoRegister(Registers::readB, Registers::writeA);
+    }
+
+    public static Instruction fromBtoB() {
+        return new LoadRegisterIntoRegister(Registers::readB, Registers::writeB);
+    }
+
+    public static Instruction fromCToA() {
+        return new LoadRegisterIntoRegister(Registers::readC, Registers::writeA);
+    }
+
+    public static Instruction fromDtoA() {
+        return new LoadRegisterIntoRegister(Registers::readD, Registers::writeA);
+    }
+
+    public static Instruction fromEToA() {
+        return new LoadRegisterIntoRegister(Registers::readE, Registers::writeA);
+    }
+
+    public static Instruction fromHToA() {
+        return new LoadRegisterIntoRegister(Registers::readH, Registers::writeA);
+    }
+
+    public static Instruction fromHtoD() {
+        return new LoadRegisterIntoRegister(Registers::readH, Registers::writeD);
+    }
+
+    public static Instruction fromLToA() {
+        return new LoadRegisterIntoRegister(Registers::readL, Registers::writeA);
+    }
+
+    public static Instruction fromLtoE() {
+        return new LoadRegisterIntoRegister(Registers::readL, Registers::writeE);
     }
 }

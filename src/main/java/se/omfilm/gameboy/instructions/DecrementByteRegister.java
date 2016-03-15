@@ -43,4 +43,12 @@ public class DecrementByteRegister implements Instruction {
     public static Instruction E() {
         return new DecrementByteRegister(Registers::readE, Registers::writeE);
     }
+
+    public static Instruction L() {
+        return new DecrementByteRegister(Registers::readL, Registers::writeL);
+    }
+
+    public static Instruction H() {
+        return new DecrementByteRegister(Registers::readH, Registers::writeH);
+    }
 }

@@ -21,11 +21,27 @@ public class LoadByteAddressOfRegisterIntoRegister implements Instruction {
         return new LoadByteAddressOfRegisterIntoRegister(Registers::readDE, Registers::writeA);
     }
 
+    public static Instruction fromHLtoA() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeA);
+    }
+
+    public static Instruction fromHLtoB() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeB);
+    }
+
+    public static Instruction fromHLtoC() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeC);
+    }
+
     public static Instruction fromHLtoD() {
         return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeD);
     }
 
     public static Instruction fromHLtoE() {
         return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeE);
+    }
+
+    public static Instruction fromHLtoL() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeL);
     }
 }

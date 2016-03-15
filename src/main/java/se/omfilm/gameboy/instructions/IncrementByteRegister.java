@@ -29,12 +29,20 @@ public class IncrementByteRegister implements Instruction {
 
     public static Instruction A() { return new IncrementByteRegister(Registers::readA, Registers::writeA); }
 
+    public static Instruction B() {
+        return new IncrementByteRegister(Registers::readB, Registers::writeB);
+    }
+
     public static Instruction C() {
         return new IncrementByteRegister(Registers::readC, Registers::writeC);
     }
 
-    public static Instruction B() {
-        return new IncrementByteRegister(Registers::readB, Registers::writeB);
+    public static Instruction D() {
+        return new IncrementByteRegister(Registers::readD, Registers::writeD);
+    }
+
+    public static Instruction E() {
+        return new IncrementByteRegister(Registers::readE, Registers::writeE);
     }
 
     public static Instruction H() {
