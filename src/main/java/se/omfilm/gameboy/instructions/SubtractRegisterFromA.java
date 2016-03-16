@@ -32,4 +32,8 @@ public class SubtractRegisterFromA implements Instruction {
     public static Instruction fromB() {
         return new SubtractRegisterFromA(Registers::readB);
     }
+
+    public static Instruction fromC() {
+        return new SubtractRegisterFromA(Registers::readC);
+    }
 }

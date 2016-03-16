@@ -108,11 +108,13 @@ public interface Instruction {
         LD_A_L(     0x7D, LoadRegisterIntoRegister::fromLToA), //Page 66
         LD_A_HL(    0x7E, LoadByteAddressOfRegisterIntoRegister::fromHLtoA), //Page 66
 
+        ADD_A_C(    0x81, AddRegisterIntoA::C), //Page 80
         ADD_A_HL(   0x86, AddByteAddressOfHLIntoA::new), //Page 80
         ADD_A_A(    0x87, AddRegisterIntoA::A), //Page 80
         ADC_A_E(    0x8B, AddRegisterWithCarryIntoA::E), //Page 81
 
         SUB_B(      0x90, SubtractRegisterFromA::fromB), //Page 82
+        SUB_C(      0x91, SubtractRegisterFromA::fromC), //Page 82
         SUB_HL(     0x96, SubtractAddressOfHLFromA::new), //page 96
         SUB_A(      0x97, SubtractRegisterFromA::fromA), //Page 82
 
@@ -131,7 +133,8 @@ public interface Instruction {
 
         RET_NZ(     0xC0, Return::ifNotZero), //Page 117
         POP_BC(     0xC1, PopStackIntoRegister::toBC), //Page 79
-        JP_nn(      0xC3, JumpWord::new), //Page 111
+        JP_NZ(      0xC2, JumpWord::ifLastNotZero), //Page 111
+        JP_nn(      0xC3, JumpWord::unconditional), //Page 111
         CALL_NZ(    0xC4, CallRoutine::ifLastNotZero), //Page 115
         PUSH_BC(    0xC5, PushRegisterIntoStack::fromBC), //Page 78
         ADD_n(      0xC6, AddByteFromAddressIntoA::new), //Page 80
@@ -162,19 +165,21 @@ public interface Instruction {
         POP_AF(     0xF1, PopStackIntoRegister::toAF), //Page 79
         DI(         0xF3, DisableInterrupts::new), //Page 98
         PUSH_AF(    0xF5, PushRegisterIntoStack::fromAF), //Page 78
+        OR_n(       0xF6, OrByteWithA::new), //Page 85
         LD_A_nn(    0xFA, LoadAddressIntoA::new), //Page 68
         EI(         0xFB, EnableInterrupts::new), //Page 98
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
         RST_38(     0xFF, Restart::to38), //Page 116
 
-        CB_RL_C(    0xCB11, RotateRegisterLeft::C), //Page 102
-        CB_RR_C(    0xCB19, RotateRegisterRight::C), //Page 104
-        CB_RR_D(    0xCB1A, RotateRegisterRight::D), //Page 104
-        CB_RR_E(    0xCB1B, RotateRegisterRight::E), //Page 104
-        CB_SWAP_A(  0xCB37, SwapRegister::A), //Page 94
-        CB_SRL_B(   0xCB38, ShiftRegisterRight::B), //Page 107
-        CB_BIT_7H(  0xCB7C, CompareBit7::new), //Page 108
-        CB_RES_A0(  0xCB87, ResetBitInRegister::bit0InA); //Page 110
+        RL_C(       0xCB11, RotateRegisterLeft::C), //Page 102
+        RR_C(       0xCB19, RotateRegisterRight::C), //Page 104
+        RR_D(       0xCB1A, RotateRegisterRight::D), //Page 104
+        RR_E(       0xCB1B, RotateRegisterRight::E), //Page 104
+        SWAP_A(     0xCB37, SwapRegister::A), //Page 94
+        SRL_B(      0xCB38, ShiftRegisterRight::B), //Page 107
+        SRL_A(      0xCB3F, ShiftRegisterRight::A), //Page 107
+        BIT_7H(     0xCB7C, CompareBit7::new), //Page 108
+        RES_A0(     0xCB87, ResetBitInRegister::bit0InA); //Page 110
 
         private final int opcode;
         private final Supplier<Instruction> instructionSupplier;

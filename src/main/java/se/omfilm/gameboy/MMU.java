@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
+import java.util.HashSet;
+
 public class MMU implements Memory {
     private static final Logger log = LoggerFactory.getLogger(MMU.class);
 
@@ -56,6 +58,16 @@ public class MMU implements Memory {
     }
 
     public void writeByte(int address, int data) {
+        if (address == 0x0000) {
+            log.warn("RAM banking called, but not implemented");
+            return;
+        }
+
+        if (address == 0x2000) {
+            log.warn("ROM banking called, but not implemented");
+            return;
+        }
+
         MemoryType type = MemoryType.fromAddress(address);
         int virtualAddress = address - type.from;
         switch (type) {

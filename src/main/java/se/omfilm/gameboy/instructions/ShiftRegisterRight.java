@@ -28,6 +28,10 @@ public class ShiftRegisterRight implements Instruction {
         return 8;
     }
 
+    public static Instruction A() {
+        return new ShiftRegisterRight(Registers::readA, Registers::writeA);
+    }
+
     public static Instruction B() {
         return new ShiftRegisterRight(Registers::readB, Registers::writeB);
     }
