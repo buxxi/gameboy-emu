@@ -30,6 +30,7 @@ public interface Instruction {
         INC_B(      0x04, IncrementByteRegister::B), //Page 88
         DEC_B(      0x05, DecrementByteRegister::B), //Page 89
         LD_B_n(     0x06, LoadByteIntoRegister::toB), //Page 65
+        LD_nn_SP(   0x08, LoadStackPointerToAddressOfWord::new), //Page 78
         ADD_HL_BC(  0x09, AddWordRegisterIntoRegister::BCtoHL), //Page 90
         DEC_BC(     0x0B, DecrementWordRegister::BC), //Page 93
         INC_C(      0x0C, IncrementByteRegister::C), //Page 88
