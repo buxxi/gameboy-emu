@@ -126,6 +126,7 @@ public class MMU implements Memory {
                     return gpu.getLCDStatus();
                 case SERIAL_TRANSFER_CONTROL:
                 case SERIAL_TRANSFER_DATA:
+                case UNKNOWN5:
                     log.warn(unhandledReadMessage(register));
                     return 0;
                 default:
@@ -188,6 +189,7 @@ public class MMU implements Memory {
                 case UNKNOWN2:
                 case UNKNOWN3:
                 case UNKNOWN4:
+                case UNKNOWN5:
                     //TODO: these shouldn't exist, somethings very wrong
 
                 case SOUND_1_SWEEP:
@@ -256,6 +258,7 @@ public class MMU implements Memory {
         UNKNOWN2(0xFF69),
         UNKNOWN3(0xFF7F),
         UNKNOWN4(0xFF4F),
+        UNKNOWN5(0xFF4D),
         INTERRUPT_ENABLE(0xFFFF);
 
         private final int address;

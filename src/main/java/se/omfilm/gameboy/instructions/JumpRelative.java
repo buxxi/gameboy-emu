@@ -36,4 +36,8 @@ public class JumpRelative implements Instruction {
     public static Instruction ifLastNotCarry() {
         return new JumpRelative((flags) -> !flags.isSet(Flags.Flag.CARRY));
     }
+
+    public static Instruction ifLastCarry() {
+        return new JumpRelative((flags) -> flags.isSet(Flags.Flag.CARRY));
+    }
 }
