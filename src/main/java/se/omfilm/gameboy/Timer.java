@@ -18,6 +18,10 @@ public class Timer {
     }
 
     public void setControl(int data) {
-        log.warn("Timer control set to " + DebugPrinter.hex(data, 4) + " but unhandled");
+        String message = "Timer control set to " + DebugPrinter.hex(data, 4) + " but unhandled";
+        if (data != 0) {
+            throw new UnsupportedOperationException(message);
+        }
+        log.warn(message);
     }
 }

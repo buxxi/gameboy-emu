@@ -41,6 +41,10 @@ public class LoadByteAddressOfRegisterIntoRegister implements Instruction {
         return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeE);
     }
 
+    public static Instruction fromHLtoH() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeH);
+    }
+
     public static Instruction fromHLtoL() {
         return new LoadByteAddressOfRegisterIntoRegister(Registers::readHL, Registers::writeL);
     }

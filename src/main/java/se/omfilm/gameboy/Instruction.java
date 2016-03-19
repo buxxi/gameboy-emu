@@ -30,6 +30,7 @@ public interface Instruction {
         INC_B(      0x04, IncrementByteRegister::B), //Page 88
         DEC_B(      0x05, DecrementByteRegister::B), //Page 89
         LD_B_n(     0x06, LoadByteIntoRegister::toB), //Page 65
+        RLCA(       0x07, RotateRegisterLeft::A), //Page 99
         LD_nn_SP(   0x08, LoadStackPointerToAddressOfWord::new), //Page 78
         ADD_HL_BC(  0x09, AddWordRegisterIntoRegister::BCtoHL), //Page 90
         DEC_BC(     0x0B, DecrementWordRegister::BC), //Page 93
@@ -44,7 +45,7 @@ public interface Instruction {
         INC_D(      0x14, IncrementByteRegister::D), //Page 88
         DEC_D(      0x15, DecrementByteRegister::D), //Page 89
         LD_D_n(     0x16, LoadByteIntoRegister::toD), //Page 65
-        RLA(        0x17, RotateRegisterLeft::A), //Page 99
+        RLA(        0x17, RotateRegisterLeft::AthroughCarry), //Page 99
         JR_n(       0x18, JumpRelative::unconditional), //Page 112
         ADD_HL_DE(  0x19, AddWordRegisterIntoRegister::DEtoHL), //Page 90
         LD_A_DE(    0x1A, LoadByteAddressOfRegisterIntoRegister::fromDEtoA), //Page 68
@@ -71,10 +72,13 @@ public interface Instruction {
         JR_NC_n(    0x30, JumpRelative::ifLastNotCarry), //Page 113
         LD_SP_nn(   0x31, LoadWordIntoStackPointer::new), //Page 76
         LDD_HL_A(   0x32, LoadAIntoAddressOfHLDecreased::new), //Page 72
+        INC_SP(     0x33, IncrementStackPointer::new), //Page 92
         INC_HL_n(   0x34, IncrementByteAddressOfHL::new), //Page 88
         DEC_HL_n(   0x35, DecrementAddressOfHL::new), //Page 89
         LD_HL_n(    0x36, LoadByteIntoAddressOfHL::new), //Page 67
         JR_C(       0x38, JumpRelative::ifLastCarry), //Page 113
+        ADD_HL_SP(  0x39, AddStackPointerIntoHL::new), //Page 90
+        DEC_SP(     0x3B, DecrementStackPointer::new), //Page 93
         INC_A(      0x3C, IncrementByteRegister::A), //Page 88
         DEC_A(      0x3D, DecrementByteRegister::A), //Page 89
         LD_A_n(     0x3E, LoadByteIntoRegister::toA), //Page 68
@@ -119,6 +123,7 @@ public interface Instruction {
         LD_H_E(     0x63, LoadRegisterIntoRegister::fromEtoH), //Page 66
         LD_H_H(     0x64, LoadRegisterIntoRegister::fromHtoH), //Page 66
         LD_H_L(     0x65, LoadRegisterIntoRegister::fromLtoH), //Page 66
+        LD_H_HL(    0x66, LoadByteAddressOfRegisterIntoRegister::fromHLtoH), //Page 66
         LD_H_A(     0x67, LoadRegisterIntoRegister::fromAtoH), //Page 69
         LD_L_B(     0x68, LoadRegisterIntoRegister::fromBtoL), //Page 66
         LD_L_C(     0x69, LoadRegisterIntoRegister::fromCtoL), //Page 66
@@ -182,15 +187,17 @@ public interface Instruction {
         RET_NC(     0xD0, Return::ifNotCarry), //Page 117
         POP_DE(     0xD1, PopStackIntoRegister::toDE), //Page 79
         PUSH_DE(    0xD5, PushRegisterIntoStack::fromDE), //Page 78
-        SUB_n(      0xD6, SubtractByteFromA::new), //Page 82
+        SUB_n(      0xD6, SubtractByteFromA::withoutCarry), //Page 82
         RET_C(      0xD8, Return::ifCarry), //Page 117
         RETI(       0xD9, Return::andEnableInterrupts), //Page 118
+        SBC_n(      0xDE, SubtractByteFromA::withCarry), //Page 83
 
         LDH_n_A(    0xE0, LoadAOffsetByte::new), //Page 75
         POP_HL(     0xE1, PopStackIntoRegister::toHL), //Page 79
         LDH_C_A(    0xE2, LoadAOffsetC::new), //Page 70
         PUSH_HL(    0xE5, PushRegisterIntoStack::fromHL), //Page 78
         AND_n(      0xE6, AndByteWithA::new), //Page 84
+        ADD_SP_n(   0xE8, AddByteToStackPointer::new), //Page 91
         JP_HL(      0xE9, JumpToValueOfHL::new), //Page 112
         LD_nn_A(    0xEA, LoadAIntoAddressOfWord::new), //Page 69
         XOR_n(      0xEE, XorByteWithA::new), //Page 86
@@ -208,7 +215,7 @@ public interface Instruction {
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
         RST_38(     0xFF, Restart::to38), //Page 116
 
-        RL_C(       0xCB11, RotateRegisterLeft::C), //Page 102
+        RL_C(       0xCB11, RotateRegisterLeft::CthroughCarry), //Page 102
         RR_C(       0xCB19, RotateRegisterRight::C), //Page 104
         RR_D(       0xCB1A, RotateRegisterRight::D), //Page 104
         RR_E(       0xCB1B, RotateRegisterRight::E), //Page 104

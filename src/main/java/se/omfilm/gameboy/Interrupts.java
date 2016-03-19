@@ -11,6 +11,8 @@ public interface Interrupts {
 
     boolean enabled(Interrupt interrupt);
 
+    boolean requested(Interrupt interrupt);
+
     enum Interrupt {
         VBLANK( 0b0000_0001),
         LCD(    0b0000_0010),
@@ -30,10 +32,20 @@ public interface Interrupts {
             return result.toArray(new Interrupt[result.size()]);
         }
 
-        public static int toValue(Interrupts interrupts) {
+        public static int enabledToValue(Interrupts interrupts) {
             int result = 0;
             for (Interrupt interrupt : Interrupt.values()) {
                 if (interrupts.enabled(interrupt)) {
+                    result = result | interrupt.mask;
+                }
+            }
+            return result;
+        }
+
+        public static int requestedToValue(Interrupts interrupts) {
+            int result = 0;
+            for (Interrupt interrupt : Interrupt.values()) {
+                if (interrupts.requested(interrupt)) {
                     result = result | interrupt.mask;
                 }
             }

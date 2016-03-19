@@ -29,7 +29,7 @@ public class AddWordRegisterIntoRegister implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 
-        return 4;
+        return 8;
     }
 
     public static Instruction BCtoHL() {

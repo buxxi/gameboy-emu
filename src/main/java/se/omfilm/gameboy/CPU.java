@@ -269,6 +269,10 @@ public class CPU implements Registers {
             return enabledInterrupts.contains(interrupt);
         }
 
+        public boolean requested(Interrupt interrupt) {
+            return requestedInterrupts.contains(interrupt);
+        }
+
         private void execute(Interrupt interrupt, MMU memory) {
             requestedInterrupts.remove(interrupt);
 
@@ -277,6 +281,9 @@ public class CPU implements Registers {
             switch (interrupt) {
                 case VBLANK:
                     programCounter.write(0x40);
+                    return;
+                case TIMER:
+                    programCounter.write(0x50);
                     return;
                 default:
                     throw new UnsupportedOperationException("Interrupt " + interrupt + " not implemented");

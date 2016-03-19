@@ -119,7 +119,9 @@ public class MMU implements Memory {
                 case JOYPAD:
                     return joypad;
                 case INTERRUPT_ENABLE:
-                    return Interrupts.Interrupt.toValue(interrupts);
+                    return Interrupts.Interrupt.enabledToValue(interrupts);
+                case INTERRUPT_REQUEST:
+                    return Interrupts.Interrupt.requestedToValue(interrupts);
                 case LCD_CONTROL:
                     return gpu.getLCDControl();
                 case LCD_STATUS:
