@@ -31,6 +31,7 @@ public class CPU implements Registers {
 
     private final Map<Instruction.InstructionType, Instruction> instructionMap;
     private Instruction previousInstruction;
+    public static Set<Instruction.InstructionType> usedInstructions = new HashSet<>();
 
     public CPU() {
         instructionMap = new EnumMap<>(Instruction.InstructionType.class);
@@ -55,9 +56,10 @@ public class CPU implements Registers {
         if (instructionType == Instruction.InstructionType.CB) {
             instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), memory.readByte(programCounter.increase()));
         }
+        usedInstructions.add(instructionType);
 
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
-        //log.debug("Running instruction " + instructionType + " @ " + DebugPrinter.hex(sourceProgramCounter, 4));
+        log.debug("Running instruction " + instructionType + " @ " + DebugPrinter.hex(sourceProgramCounter, 4));
         int cycles = instruction.execute(memory, this, this.flags, this.programCounter, this.stackPointer);
         //DebugPrinter.debug(this.stackPointer, this.programCounter);
         //DebugPrinter.debug(this);

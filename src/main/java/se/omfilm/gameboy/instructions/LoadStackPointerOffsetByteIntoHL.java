@@ -9,10 +9,9 @@ public class LoadStackPointerOffsetByteIntoHL implements Instruction {
         int result = s + ((byte) n);
 
         boolean carry = result > 0xFFFF;
-        result = result & 0xFFFF;
         boolean halfCarry = ((result ^ s ^ n) & 0x1000) != 0;
 
-        registers.writeHL(result);
+        registers.writeHL(result & 0xFFFF);
 
         flags.reset(Flags.Flag.ZERO);
         flags.reset(Flags.Flag.SUBTRACT);

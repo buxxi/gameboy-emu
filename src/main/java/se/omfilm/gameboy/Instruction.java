@@ -138,6 +138,8 @@ public interface Instruction {
         LD_HL_C(    0x71, LoadRegisterIntoAddressOfWordRegister::CtoHL), //Page 67
         LD_HL_D(    0x72, LoadRegisterIntoAddressOfWordRegister::DtoHL), //Page 67
         LD_HL_E(    0x73, LoadRegisterIntoAddressOfWordRegister::EtoHL), //Page 67
+        LD_HL_H(    0x74, LoadRegisterIntoAddressOfWordRegister::HtoHL), //Page 67
+        LD_HL_L(    0x75, LoadRegisterIntoAddressOfWordRegister::LtoHL), //Page 67
         LD_HL_A(    0x77, LoadRegisterIntoAddressOfWordRegister::AtoHL), //Page 69
         LD_A_B(     0x78, LoadRegisterIntoRegister::fromBtoA), //Page 66
         LD_A_C(     0x79, LoadRegisterIntoRegister::fromCtoA), //Page 66
@@ -146,6 +148,7 @@ public interface Instruction {
         LD_A_H(     0x7C, LoadRegisterIntoRegister::fromHtoA), //Page 66
         LD_A_L(     0x7D, LoadRegisterIntoRegister::fromLtoA), //Page 66
         LD_A_HL(    0x7E, LoadByteAddressOfRegisterIntoRegister::fromHLtoA), //Page 66
+        LD_A_A(     0x7F, LoadRegisterIntoRegister::fromAtoA), //Page 68
 
         ADD_A_C(    0x81, AddRegisterIntoA::C), //Page 80
         ADD_A_HL(   0x86, AddByteAddressOfHLIntoA::new), //Page 80
@@ -210,7 +213,7 @@ public interface Instruction {
         OR_n(       0xF6, OrByteWithA::new), //Page 85
         LD_HL_SP_n( 0xF8, LoadStackPointerOffsetByteIntoHL::new), //Page 77
         LD_SP_HL(   0xF9, LoadHLIntoStackPointer::new), //Page 76
-        LD_A_nn(    0xFA, LoadAddressIntoA::new), //Page 68
+        LD_A_nn(    0xFA, LoadAddressOfByteIntoA::new), //Page 68
         EI(         0xFB, EnableInterrupts::new), //Page 98
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
         RST_38(     0xFF, Restart::to38), //Page 116

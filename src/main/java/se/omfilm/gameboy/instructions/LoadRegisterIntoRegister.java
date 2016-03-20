@@ -18,6 +18,10 @@ public class LoadRegisterIntoRegister implements Instruction {
         return 4;
     }
 
+    public static Instruction fromAtoA() {
+        return new LoadRegisterIntoRegister(Registers::readA, Registers::writeA);
+    }
+
     public static Instruction fromAtoB() {
         return new LoadRegisterIntoRegister(Registers::readA, Registers::writeB);
     }

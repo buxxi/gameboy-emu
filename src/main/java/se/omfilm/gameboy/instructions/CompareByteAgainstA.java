@@ -9,7 +9,7 @@ public class CompareByteAgainstA implements Instruction {
         int a = registers.readA();
 
         boolean zero = n == a;
-        boolean carry = a < n;
+        boolean carry = n > a;
         boolean halfCarry = (n & 0x0F) > (a & 0x0F);
 
         flags.set(Flags.Flag.ZERO, zero);

@@ -44,4 +44,12 @@ public class LoadRegisterIntoAddressOfWordRegister implements Instruction {
     public static Instruction EtoHL() {
         return new LoadRegisterIntoAddressOfWordRegister(Registers::readHL, Registers::readE);
     }
+
+    public static Instruction HtoHL() {
+        return new LoadRegisterIntoAddressOfWordRegister(Registers::readHL, Registers::readH);
+    }
+
+    public static Instruction LtoHL() {
+        return new LoadRegisterIntoAddressOfWordRegister(Registers::readHL, Registers::readL);
+    }
 }

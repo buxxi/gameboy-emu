@@ -11,7 +11,6 @@ public class IncrementByteRegister implements Instruction {
         this.target = target;
     }
 
-    @Override
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int n = source.read(registers);
         int result = (n + 1) & 0xFF;

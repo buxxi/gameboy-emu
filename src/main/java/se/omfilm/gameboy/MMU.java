@@ -104,6 +104,9 @@ public class MMU implements Memory {
 
         private int joypad = 0; //TODO
 
+        private int serialData = 0;
+        private int serialControl = 0;
+
         private IOController(Interrupts interrupts, Timer timer) {
             this.interrupts = interrupts;
             this.timer = timer;
@@ -127,10 +130,11 @@ public class MMU implements Memory {
                 case LCD_STATUS:
                     return gpu.getLCDStatus();
                 case SERIAL_TRANSFER_CONTROL:
-                case SERIAL_TRANSFER_DATA:
-                case UNKNOWN5:
                     log.warn(unhandledReadMessage(register));
-                    return 0;
+                    return serialControl;
+                case SERIAL_TRANSFER_DATA:
+                    log.warn(unhandledReadMessage(register));
+                    return serialData;
                 default:
                     throw new UnsupportedOperationException(unhandledReadMessage(register));
             }
@@ -185,14 +189,13 @@ public class MMU implements Memory {
                     gpu.transferDMA((data * 0x100) - MemoryType.RAM.from, ram);
                     return;
                 case SERIAL_TRANSFER_DATA:
+                    serialData = data;
+                    log.warn(unhandledWriteMessage(data, register));
+                    return;
                 case SERIAL_TRANSFER_CONTROL:
-
-                case UNKNOWN1:
-                case UNKNOWN2:
-                case UNKNOWN3:
-                case UNKNOWN4:
-                case UNKNOWN5:
-                    //TODO: these shouldn't exist, somethings very wrong
+                    serialControl = data;
+                    log.warn(unhandledWriteMessage(data, register));
+                    return;
 
                 case SOUND_1_SWEEP:
                 case SOUND_1_LENGTH_PATTERN_DUTY:
@@ -256,11 +259,6 @@ public class MMU implements Memory {
         WINDOW_Y(0xFF4A),
         WINDOW_X(0xFF4B),
         SOUND_SWEEP(0xFF50),
-        UNKNOWN1(0xFF68),
-        UNKNOWN2(0xFF69),
-        UNKNOWN3(0xFF7F),
-        UNKNOWN4(0xFF4F),
-        UNKNOWN5(0xFF4D),
         INTERRUPT_ENABLE(0xFFFF);
 
         private final int address;

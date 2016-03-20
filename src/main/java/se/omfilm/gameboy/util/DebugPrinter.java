@@ -5,6 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 public class DebugPrinter {
     private static final Logger log = LoggerFactory.getLogger(DebugPrinter.class);
 
@@ -35,6 +40,12 @@ public class DebugPrinter {
         Thread.sleep(100);
         e.printStackTrace();
         log.error(Instruction.InstructionType.values().length + " instructions implemented of 512");
+        log.error("Used instructions: ");
+        List<Instruction.InstructionType> usedInstructions = new ArrayList<>(CPU.usedInstructions);
+        Collections.sort(usedInstructions);
+        for (Instruction.InstructionType usedInstruction : usedInstructions) {
+            log.error("\t" + usedInstruction);
+        }
         System.exit(0);
     }
 
