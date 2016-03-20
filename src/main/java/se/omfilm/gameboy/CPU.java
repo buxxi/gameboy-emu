@@ -84,8 +84,22 @@ public class CPU implements Registers {
         return this.h;
     }
 
+    public int readL() {
+        return this.l;
+    }
+
     public int readHL() {
         return this.h << 8 | this.l;
+    }
+
+    public void writeH(int val) {
+        verify(val, 0xFF);
+        this.h = val;
+    }
+
+    public void writeL(int val) {
+        verify(val, 0xFF);
+        this.l = val;
     }
 
     public void writeHL(int val) {
@@ -94,28 +108,21 @@ public class CPU implements Registers {
         writeL(val & 0x00FF);
     }
 
-    public int readL() {
-        return this.l;
+    public int readD() {
+        return this.d;
     }
 
-    public void writeL(int val) {
-        verify(val, 0xFF);
-        this.l = val;
-    }
-
-    public void writeH(int val) {
-        verify(val, 0xFF);
-        this.h = val;
+    public int readE() {
+        return this.e;
     }
 
     public int readDE() {
         return this.d << 8 | this.e;
     }
 
-    public void writeDE(int val) {
-        verify(val, 0xFFFF);
-        writeD(val >> 8);
-        writeE(val & 0x00FF);
+    public void writeD(int val) {
+        verify(val, 0xFF);
+        this.d = val;
     }
 
     public void writeE(int val) {
@@ -123,9 +130,10 @@ public class CPU implements Registers {
         this.e = val;
     }
 
-    public void writeD(int val) {
-        verify(val, 0xFF);
-        this.d = val;
+    public void writeDE(int val) {
+        verify(val, 0xFFFF);
+        writeD(val >> 8);
+        writeE(val & 0x00FF);
     }
 
     public int readA() {
@@ -136,12 +144,17 @@ public class CPU implements Registers {
         return this.f;
     }
 
-    public void writeF(int val) {
-        this.f = val;
-    }
-
     public int readAF() {
         return this.a << 8 | this.f;
+    }
+
+    public void writeA(int val) {
+        verify(val, 0xFF);
+        this.a = val;
+    }
+
+    public void writeF(int val) {
+        this.f = val;
     }
 
     public void writeAF(int val) {
@@ -150,22 +163,16 @@ public class CPU implements Registers {
         writeF(val & 0x00FF);
     }
 
-    public void writeA(int val) {
-        verify(val, 0xFF);
-        this.a = val;
+    public int readB() {
+        return this.b;
     }
 
     public int readC() {
         return this.c;
     }
 
-    public int readB() {
-        return this.b;
-    }
-
-    public void writeC(int val) {
-        verify(val, 0xFF);
-        this.c = val;
+    public int readBC() {
+        return this.b << 8 | this.c;
     }
 
     public void writeB(int val) {
@@ -173,22 +180,15 @@ public class CPU implements Registers {
         this.b = val;
     }
 
-    public int readBC() {
-        return this.b << 8 | this.c;
+    public void writeC(int val) {
+        verify(val, 0xFF);
+        this.c = val;
     }
 
     public void writeBC(int val) {
         verify(val, 0xFFFF);
         writeB(val >> 8);
         writeC(val & 0x00FF);
-    }
-
-    public int readD() {
-        return this.d;
-    }
-
-    public int readE() {
-        return this.e;
     }
 
     private void verify(int val, int maxValue) {
