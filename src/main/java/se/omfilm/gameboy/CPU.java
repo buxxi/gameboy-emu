@@ -6,6 +6,8 @@ import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.util.*;
 
+import static se.omfilm.gameboy.util.DebugPrinter.record;
+
 public class CPU implements Registers {
     private static final Logger log = LoggerFactory.getLogger(CPU.class);
 
@@ -31,7 +33,6 @@ public class CPU implements Registers {
 
     private final Map<Instruction.InstructionType, Instruction> instructionMap;
     private Instruction previousInstruction;
-    public static Set<Instruction.InstructionType> usedInstructions = new HashSet<>();
 
     public CPU() {
         instructionMap = new EnumMap<>(Instruction.InstructionType.class);
@@ -56,13 +57,11 @@ public class CPU implements Registers {
         if (instructionType == Instruction.InstructionType.CB) {
             instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), programCounter.byteOperand(memory));
         }
-        usedInstructions.add(instructionType);
 
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
-        log.debug("Running instruction " + instructionType + " @ " + DebugPrinter.hex(sourceProgramCounter, 4));
-        int cycles = instruction.execute(memory, this, this.flags, this.programCounter, this.stackPointer);
-        //DebugPrinter.debug(this.stackPointer, this.programCounter);
-        //DebugPrinter.debug(this);
+        DebugPrinter.record(instructionType, sourceProgramCounter);
+        int cycles = instruction.execute(record(memory), record(this), record(this.flags), record(this.programCounter), record(this.stackPointer));
+
         if (previousInstruction instanceof DelayedInstruction) {
             interruptsDisabled = ((DelayedInstruction) previousInstruction).disableInterrupts();
         }
