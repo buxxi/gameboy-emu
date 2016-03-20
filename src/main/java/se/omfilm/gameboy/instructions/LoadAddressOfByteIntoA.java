@@ -4,7 +4,7 @@ import se.omfilm.gameboy.*;
 
 public class LoadAddressOfByteIntoA implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int address = memory.readWord(programCounter.increase(2));
+        int address = programCounter.wordOperand(memory);
         registers.writeA(memory.readByte(address));
         return 16;
     }

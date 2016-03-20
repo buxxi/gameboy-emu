@@ -5,7 +5,7 @@ import se.omfilm.gameboy.*;
 public class OrByteWithA implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int a = registers.readA();
-        int n = memory.readByte(programCounter.increase());
+        int n = programCounter.byteOperand(memory);
         int result = a | n;
 
         registers.writeA(result);

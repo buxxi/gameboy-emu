@@ -10,7 +10,7 @@ public class SubtractByteFromA implements Instruction {
     }
 
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int n = memory.readByte(programCounter.increase());
+        int n = programCounter.byteOperand(memory);
         if (withCarry && flags.isSet(Flags.Flag.CARRY)) {
             n++;
         }

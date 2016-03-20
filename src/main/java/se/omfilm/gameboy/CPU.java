@@ -51,10 +51,10 @@ public class CPU implements Registers {
             memory.bootSuccess();
             DebugPrinter.verifyBoot(this, this.stackPointer);
         }
-        int sourceProgramCounter = programCounter.increase();
-        Instruction.InstructionType instructionType = Instruction.InstructionType.fromOpCode(memory.readByte(sourceProgramCounter));
+        int sourceProgramCounter = programCounter.read();
+        Instruction.InstructionType instructionType = Instruction.InstructionType.fromOpCode(programCounter.byteOperand(memory));
         if (instructionType == Instruction.InstructionType.CB) {
-            instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), memory.readByte(programCounter.increase()));
+            instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), programCounter.byteOperand(memory));
         }
         usedInstructions.add(instructionType);
 
@@ -200,22 +200,12 @@ public class CPU implements Registers {
     private static class ProgramCounterImpl implements ProgramCounter {
         private int value = 0;
 
-        public int increase() {
-            return increase(1);
-        }
-
-        public int increase(int amount) {
-            int oldValue = value;
-            value = (value + amount) % 0xFFFF;
-            return oldValue;
-        }
-
         public int read() {
             return value;
         }
 
         public void write(int data) {
-            this.value = data;
+            this.value = data & 0xFFFF;
         }
     }
 

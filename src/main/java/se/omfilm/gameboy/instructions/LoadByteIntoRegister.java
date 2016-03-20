@@ -10,7 +10,7 @@ public class LoadByteIntoRegister implements Instruction {
     }
 
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        target.write(registers, memory.readByte(programCounter.increase()));
+        target.write(registers, programCounter.byteOperand(memory));
         return 8;
     }
 

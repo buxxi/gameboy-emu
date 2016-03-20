@@ -4,7 +4,7 @@ import se.omfilm.gameboy.*;
 
 public class LoadWordIntoStackPointer implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        stackPointer.write(memory.readWord(programCounter.increase(2)));
+        stackPointer.write(programCounter.wordOperand(memory));
 
         return 8;
     }

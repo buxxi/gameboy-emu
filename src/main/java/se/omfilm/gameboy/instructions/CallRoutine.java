@@ -12,7 +12,7 @@ public class CallRoutine implements Instruction {
     }
 
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int nextProgramCounter = memory.readWord(programCounter.increase(2));
+        int nextProgramCounter = programCounter.wordOperand(memory);
 
         if (predicate.test(flags)) {
             stackPointer.push(memory, programCounter.read());

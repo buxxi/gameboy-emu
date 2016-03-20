@@ -10,7 +10,7 @@ public class LoadWordIntoRegister implements Instruction {
     }
 
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        target.write(registers, memory.readWord(programCounter.increase(2)));
+        target.write(registers, programCounter.wordOperand(memory));
 
         return 12;
     }

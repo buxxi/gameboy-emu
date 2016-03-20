@@ -4,7 +4,7 @@ import se.omfilm.gameboy.*;
 
 public class AddByteFromAddressWithCarryIntoA implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int n = memory.readByte(programCounter.increase());
+        int n = programCounter.byteOperand(memory);
         int a = registers.readA();
         int result = n + a + (flags.isSet(Flags.Flag.CARRY) ? 1 : 0);
 

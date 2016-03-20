@@ -12,7 +12,7 @@ public class JumpWord implements Instruction {
     }
 
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int nn = memory.readWord(programCounter.increase(2));
+        int nn = programCounter.wordOperand(memory);
         if (predicate.test(flags)) {
             programCounter.write(nn);
         }

@@ -5,7 +5,7 @@ import se.omfilm.gameboy.*;
 public class CompareByteAgainstA implements Instruction {
     @Override
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int n = memory.readByte(programCounter.increase());
+        int n = programCounter.byteOperand(memory);
         int a = registers.readA();
 
         boolean zero = n == a;
