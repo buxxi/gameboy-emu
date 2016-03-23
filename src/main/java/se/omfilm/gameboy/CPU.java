@@ -153,7 +153,7 @@ public class CPU implements Registers {
     }
 
     public void writeF(int val) {
-        this.f = val;
+        this.f = val & 0xF0;
     }
 
     public void writeAF(int val) {

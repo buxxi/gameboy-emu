@@ -25,7 +25,31 @@ public class CompareRegisterAgainstA implements Instruction {
         return 8;
     }
 
+    public static Instruction A() {
+        return new CompareRegisterAgainstA(Registers::readA);
+    }
+
+    public static Instruction B() {
+        return new CompareRegisterAgainstA(Registers::readB);
+    }
+
+    public static Instruction C() {
+        return new CompareRegisterAgainstA(Registers::readC);
+    }
+
+    public static Instruction D() {
+        return new CompareRegisterAgainstA(Registers::readD);
+    }
+
     public static Instruction E() {
         return new CompareRegisterAgainstA(Registers::readE);
+    }
+
+    public static Instruction H() {
+        return new CompareRegisterAgainstA(Registers::readH);
+    }
+
+    public static Instruction L() {
+        return new CompareRegisterAgainstA(Registers::readL);
     }
 }

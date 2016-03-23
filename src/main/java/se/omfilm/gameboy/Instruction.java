@@ -62,6 +62,7 @@ public interface Instruction {
         DEC_H(      0x25, DecrementByteRegister::H), //Page 89
         LD_H_n(     0x26, LoadByteIntoRegister::toH), //Page 65
         JR_Z_n(     0x28, JumpRelative::ifLastZero), //Page 113
+        DAA(        0x27, DecimalAdjustA::new), //Page 95
         ADD_HL_HL(  0x29, AddWordRegisterIntoRegister::HLtoHL), //Page 90
         LDI_A_HL(   0x2A, LoadAddressOfHLIncreasedIntoA::new), //Page 73
         INC_L(      0x2C, IncrementByteRegister::L), //Page 88
@@ -171,7 +172,13 @@ public interface Instruction {
         OR_C(       0xB1, OrRegisterWithA::C), //Page 85
         OR_HL(      0xB6, OrAddressOfHLWithA::new), //Page 85
         OR_A(       0xB7, OrRegisterWithA::A), //Page 85
+        CP_B(       0xB8, CompareRegisterAgainstA::B), //Page 85
+        CP_C(       0xB9, CompareRegisterAgainstA::C), //Page 85
+        CP_D(       0xBA, CompareRegisterAgainstA::D), //Page 85
         CP_E(       0xBB, CompareRegisterAgainstA::E), //Page 85
+        CP_H(       0xBC, CompareRegisterAgainstA::H), //Page 85
+        CP_L(       0xBD, CompareRegisterAgainstA::L), //Page 85
+        CP_A(       0xBF, CompareRegisterAgainstA::A), //Page 85
         CP_HL(      0xBE, CompareByteAddressOfHLAgainstA::new), //Page 87
 
         RET_NZ(     0xC0, Return::ifNotZero), //Page 117

@@ -14,14 +14,16 @@ public class MMU implements Memory {
     private final Memory zeroPage;
     private final Memory ioController;
     private final GPU gpu;
+    private final SerialConnection serial;
     private final Memory ram;
     private final Memory[] switchableRam;
 
     private boolean isBooting = true;
 
-    public MMU(Memory boot, Memory rom, GPU gpu, Interrupts interrupts, Timer timer) {
+    public MMU(Memory boot, Memory rom, GPU gpu, Interrupts interrupts, Timer timer, SerialConnection serial) {
         this.boot = boot;
         this.rom = rom;
+        this.serial = serial;
         this.ioController = new IOController(interrupts, timer);
         this.gpu = gpu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
@@ -104,8 +106,7 @@ public class MMU implements Memory {
 
         private int joypad = 0; //TODO
 
-        private int serialData = 0;
-        private int serialControl = 0;
+        private int speedSwitch = 0; //gbc only
 
         private IOController(Interrupts interrupts, Timer timer) {
             this.interrupts = interrupts;
@@ -130,11 +131,11 @@ public class MMU implements Memory {
                 case LCD_STATUS:
                     return gpu.getLCDStatus();
                 case SERIAL_TRANSFER_CONTROL:
-                    log.warn(unhandledReadMessage(register));
-                    return serialControl;
+                    return serial.getControl();
                 case SERIAL_TRANSFER_DATA:
-                    log.warn(unhandledReadMessage(register));
-                    return serialData;
+                    return serial.getData();
+                case PREPARE_SPEED_SWITCH:
+                    return speedSwitch;
                 default:
                     throw new UnsupportedOperationException(unhandledReadMessage(register));
             }
@@ -189,12 +190,18 @@ public class MMU implements Memory {
                     gpu.transferDMA((data * 0x100) - MemoryType.RAM.from, ram);
                     return;
                 case SERIAL_TRANSFER_DATA:
-                    serialData = data;
-                    log.warn(unhandledWriteMessage(data, register));
+                    serial.setData(data);
                     return;
                 case SERIAL_TRANSFER_CONTROL:
-                    serialControl = data;
-                    log.warn(unhandledWriteMessage(data, register));
+                    serial.setControl(data);
+                    return;
+
+                case PREPARE_SPEED_SWITCH:
+                    speedSwitch = data;
+                case COLOR_BACKGROUND_PALETTE_INDEX:
+                case COLOR_BACKGROUND_PALETTE_DATA:
+                case VRAM_BANK:
+                    log.debug(unhandledWriteMessage(data, register)); //Only GameBoy Color
                     return;
 
                 case SOUND_1_SWEEP:
@@ -258,7 +265,11 @@ public class MMU implements Memory {
         OBJECT_PALETTE_1_DATA(0xFF49),
         WINDOW_Y(0xFF4A),
         WINDOW_X(0xFF4B),
+        PREPARE_SPEED_SWITCH(0xFF4D), //Only GBC
+        VRAM_BANK(0xFF4F), //Only GBC
         SOUND_SWEEP(0xFF50),
+        COLOR_BACKGROUND_PALETTE_INDEX(0xFF68), //Only GBC
+        COLOR_BACKGROUND_PALETTE_DATA(0xFF69), //Only GBC
         INTERRUPT_ENABLE(0xFFFF);
 
         private final int address;

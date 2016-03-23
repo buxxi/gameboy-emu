@@ -13,6 +13,7 @@ public class ROM extends ByteArrayMemory {
 
     private static byte[] verifyRom(byte[] rom) {
         log.info("Game:\t\t" + readGameName(rom));
+        log.info("Model:\t\t" + ((rom[0x143] & 0xFF) == 0x80 ? "GameBoy Color" : "GameBoy"));
         if (rom[0x146] != 0) {
             throw new IllegalArgumentException("Can only handle the original GameBoy");
         }
