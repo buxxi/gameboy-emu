@@ -14,6 +14,9 @@ public class JumpWord implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int nn = programCounter.wordOperand(memory);
         if (predicate.test(flags)) {
+            /*if (nn == 0xC1B9) {
+                throw new RuntimeException();
+            }*/
             programCounter.write(nn);
         }
         return 12;
@@ -25,5 +28,17 @@ public class JumpWord implements Instruction {
 
     public static Instruction ifLastNotZero() {
         return new JumpWord((flags) -> !flags.isSet(Flags.Flag.ZERO));
+    }
+
+    public static Instruction ifLastZero() {
+        return new JumpWord((flags) -> flags.isSet(Flags.Flag.ZERO));
+    }
+
+    public static Instruction ifLastNotCarry() {
+        return new JumpWord((flags) -> !flags.isSet(Flags.Flag.CARRY));
+    }
+
+    public static Instruction ifLastCarry() {
+        return new JumpWord((flags) -> flags.isSet(Flags.Flag.CARRY));
     }
 }

@@ -16,8 +16,32 @@ public class Restart implements Instruction {
         return 32;
     }
 
+    public static Instruction to00() {
+        return new Restart(0x00);
+    }
+
+    public static Instruction to08() {
+        return new Restart(0x08);
+    }
+
+    public static Instruction to10() {
+        return new Restart(0x10);
+    }
+
+    public static Instruction to18() {
+        return new Restart(0x18);
+    }
+
+    public static Instruction to20() {
+        return new Restart(0x20);
+    }
+
     public static Instruction to28() {
         return new Restart(0x28);
+    }
+
+    public static Instruction to30() {
+        return new Restart(0x30);
     }
 
     public static Instruction to38() { return new Restart(0x38); }

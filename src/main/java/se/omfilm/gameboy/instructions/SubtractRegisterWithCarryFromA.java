@@ -2,10 +2,10 @@ package se.omfilm.gameboy.instructions;
 
 import se.omfilm.gameboy.*;
 
-public class SubtractRegisterFromA implements Instruction {
+public class SubtractRegisterWithCarryFromA implements Instruction {
     private final RegisterReader source;
 
-    private SubtractRegisterFromA(RegisterReader source) {
+    private SubtractRegisterWithCarryFromA(RegisterReader source) {
         this.source = source;
     }
 
@@ -13,7 +13,7 @@ public class SubtractRegisterFromA implements Instruction {
         int n = source.read(registers);
         int a = registers.readA();
 
-        int result = (a - n) & 0xFF;
+        int result = (a - n - (flags.isSet(Flags.Flag.CARRY) ? 1 : 0)) & 0xFF;
         boolean zero = result == 0;
         boolean carry = n > a;
         boolean halfCarry = (n & 0x0F) > (a & 0x0F);
@@ -28,30 +28,30 @@ public class SubtractRegisterFromA implements Instruction {
     }
 
     public static Instruction fromA() {
-        return new SubtractRegisterFromA(Registers::readA);
+        return new SubtractRegisterWithCarryFromA(Registers::readA);
     }
 
     public static Instruction fromB() {
-        return new SubtractRegisterFromA(Registers::readB);
+        return new SubtractRegisterWithCarryFromA(Registers::readB);
     }
 
     public static Instruction fromC() {
-        return new SubtractRegisterFromA(Registers::readC);
+        return new SubtractRegisterWithCarryFromA(Registers::readC);
     }
 
     public static Instruction fromD() {
-        return new SubtractRegisterFromA(Registers::readD);
+        return new SubtractRegisterWithCarryFromA(Registers::readD);
     }
 
     public static Instruction fromE() {
-        return new SubtractRegisterFromA(Registers::readE);
+        return new SubtractRegisterWithCarryFromA(Registers::readE);
     }
 
     public static Instruction fromH() {
-        return new SubtractRegisterFromA(Registers::readH);
+        return new SubtractRegisterWithCarryFromA(Registers::readH);
     }
 
     public static Instruction fromL() {
-        return new SubtractRegisterFromA(Registers::readL);
+        return new SubtractRegisterWithCarryFromA(Registers::readL);
     }
 }

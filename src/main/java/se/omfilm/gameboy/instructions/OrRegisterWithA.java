@@ -33,4 +33,20 @@ public class OrRegisterWithA implements Instruction {
     public static Instruction C() {
         return new OrRegisterWithA(Registers::readC);
     }
+
+    public static Instruction D() {
+        return new OrRegisterWithA(Registers::readD);
+    }
+
+    public static Instruction E() {
+        return new OrRegisterWithA(Registers::readE);
+    }
+
+    public static Instruction H() {
+        return new OrRegisterWithA(Registers::readH);
+    }
+
+    public static Instruction L() {
+        return new OrRegisterWithA(Registers::readL);
+    }
 }

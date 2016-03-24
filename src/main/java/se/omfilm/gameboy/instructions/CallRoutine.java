@@ -29,4 +29,16 @@ public class CallRoutine implements Instruction {
     public static Instruction ifLastNotZero() {
         return new CallRoutine((flags) -> !flags.isSet(Flags.Flag.ZERO));
     }
+
+    public static Instruction ifLastZero() {
+        return new CallRoutine((flags) -> flags.isSet(Flags.Flag.ZERO));
+    }
+
+    public static Instruction ifLastNotCarry() {
+        return new CallRoutine((flags) -> !flags.isSet(Flags.Flag.CARRY));
+    }
+
+    public static Instruction ifLastCarry() {
+        return new CallRoutine((flags) -> flags.isSet(Flags.Flag.CARRY));
+    }
 }

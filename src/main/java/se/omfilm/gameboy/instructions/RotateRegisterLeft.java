@@ -44,12 +44,56 @@ public class RotateRegisterLeft implements Instruction {
         return new RotateRegisterLeft(Registers::readA, Registers::writeA, RotateRegisterLeft::carryFromBit7);
     }
 
+    public static Instruction B() {
+        return new RotateRegisterLeft(Registers::readB, Registers::writeB, RotateRegisterLeft::carryFromBit7);
+    }
+
+    public static Instruction C() {
+        return new RotateRegisterLeft(Registers::readC, Registers::writeC, RotateRegisterLeft::carryFromBit7);
+    }
+
+    public static Instruction D() {
+        return new RotateRegisterLeft(Registers::readD, Registers::writeD, RotateRegisterLeft::carryFromBit7);
+    }
+
+    public static Instruction E() {
+        return new RotateRegisterLeft(Registers::readE, Registers::writeE, RotateRegisterLeft::carryFromBit7);
+    }
+
+    public static Instruction H() {
+        return new RotateRegisterLeft(Registers::readH, Registers::writeH, RotateRegisterLeft::carryFromBit7);
+    }
+
+    public static Instruction L() {
+        return new RotateRegisterLeft(Registers::readL, Registers::writeL, RotateRegisterLeft::carryFromBit7);
+    }
+
     public static Instruction AthroughCarry() {
         return new RotateRegisterLeft(Registers::readA, Registers::writeA, RotateRegisterLeft::carryFromFlags);
     }
 
+    public static Instruction BthroughCarry() {
+        return new RotateRegisterLeft(Registers::readB, Registers::writeB, RotateRegisterLeft::carryFromFlags);
+    }
+
     public static Instruction CthroughCarry() {
         return new RotateRegisterLeft(Registers::readC, Registers::writeC, RotateRegisterLeft::carryFromFlags);
+    }
+
+    public static Instruction DthroughCarry() {
+        return new RotateRegisterLeft(Registers::readD, Registers::writeD, RotateRegisterLeft::carryFromFlags);
+    }
+
+    public static Instruction EthroughCarry() {
+        return new RotateRegisterLeft(Registers::readE, Registers::writeE, RotateRegisterLeft::carryFromFlags);
+    }
+
+    public static Instruction HthroughCarry() {
+        return new RotateRegisterLeft(Registers::readH, Registers::writeH, RotateRegisterLeft::carryFromFlags);
+    }
+
+    public static Instruction LthroughCarry() {
+        return new RotateRegisterLeft(Registers::readL, Registers::writeL, RotateRegisterLeft::carryFromFlags);
     }
 
     private interface CarryTransfer {

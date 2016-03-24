@@ -21,4 +21,12 @@ public class DecrementWordRegister implements Instruction {
     public static Instruction BC() {
         return new DecrementWordRegister(Registers::readBC, Registers::writeBC);
     }
+
+    public static Instruction DE() {
+        return new DecrementWordRegister(Registers::readDE, Registers::writeDE);
+    }
+
+    public static Instruction HL() {
+        return new DecrementWordRegister(Registers::readHL, Registers::writeHL);
+    }
 }

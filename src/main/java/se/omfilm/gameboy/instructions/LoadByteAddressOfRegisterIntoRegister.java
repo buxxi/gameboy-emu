@@ -17,6 +17,10 @@ public class LoadByteAddressOfRegisterIntoRegister implements Instruction {
         return 8;
     }
 
+    public static Instruction fromBCtoA() {
+        return new LoadByteAddressOfRegisterIntoRegister(Registers::readBC, Registers::writeA);
+    }
+
     public static Instruction fromDEtoA() {
         return new LoadByteAddressOfRegisterIntoRegister(Registers::readDE, Registers::writeA);
     }

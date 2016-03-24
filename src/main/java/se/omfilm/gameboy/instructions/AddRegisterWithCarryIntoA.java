@@ -29,7 +29,31 @@ public class AddRegisterWithCarryIntoA implements Instruction {
         return 4;
     }
 
+    public static Instruction A() {
+        return new AddRegisterWithCarryIntoA(Registers::readA);
+    }
+
+    public static Instruction B() {
+        return new AddRegisterWithCarryIntoA(Registers::readB);
+    }
+
+    public static Instruction C() {
+        return new AddRegisterWithCarryIntoA(Registers::readC);
+    }
+
+    public static Instruction D() {
+        return new AddRegisterWithCarryIntoA(Registers::readD);
+    }
+
     public static Instruction E() {
         return new AddRegisterWithCarryIntoA(Registers::readE);
+    }
+
+    public static Instruction H() {
+        return new AddRegisterWithCarryIntoA(Registers::readH);
+    }
+
+    public static Instruction L() {
+        return new AddRegisterWithCarryIntoA(Registers::readL);
     }
 }

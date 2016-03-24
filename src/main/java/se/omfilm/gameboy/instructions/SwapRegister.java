@@ -27,4 +27,28 @@ public class SwapRegister implements Instruction {
     public static Instruction A() {
         return new SwapRegister(Registers::readA, Registers::writeA);
     }
+
+    public static Instruction B() {
+        return new SwapRegister(Registers::readB, Registers::writeB);
+    }
+
+    public static Instruction C() {
+        return new SwapRegister(Registers::readC, Registers::writeC);
+    }
+
+    public static Instruction D() {
+        return new SwapRegister(Registers::readD, Registers::writeD);
+    }
+
+    public static Instruction E() {
+        return new SwapRegister(Registers::readE, Registers::writeE);
+    }
+
+    public static Instruction H() {
+        return new SwapRegister(Registers::readH, Registers::writeH);
+    }
+
+    public static Instruction L() {
+        return new SwapRegister(Registers::readL, Registers::writeL);
+    }
 }

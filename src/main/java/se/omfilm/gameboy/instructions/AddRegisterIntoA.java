@@ -33,7 +33,27 @@ public class AddRegisterIntoA implements Instruction {
         return new AddRegisterIntoA(Registers::readA);
     }
 
+    public static Instruction B() {
+        return new AddRegisterIntoA(Registers::readB);
+    }
+
     public static Instruction C() {
         return new AddRegisterIntoA(Registers::readC);
+    }
+
+    public static Instruction D() {
+        return new AddRegisterIntoA(Registers::readD);
+    }
+
+    public static Instruction E() {
+        return new AddRegisterIntoA(Registers::readE);
+    }
+
+    public static Instruction H() {
+        return new AddRegisterIntoA(Registers::readH);
+    }
+
+    public static Instruction L() {
+        return new AddRegisterIntoA(Registers::readL);
     }
 }
