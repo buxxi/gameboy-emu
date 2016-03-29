@@ -33,13 +33,12 @@ public class RotateRegisterRight implements Instruction {
     }
 
     private static int carryFromFlags(Flags flags, int n) {
-        return flags.isSet(Flags.Flag.CARRY) ? 1 : 0;
+        return flags.isSet(Flags.Flag.CARRY) ? 0b1000_0000 : 0;
     }
 
     private static int carryFromBit0(Flags flags, int n) {
-        return (n & 0b0000_0001);
+        return (n & 0b0000_0001) << 7;
     }
-
 
     public static Instruction A() {
         return new RotateRegisterRight(Registers::readA, Registers::writeA, RotateRegisterRight::carryFromBit0); //TODO: fix this having 4 cycles without anonymous class
@@ -70,7 +69,31 @@ public class RotateRegisterRight implements Instruction {
     }
 
     public static Instruction AthroughCarry() {
+        return new RotateRegisterRight(Registers::readA, Registers::writeA, RotateRegisterRight::carryFromFlags);
+    }
+
+    public static Instruction BthroughCarry() {
+        return new RotateRegisterRight(Registers::readB, Registers::writeB, RotateRegisterRight::carryFromFlags);
+    }
+
+    public static Instruction CthroughCarry() {
+        return new RotateRegisterRight(Registers::readC, Registers::writeC, RotateRegisterRight::carryFromFlags);
+    }
+
+    public static Instruction DthroughCarry() {
+        return new RotateRegisterRight(Registers::readD, Registers::writeD, RotateRegisterRight::carryFromFlags);
+    }
+
+    public static Instruction EthroughCarry() {
         return new RotateRegisterRight(Registers::readE, Registers::writeE, RotateRegisterRight::carryFromFlags);
+    }
+
+    public static Instruction HthroughCarry() {
+        return new RotateRegisterRight(Registers::readH, Registers::writeH, RotateRegisterRight::carryFromFlags);
+    }
+
+    public static Instruction LthroughCarry() {
+        return new RotateRegisterRight(Registers::readL, Registers::writeL, RotateRegisterRight::carryFromFlags);
     }
 
     private interface CarryTransfer {

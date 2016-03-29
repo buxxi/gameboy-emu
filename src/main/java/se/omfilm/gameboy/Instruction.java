@@ -308,14 +308,14 @@ public interface Instruction {
         RL_L(       0xCB15, RotateRegisterLeft::LthroughCarry), //Page 102
         RL_HL(      0xCB16, RotateAddressOfHLLeft::flag), //Page 102
         RL_A(       0xCB17, RotateRegisterLeft::AthroughCarry), //Page 102
-        RR_B(       0xCB18, RotateRegisterRight::B), //Page 104
-        RR_C(       0xCB19, RotateRegisterRight::C), //Page 104
-        RR_D(       0xCB1A, RotateRegisterRight::D), //Page 104
-        RR_E(       0xCB1B, RotateRegisterRight::E), //Page 104
-        RR_H(       0xCB1C, RotateRegisterRight::H), //Page 104
-        RR_L(       0xCB1D, RotateRegisterRight::L), //Page 104
+        RR_B(       0xCB18, RotateRegisterRight::BthroughCarry), //Page 104
+        RR_C(       0xCB19, RotateRegisterRight::CthroughCarry), //Page 104
+        RR_D(       0xCB1A, RotateRegisterRight::DthroughCarry), //Page 104
+        RR_E(       0xCB1B, RotateRegisterRight::EthroughCarry), //Page 104
+        RR_H(       0xCB1C, RotateRegisterRight::HthroughCarry), //Page 104
+        RR_L(       0xCB1D, RotateRegisterRight::LthroughCarry), //Page 104
         RR_HL(      0xCB1E, RotateAddressOfHLRight::flag), //Page 104
-        RR_A(       0xCB1F, RotateRegisterRight::A), //Page 104
+        RR_A(       0xCB1F, RotateRegisterRight::AthroughCarry), //Page 104
 
         SLA_B(      0xCB20, ShiftRegisterLeft::B), //Page 105
         SLA_C(      0xCB21, ShiftRegisterLeft::C), //Page 105

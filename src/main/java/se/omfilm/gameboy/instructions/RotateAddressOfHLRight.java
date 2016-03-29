@@ -30,11 +30,11 @@ public class RotateAddressOfHLRight implements Instruction {
     }
 
     private static int carryFromFlags(Flags flags, int n) {
-        return flags.isSet(Flags.Flag.CARRY) ? 1 : 0;
+        return flags.isSet(Flags.Flag.CARRY) ? 0b1000_0000 : 0;
     }
 
     private static int carryFromBit0(Flags flags, int n) {
-        return (n & 0b0000_0001);
+        return (n & 0b0000_0001) << 7;
     }
 
     public static Instruction bit0() {
