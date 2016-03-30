@@ -9,12 +9,10 @@ public class AddStackPointerIntoHL implements Instruction {
         int result = n + hl;
 
         boolean carry = result > 0xFFFF;
-        result = result & 0xFFFF;
-        boolean halfCarry = ((result ^ hl ^ n) & 0x1000) != 0;
+        boolean halfCarry = (hl & 0xFFF) > (result & 0xFFF);
 
-        registers.writeHL(result);
+        registers.writeHL(result & 0xFFFF);
 
-        flags.set(Flags.Flag.ZERO, result == 0);
         flags.reset(Flags.Flag.SUBTRACT);
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
