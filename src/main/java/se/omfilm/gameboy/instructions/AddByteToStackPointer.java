@@ -4,9 +4,9 @@ import se.omfilm.gameboy.*;
 
 public class AddByteToStackPointer implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int n = programCounter.byteOperand(memory);
+        int n = (byte) programCounter.byteOperand(memory);
         int sp = stackPointer.read();
-        int result = (n + sp) & 0xFFFF;
+        int result = (sp + n) & 0xFFFF;
 
         boolean carry = ((sp ^ n ^ result) & 0x100) != 0;
         boolean halfCarry = ((sp ^ n ^ result) & 0x10) != 0;
