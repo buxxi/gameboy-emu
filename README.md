@@ -5,8 +5,8 @@ My attempt at learning to write an emulator
 __Current status:__
  - 01-special: __Passed__
  - 02-interrupts: Failed #2 (EI)
- - 03-op sp,hl: Failed (33 39 E8 E8 F8 F8)
- - 04-op r,imm: Failed (DE)
+ - 03-op sp,hl: Failed (E8 F8)
+ - 04-op r,imm: __Passed__
  - 05-op rp: __Passed__
  - 06-ld r,r: __Passed__
  - 07-jr,jp,call,ret,rst: __Passed__
