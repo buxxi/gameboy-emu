@@ -30,7 +30,7 @@ public interface Instruction {
         INC_B(      0x04, IncrementByteRegister::B), //Page 88
         DEC_B(      0x05, DecrementByteRegister::B), //Page 89
         LD_B_n(     0x06, LoadByteIntoRegister::toB), //Page 65
-        RLCA(       0x07, RotateRegisterLeft::A), //Page 99
+        RLCA(       0x07, RotateRegisterLeft::AresetZero), //Page 99
         LD_nn_SP(   0x08, LoadStackPointerToAddressOfWord::new), //Page 78
         ADD_HL_BC(  0x09, AddWordRegisterIntoRegister::BCtoHL), //Page 90
         LD_A_BC(    0x0A, LoadByteAddressOfRegisterIntoRegister::fromBCtoA), //Page 68
@@ -38,7 +38,7 @@ public interface Instruction {
         INC_C(      0x0C, IncrementByteRegister::C), //Page 88
         DEC_C(      0x0D, DecrementByteRegister::C), //Page 89
         LD_C_n(     0x0E, LoadByteIntoRegister::toC), //Page 65
-        RRCA(       0x0F, RotateRegisterRight::A), //Page 100
+        RRCA(       0x0F, RotateRegisterRight::AresetZero), //Page 100
 
         STOP(       0x10, InvalidInstruction::new), //Page 97
         LD_DE_nn(   0x11, LoadWordIntoRegister::toDE), //Page 76
@@ -47,7 +47,7 @@ public interface Instruction {
         INC_D(      0x14, IncrementByteRegister::D), //Page 88
         DEC_D(      0x15, DecrementByteRegister::D), //Page 89
         LD_D_n(     0x16, LoadByteIntoRegister::toD), //Page 65
-        RLA(        0x17, RotateRegisterLeft::AthroughCarry), //Page 99
+        RLA(        0x17, RotateRegisterLeft::AthroughCarryResetZero), //Page 99
         JR_n(       0x18, JumpRelative::unconditional), //Page 112
         ADD_HL_DE(  0x19, AddWordRegisterIntoRegister::DEtoHL), //Page 90
         LD_A_DE(    0x1A, LoadByteAddressOfRegisterIntoRegister::fromDEtoA), //Page 68
@@ -55,7 +55,7 @@ public interface Instruction {
         INC_E(      0x1C, IncrementByteRegister::E), //Page 88
         DEC_E(      0x1D, DecrementByteRegister::E), //Page 89
         LD_E_n(     0x1E, LoadByteIntoRegister::toE), //Page 65
-        RRA(        0x1F, RotateRegisterRight::AthroughCarry), //Page 100
+        RRA(        0x1F, RotateRegisterRight::AthroughCarryResetZero), //Page 100
 
         JR_NZ_n(    0x20, JumpRelative::ifLastNotZero), //Page 113
         LD_HL_nn(   0x21, LoadWordIntoRegister::toHL), //Page 76
