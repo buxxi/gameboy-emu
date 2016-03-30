@@ -13,4 +13,4 @@ __Current status:__
  - 08-misc instrs: __Passed__
  - 09-op r,r: Failed (98 99 9A 9B 9C 9D 9F 07 17 0F 1F)
  - 10-bit ops: Crash (Unimplemented instructions)
- - 11-op a,(hl): Failed (9E 34)
+ - 11-op a,(hl): __Passed__
