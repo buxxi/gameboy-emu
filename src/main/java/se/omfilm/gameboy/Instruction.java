@@ -148,6 +148,7 @@ public interface Instruction {
         LD_HL_E(    0x73, LoadRegisterIntoAddressOfWordRegister::EtoHL), //Page 67
         LD_HL_H(    0x74, LoadRegisterIntoAddressOfWordRegister::HtoHL), //Page 67
         LD_HL_L(    0x75, LoadRegisterIntoAddressOfWordRegister::LtoHL), //Page 67
+        HALT(       0x76, InvalidInstruction::new), //Page 97
         LD_HL_A(    0x77, LoadRegisterIntoAddressOfWordRegister::AtoHL), //Page 69
         LD_A_B(     0x78, LoadRegisterIntoRegister::fromBtoA), //Page 66
         LD_A_C(     0x79, LoadRegisterIntoRegister::fromCtoA), //Page 66
@@ -351,43 +352,209 @@ public interface Instruction {
         SRL_HL(     0xCB3E, ShiftAddressOfHLRight::resetBit7), //Page 107
         SRL_A(      0xCB3F, ShiftRegisterRight::A), //Page 107
 
+        BIT_0B(     0xCB40, CompareBit::bit0ofB), //Page 108
+        BIT_0C(     0xCB41, CompareBit::bit0ofC), //Page 108
+        BIT_0D(     0xCB42, CompareBit::bit0ofD), //Page 108
+        BIT_0E(     0xCB43, CompareBit::bit0ofE), //Page 108
+        BIT_0H(     0xCB44, CompareBit::bit0ofH), //Page 108
+        BIT_0L(     0xCB45, CompareBit::bit0ofL), //Page 108
         BIT_0_HL(   0xCB46, CompareBitAddressOfHL::bit0), //Page 108
+        BIT_0A(     0xCB47, CompareBit::bit0ofA), //Page 108
+        BIT_1B(     0xCB48, CompareBit::bit1ofB), //Page 108
+        BIT_1C(     0xCB49, CompareBit::bit1ofC), //Page 108
+        BIT_1D(     0xCB4A, CompareBit::bit1ofD), //Page 108
+        BIT_1E(     0xCB4B, CompareBit::bit1ofE), //Page 108
+        BIT_1H(     0xCB4C, CompareBit::bit1ofH), //Page 108
+        BIT_1L(     0xCB4D, CompareBit::bit1ofL), //Page 108
         BIT_1_HL(   0xCB4E, CompareBitAddressOfHL::bit1), //Page 108
+        BIT_1A(     0xCB4F, CompareBit::bit1ofA), //Page 108
 
+        BIT_2B(     0xCB50, CompareBit::bit2ofB), //Page 108
+        BIT_2C(     0xCB51, CompareBit::bit2ofC), //Page 108
+        BIT_2D(     0xCB52, CompareBit::bit2ofD), //Page 108
+        BIT_2E(     0xCB53, CompareBit::bit2ofE), //Page 108
+        BIT_2H(     0xCB54, CompareBit::bit2ofH), //Page 108
+        BIT_2L(     0xCB55, CompareBit::bit2ofL), //Page 108
         BIT_2_HL(   0xCB56, CompareBitAddressOfHL::bit2), //Page 108
+        BIT_2A(     0xCB57, CompareBit::bit2ofA), //Page 108
+        BIT_3B(     0xCB58, CompareBit::bit3ofB), //Page 108
+        BIT_3C(     0xCB59, CompareBit::bit3ofC), //Page 108
+        BIT_3D(     0xCB5A, CompareBit::bit3ofD), //Page 108
+        BIT_3E(     0xCB5B, CompareBit::bit3ofE), //Page 108
+        BIT_3H(     0xCB5C, CompareBit::bit3ofH), //Page 108
+        BIT_3L(     0xCB5D, CompareBit::bit3ofL), //Page 108
         BIT_3_HL(   0xCB5E, CompareBitAddressOfHL::bit3), //Page 108
+        BIT_3A(     0xCB5F, CompareBit::bit3ofA), //Page 108
 
+        BIT_4B(     0xCB60, CompareBit::bit4ofB), //Page 108
+        BIT_4C(     0xCB61, CompareBit::bit4ofC), //Page 108
+        BIT_4D(     0xCB62, CompareBit::bit4ofD), //Page 108
+        BIT_4E(     0xCB63, CompareBit::bit4ofE), //Page 108
+        BIT_4H(     0xCB64, CompareBit::bit4ofH), //Page 108
+        BIT_4L(     0xCB65, CompareBit::bit4ofL), //Page 108
         BIT_4_HL(   0xCB66, CompareBitAddressOfHL::bit4), //Page 108
+        BIT_4A(     0xCB67, CompareBit::bit4ofA), //Page 108
+        BIT_5B(     0xCB68, CompareBit::bit5ofB), //Page 108
+        BIT_5C(     0xCB69, CompareBit::bit5ofC), //Page 108
+        BIT_5D(     0xCB6A, CompareBit::bit5ofD), //Page 108
+        BIT_5E(     0xCB6B, CompareBit::bit5ofE), //Page 108
+        BIT_5H(     0xCB6C, CompareBit::bit5ofH), //Page 108
+        BIT_5L(     0xCB6D, CompareBit::bit5ofL), //Page 108
         BIT_5_HL(   0xCB6E, CompareBitAddressOfHL::bit5), //Page 108
+        BIT_5A(     0xCB6F, CompareBit::bit5ofA), //Page 108
 
+        BIT_6B(     0xCB70, CompareBit::bit6ofB), //Page 108
+        BIT_6C(     0xCB71, CompareBit::bit6ofC), //Page 108
+        BIT_6D(     0xCB72, CompareBit::bit6ofD), //Page 108
+        BIT_6E(     0xCB73, CompareBit::bit6ofE), //Page 108
+        BIT_6H(     0xCB74, CompareBit::bit6ofH), //Page 108
+        BIT_6L(     0xCB75, CompareBit::bit6ofL), //Page 108
         BIT_6_HL(   0xCB76, CompareBitAddressOfHL::bit6), //Page 108
-        BIT_7H(     0xCB7C, CompareBit7::new), //Page 108
+        BIT_6A(     0xCB77, CompareBit::bit6ofA), //Page 108
+        BIT_7B(     0xCB78, CompareBit::bit7ofB), //Page 108
+        BIT_7C(     0xCB79, CompareBit::bit7ofC), //Page 108
+        BIT_7D(     0xCB7A, CompareBit::bit7ofD), //Page 108
+        BIT_7E(     0xCB7B, CompareBit::bit7ofE), //Page 108
+        BIT_7H(     0xCB7C, CompareBit::bit7ofH), //Page 108
+        BIT_7L(     0xCB7D, CompareBit::bit7ofL), //Page 108
         BIT_7_HL(   0xCB7E, CompareBitAddressOfHL::bit7), //Page 108
+        BIT_7A(     0xCB7F, CompareBit::bit7ofA), //Page 108
 
+        RES_B0(     0xCB80, ResetBitInRegister::bit0ofB), //Page 110
+        RES_C0(     0xCB81, ResetBitInRegister::bit0ofC), //Page 110
+        RES_D0(     0xCB82, ResetBitInRegister::bit0ofD), //Page 110
+        RES_E0(     0xCB83, ResetBitInRegister::bit0ofE), //Page 110
+        RES_H0(     0xCB84, ResetBitInRegister::bit0ofH), //Page 110
+        RES_L0(     0xCB85, ResetBitInRegister::bit0ofL), //Page 110
         RES_0_HL(   0xCB86, ResetBitAddressOfHL::bit0), //Page 110
-        RES_A0(     0xCB87, ResetBitInRegister::bit0InA), //Page 110
+        RES_A0(     0xCB87, ResetBitInRegister::bit0ofA), //Page 110
+        RES_B1(     0xCB88, ResetBitInRegister::bit1ofB), //Page 110
+        RES_C1(     0xCB89, ResetBitInRegister::bit1ofC), //Page 110
+        RES_D1(     0xCB8A, ResetBitInRegister::bit1ofD), //Page 110
+        RES_E1(     0xCB8B, ResetBitInRegister::bit1ofE), //Page 110
+        RES_H1(     0xCB8C, ResetBitInRegister::bit1ofH), //Page 110
+        RES_L1(     0xCB8D, ResetBitInRegister::bit1ofL), //Page 110
         RES_1_HL(   0xCB8E, ResetBitAddressOfHL::bit1), //Page 110
+        RES_A1(     0xCB8F, ResetBitInRegister::bit1ofA), //Page 110
 
+        RES_B2(     0xCB90, ResetBitInRegister::bit2ofB), //Page 110
+        RES_C2(     0xCB91, ResetBitInRegister::bit2ofC), //Page 110
+        RES_D2(     0xCB92, ResetBitInRegister::bit2ofD), //Page 110
+        RES_E2(     0xCB93, ResetBitInRegister::bit2ofE), //Page 110
+        RES_H2(     0xCB94, ResetBitInRegister::bit2ofH), //Page 110
+        RES_L2(     0xCB95, ResetBitInRegister::bit2ofL), //Page 110
         RES_2_HL(   0xCB96, ResetBitAddressOfHL::bit2), //Page 110
+        RES_A2(     0xCB97, ResetBitInRegister::bit2ofA), //Page 110
+        RES_B3(     0xCB98, ResetBitInRegister::bit3ofB), //Page 110
+        RES_C3(     0xCB99, ResetBitInRegister::bit3ofC), //Page 110
+        RES_D3(     0xCB9A, ResetBitInRegister::bit3ofD), //Page 110
+        RES_E3(     0xCB9B, ResetBitInRegister::bit3ofE), //Page 110
+        RES_H3(     0xCB9C, ResetBitInRegister::bit3ofH), //Page 110
+        RES_L3(     0xCB9D, ResetBitInRegister::bit3ofL), //Page 110
         RES_3_HL(   0xCB9E, ResetBitAddressOfHL::bit3), //Page 110
+        RES_A3(     0xCB9F, ResetBitInRegister::bit3ofA), //Page 110
 
+        RES_B4(     0xCBA0, ResetBitInRegister::bit4ofB), //Page 110
+        RES_C4(     0xCBA1, ResetBitInRegister::bit4ofC), //Page 110
+        RES_D4(     0xCBA2, ResetBitInRegister::bit4ofD), //Page 110
+        RES_E4(     0xCBA3, ResetBitInRegister::bit4ofE), //Page 110
+        RES_H4(     0xCBA4, ResetBitInRegister::bit4ofH), //Page 110
+        RES_L4(     0xCBA5, ResetBitInRegister::bit4ofL), //Page 110
         RES_4_HL(   0xCBA6, ResetBitAddressOfHL::bit4), //Page 110
+        RES_A4(     0xCBA7, ResetBitInRegister::bit4ofA), //Page 110
+        RES_B5(     0xCBA8, ResetBitInRegister::bit5ofB), //Page 110
+        RES_C5(     0xCBA9, ResetBitInRegister::bit5ofC), //Page 110
+        RES_D5(     0xCBAA, ResetBitInRegister::bit5ofD), //Page 110
+        RES_E5(     0xCBAB, ResetBitInRegister::bit5ofE), //Page 110
+        RES_H5(     0xCBAC, ResetBitInRegister::bit5ofH), //Page 110
+        RES_L5(     0xCBAD, ResetBitInRegister::bit5ofL), //Page 110
         RES_5_HL(   0xCBAE, ResetBitAddressOfHL::bit5), //Page 110
+        RES_A5(     0xCBAF, ResetBitInRegister::bit5ofA), //Page 110
 
+        RES_B6(     0xCBB0, ResetBitInRegister::bit6ofB), //Page 110
+        RES_C6(     0xCBB1, ResetBitInRegister::bit6ofC), //Page 110
+        RES_D6(     0xCBB2, ResetBitInRegister::bit6ofD), //Page 110
+        RES_E6(     0xCBB3, ResetBitInRegister::bit6ofE), //Page 110
+        RES_H6(     0xCBB4, ResetBitInRegister::bit6ofH), //Page 110
+        RES_L6(     0xCBB5, ResetBitInRegister::bit6ofL), //Page 110
         RES_6_HL(   0xCBB6, ResetBitAddressOfHL::bit6), //Page 110
+        RES_A6(     0xCBB7, ResetBitInRegister::bit6ofA), //Page 110
+        RES_B7(     0xCBB8, ResetBitInRegister::bit7ofB), //Page 110
+        RES_C7(     0xCBB9, ResetBitInRegister::bit7ofC), //Page 110
+        RES_D7(     0xCBBA, ResetBitInRegister::bit7ofD), //Page 110
+        RES_E7(     0xCBBB, ResetBitInRegister::bit7ofE), //Page 110
+        RES_H7(     0xCBBC, ResetBitInRegister::bit7ofH), //Page 110
+        RES_L7(     0xCBBD, ResetBitInRegister::bit7ofL), //Page 110
         RES_7_HL(   0xCBBE, ResetBitAddressOfHL::bit7), //Page 110
+        RES_A7(     0xCBBF, ResetBitInRegister::bit7ofA), //Page 110
 
+        SET_B0(     0xCBC0, SetBitInRegister::bit0ofB), //Page 109
+        SET_C0(     0xCBC1, SetBitInRegister::bit0ofC), //Page 109
+        SET_D0(     0xCBC2, SetBitInRegister::bit0ofD), //Page 109
+        SET_E0(     0xCBC3, SetBitInRegister::bit0ofE), //Page 109
+        SET_H0(     0xCBC4, SetBitInRegister::bit0ofH), //Page 109
+        SET_L0(     0xCBC5, SetBitInRegister::bit0ofL), //Page 109
         SET_0_HL(   0xCBC6, SetBitAddressOfHL::bit0), //Page 109
+        SET_A0(     0xCBC7, SetBitInRegister::bit0ofA), //Page 109
+        SET_B1(     0xCBC8, SetBitInRegister::bit1ofB), //Page 109
+        SET_C1(     0xCBC9, SetBitInRegister::bit1ofC), //Page 109
+        SET_D1(     0xCBCA, SetBitInRegister::bit1ofD), //Page 109
+        SET_E1(     0xCBCB, SetBitInRegister::bit1ofE), //Page 109
+        SET_H1(     0xCBCC, SetBitInRegister::bit1ofH), //Page 109
+        SET_L1(     0xCBCD, SetBitInRegister::bit1ofL), //Page 109
         SET_1_HL(   0xCBCE, SetBitAddressOfHL::bit1), //Page 109
+        SET_A1(     0xCBCF, SetBitInRegister::bit1ofA), //Page 109
 
+        SET_B2(     0xCBD0, SetBitInRegister::bit2ofB), //Page 109
+        SET_C2(     0xCBD1, SetBitInRegister::bit2ofC), //Page 109
+        SET_D2(     0xCBD2, SetBitInRegister::bit2ofD), //Page 109
+        SET_E2(     0xCBD3, SetBitInRegister::bit2ofE), //Page 109
+        SET_H2(     0xCBD4, SetBitInRegister::bit2ofH), //Page 109
+        SET_L2(     0xCBD5, SetBitInRegister::bit2ofL), //Page 109
         SET_2_HL(   0xCBD6, SetBitAddressOfHL::bit2), //Page 109
+        SET_A2(     0xCBD7, SetBitInRegister::bit2ofA), //Page 109
+        SET_B3(     0xCBD8, SetBitInRegister::bit3ofB), //Page 109
+        SET_C3(     0xCBD9, SetBitInRegister::bit3ofC), //Page 109
+        SET_D3(     0xCBDA, SetBitInRegister::bit3ofD), //Page 109
+        SET_E3(     0xCBDB, SetBitInRegister::bit3ofE), //Page 109
+        SET_H3(     0xCBDC, SetBitInRegister::bit3ofH), //Page 109
+        SET_L3(     0xCBDD, SetBitInRegister::bit3ofL), //Page 109
         SET_3_HL(   0xCBDE, SetBitAddressOfHL::bit3), //Page 109
+        SET_A3(     0xCBDF, SetBitInRegister::bit3ofA), //Page 109
 
+        SET_B4(     0xCBE0, SetBitInRegister::bit4ofB), //Page 109
+        SET_C4(     0xCBE1, SetBitInRegister::bit4ofC), //Page 109
+        SET_D4(     0xCBE2, SetBitInRegister::bit4ofD), //Page 109
+        SET_E4(     0xCBE3, SetBitInRegister::bit4ofE), //Page 109
+        SET_H4(     0xCBE4, SetBitInRegister::bit4ofH), //Page 109
+        SET_L4(     0xCBE5, SetBitInRegister::bit4ofL), //Page 109
         SET_4_HL(   0xCBE6, SetBitAddressOfHL::bit4), //Page 109
+        SET_A4(     0xCBE7, SetBitInRegister::bit4ofA), //Page 109
+        SET_B5(     0xCBE8, SetBitInRegister::bit5ofB), //Page 109
+        SET_C5(     0xCBE9, SetBitInRegister::bit5ofC), //Page 109
+        SET_D5(     0xCBEA, SetBitInRegister::bit5ofD), //Page 109
+        SET_E5(     0xCBEB, SetBitInRegister::bit5ofE), //Page 109
+        SET_H5(     0xCBEC, SetBitInRegister::bit5ofH), //Page 109
+        SET_L5(     0xCBED, SetBitInRegister::bit5ofL), //Page 109
         SET_5_HL(   0xCBEE, SetBitAddressOfHL::bit5), //Page 109
+        SET_A5(     0xCBEF, SetBitInRegister::bit5ofA), //Page 109
 
+        SET_B6(     0xCBF0, SetBitInRegister::bit6ofB), //Page 109
+        SET_C6(     0xCBF1, SetBitInRegister::bit6ofC), //Page 109
+        SET_D6(     0xCBF2, SetBitInRegister::bit6ofD), //Page 109
+        SET_E6(     0xCBF3, SetBitInRegister::bit6ofE), //Page 109
+        SET_H6(     0xCBF4, SetBitInRegister::bit6ofH), //Page 109
+        SET_L6(     0xCBF5, SetBitInRegister::bit6ofL), //Page 109
         SET_6_HL(   0xCBF6, SetBitAddressOfHL::bit6), //Page 109
-        SET_7_HL(   0xCBFE, SetBitAddressOfHL::bit7); //Page 109
+        SET_A6(     0xCBF7, SetBitInRegister::bit6ofA), //Page 109
+        SET_B7(     0xCBF8, SetBitInRegister::bit7ofB), //Page 109
+        SET_C7(     0xCBF9, SetBitInRegister::bit7ofC), //Page 109
+        SET_D7(     0xCBFA, SetBitInRegister::bit7ofD), //Page 109
+        SET_E7(     0xCBFB, SetBitInRegister::bit7ofE), //Page 109
+        SET_H7(     0xCBFC, SetBitInRegister::bit7ofH), //Page 109
+        SET_L7(     0xCBFD, SetBitInRegister::bit7ofL), //Page 109
+        SET_7_HL(   0xCBFE, SetBitAddressOfHL::bit7), //Page 109
+        SET_A7(     0xCBFF, SetBitInRegister::bit7ofA); //Page 109
 
         private final int opcode;
         private final Supplier<Instruction> instructionSupplier;

@@ -27,12 +27,8 @@ public class CPU implements Registers {
     private int d = 0;
     private int e = 0;
 
-    private boolean interruptsDisabled = false;
-    private Collection<Interrupts.Interrupt> enabledInterrupts = Collections.emptySet();
-    private Collection<Interrupts.Interrupt> requestedInterrupts = Collections.emptySet();
 
     private final Map<Instruction.InstructionType, Instruction> instructionMap;
-    private Instruction previousInstruction;
 
     public CPU() {
         instructionMap = new EnumMap<>(Instruction.InstructionType.class);
@@ -40,14 +36,23 @@ public class CPU implements Registers {
             instructionMap.put(type, type.instruction().get());
         }
         instructionMap.put(Instruction.InstructionType.STOP, this::stop);
+        instructionMap.put(Instruction.InstructionType.HALT, this::halt);
     }
 
     private int stop(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+        log.warn("stop() called but is not implemented yet");
         //TODO: handle me, stop until button is pressed
         return 4;
     }
 
+    private int halt(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+        log.warn("halt() called but is not implemented yet");
+        //TODO: handle me, stop until interrupt has occured
+        return 4;
+    }
+
     public int step(MMU memory) {
+
         if (programCounter.read() == 0x100) {
             memory.bootSuccess();
             DebugPrinter.verifyBoot(this, this.stackPointer);
@@ -60,13 +65,8 @@ public class CPU implements Registers {
 
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
         DebugPrinter.record(instructionType, sourceProgramCounter);
-        int cycles = instruction.execute(record(memory), record(this), record(this.flags), record(this.programCounter), record(this.stackPointer));
 
-        if (previousInstruction instanceof DelayedInstruction) {
-            interruptsDisabled = ((DelayedInstruction) previousInstruction).disableInterrupts();
-        }
-        previousInstruction = instruction;
-        return cycles;
+        return instruction.execute(record(memory), record(this), record(this.flags), record(this.programCounter), record(this.stackPointer));
     }
 
     public void interruptStep(MMU memory) {
@@ -234,11 +234,19 @@ public class CPU implements Registers {
             }
             writeF(f);
         }
+
+        public void setInterruptsDisabled(boolean disabled) {
+            interrupts.interruptsDisabled = disabled;
+        }
     }
 
     private class InterruptsImpl implements Interrupts {
-        public void step(MMU memory) {
-            if (requestedInterrupts.isEmpty() || enabledInterrupts.isEmpty()) {
+        private boolean interruptsDisabled = false;
+        private Collection<Interrupts.Interrupt> enabledInterrupts = Collections.emptySet();
+        private Collection<Interrupts.Interrupt> requestedInterrupts = Collections.emptySet();
+
+        private void step(MMU memory) {
+            if (interruptsDisabled || requestedInterrupts.isEmpty() || enabledInterrupts.isEmpty()) {
                 return;
             }
 
@@ -250,9 +258,6 @@ public class CPU implements Registers {
         }
 
         public void request(Interrupt... interrupts) {
-            if (interruptsDisabled) {
-                return;
-            }
             requestedInterrupts = new ArrayList<>(Arrays.asList(interrupts));
         }
 

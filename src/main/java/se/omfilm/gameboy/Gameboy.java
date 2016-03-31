@@ -13,11 +13,13 @@ public class Gameboy {
     private final MMU memory;
     private final CPU cpu;
     private final GPU gpu;
+    private final Timer timer;
 
     public Gameboy(Path bootPath, Path romPath, Screen screen) throws IOException {
         this.cpu = new CPU();
         this.gpu = new GPU(screen, this.cpu.interrupts);
-        memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), new ROM(Files.readAllBytes(romPath)), this.gpu, this.cpu.interrupts, new Timer(this.cpu.flags), new ConsoleSerialConnection());
+        this.timer = new Timer(this.cpu.interrupts);
+        this.memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), new ROM(Files.readAllBytes(romPath)), this.gpu, this.cpu.interrupts, timer, new ConsoleSerialConnection());
     }
 
     public void run() throws InterruptedException {
@@ -33,6 +35,7 @@ public class Gameboy {
 
     private Integer step() {
         int cycles = cpu.step(memory);
+        timer.step(cycles);
         gpu.step(cycles);
         cpu.interruptStep(memory);
         return cycles;

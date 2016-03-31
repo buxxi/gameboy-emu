@@ -183,6 +183,9 @@ public class MMU implements Memory {
                 case TIMER_CONTROL:
                     timer.setControl(data);
                     return;
+                case TIMER_COUNTER:
+                    timer.setCounter(data);
+                    return;
                 case LCD_STATUS:
                     gpu.setInterruptEnables(data);
                     return;
@@ -238,6 +241,7 @@ public class MMU implements Memory {
         JOYPAD(0xFF00),
         SERIAL_TRANSFER_DATA(0xFF01),
         SERIAL_TRANSFER_CONTROL(0xFF02),
+        TIMER_COUNTER(0xFF05),
         TIMER_MODULO(0xFF06),
         TIMER_CONTROL(0xFF07),
         INTERRUPT_REQUEST(0xFF0F),

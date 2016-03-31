@@ -43,13 +43,15 @@ public class Return implements Instruction {
         return new ReturnEnableInterrupts();
     }
 
-    public static class ReturnEnableInterrupts extends Return implements DelayedInstruction {
-        public ReturnEnableInterrupts() {
+    private static class ReturnEnableInterrupts extends Return {
+        private ReturnEnableInterrupts() {
             super((flags) -> true);
         }
 
-        public boolean disableInterrupts() {
-            return false;
+        public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+            super.execute(memory, registers, flags, programCounter, stackPointer);
+            flags.setInterruptsDisabled(false);
+            return 8;
         }
     }
 }

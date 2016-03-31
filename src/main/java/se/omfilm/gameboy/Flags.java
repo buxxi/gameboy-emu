@@ -17,6 +17,8 @@ public interface Flags {
         }
     }
 
+    void setInterruptsDisabled(boolean disabled);
+
     enum Flag {
         ZERO(       0b1000_0000), //Z
         SUBTRACT(   0b0100_0000), //N

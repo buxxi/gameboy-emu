@@ -234,6 +234,10 @@ public class DebugPrinter {
                 }
                 flags.set(flag, set);
             }
+
+            public void setInterruptsDisabled(boolean disabled) {
+                flags.setInterruptsDisabled(disabled);
+            }
         };
     }
 
