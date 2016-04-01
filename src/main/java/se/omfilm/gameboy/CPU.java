@@ -242,35 +242,43 @@ public class CPU implements Registers {
 
     private class InterruptsImpl implements Interrupts {
         private boolean interruptsDisabled = false;
-        private Collection<Interrupts.Interrupt> enabledInterrupts = Collections.emptySet();
-        private Collection<Interrupts.Interrupt> requestedInterrupts = Collections.emptySet();
+        private int enabledInterrupts = 0;
+        private int requestedInterrupts = 0;
 
         private void step(MMU memory) {
-            if (interruptsDisabled || requestedInterrupts.isEmpty() || enabledInterrupts.isEmpty()) {
+            if (interruptsDisabled || (requestedInterrupts & enabledInterrupts) == 0) {
                 return;
             }
 
-            requestedInterrupts.stream().filter(i -> enabledInterrupts.contains(i)).sorted().forEach(i -> execute(i, memory));
+            for (Interrupt interrupt : Interrupt.values()) {
+                if ((interrupt.mask & requestedInterrupts & enabledInterrupts) != 0) {
+                    execute(interrupt, memory);
+                }
+            }
         }
 
         public void enable(Interrupt... interrupts) {
-            enabledInterrupts = Arrays.asList(interrupts);
+            for (Interrupt i : interrupts) {
+                enabledInterrupts = enabledInterrupts & i.mask;
+            }
         }
 
         public void request(Interrupt... interrupts) {
-            requestedInterrupts = new ArrayList<>(Arrays.asList(interrupts));
+            for (Interrupt i : interrupts) {
+                requestedInterrupts = requestedInterrupts & i.mask;
+            }
         }
 
         public boolean enabled(Interrupt interrupt) {
-            return enabledInterrupts.contains(interrupt);
+            return (enabledInterrupts & interrupt.mask) != 0;
         }
 
         public boolean requested(Interrupt interrupt) {
-            return requestedInterrupts.contains(interrupt);
+            return (requestedInterrupts & interrupt.mask) != 0;
         }
 
         private void execute(Interrupt interrupt, MMU memory) {
-            requestedInterrupts.remove(interrupt);
+            requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask);
 
             stackPointer.push(memory, programCounter.read());
 

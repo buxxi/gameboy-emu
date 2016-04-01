@@ -17,7 +17,8 @@ public interface Interrupts {
         VBLANK( 0b0000_0001),
         LCD(    0b0000_0010),
         TIMER(  0b0000_0100),
-        JOYPAD( 0b0000_1000);
+        SERIAL( 0b0000_1000),
+        JOYPAD( 0b0001_0000);
 
         public final int mask;
 
