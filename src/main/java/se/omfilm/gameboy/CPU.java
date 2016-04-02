@@ -27,6 +27,7 @@ public class CPU implements Registers {
     private int d = 0;
     private int e = 0;
 
+    private boolean halted = false;
 
     private final Map<Instruction.InstructionType, Instruction> instructionMap;
 
@@ -46,12 +47,17 @@ public class CPU implements Registers {
     }
 
     private int halt(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        log.warn("halt() called but is not implemented yet");
-        //TODO: handle me, stop until interrupt has occured
+        halted = true;
+        interrupts.interruptMasterEnable = true;
         return 4;
     }
 
     public int step(MMU memory) {
+        interrupts.step(memory);
+
+        if (halted) {
+            return 4;
+        }
 
         if (programCounter.read() == 0x100) {
             memory.bootSuccess();
@@ -67,10 +73,6 @@ public class CPU implements Registers {
         DebugPrinter.record(instructionType, sourceProgramCounter);
 
         return instruction.execute(record(memory), record(this), record(this.flags), record(this.programCounter), record(this.stackPointer));
-    }
-
-    public void interruptStep(MMU memory) {
-        this.interrupts.step(memory);
     }
 
     private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
@@ -236,17 +238,28 @@ public class CPU implements Registers {
         }
 
         public void setInterruptsDisabled(boolean disabled) {
-            interrupts.interruptsDisabled = disabled;
+            interrupts.setInterruptsDisabled(disabled);
         }
     }
 
     private class InterruptsImpl implements Interrupts {
-        private boolean interruptsDisabled = false;
+        private boolean interruptMasterEnable = false;
+        private int enableDelay = 0;
         private int enabledInterrupts = 0;
         private int requestedInterrupts = 0;
 
         private void step(MMU memory) {
-            if (interruptsDisabled || (requestedInterrupts & enabledInterrupts) == 0) {
+            switch (enableDelay) {
+                case 2:
+                    enableDelay--;
+                    break;
+                case 1:
+                    interruptMasterEnable = true;
+                    enableDelay--;
+                    break;
+            }
+
+            if ((!interruptMasterEnable) || (requestedInterrupts & enabledInterrupts) == 0) {
                 return;
             }
 
@@ -257,15 +270,25 @@ public class CPU implements Registers {
             }
         }
 
+        private void setInterruptsDisabled(boolean disabled) {
+            if (!disabled) {
+                enableDelay = 2;
+            } else {
+                interruptMasterEnable = false;
+            }
+        }
+
         public void enable(Interrupt... interrupts) {
+            enabledInterrupts = 0;
             for (Interrupt i : interrupts) {
-                enabledInterrupts = enabledInterrupts & i.mask;
+                enabledInterrupts = enabledInterrupts | i.mask;
             }
         }
 
         public void request(Interrupt... interrupts) {
+            requestedInterrupts = 0;
             for (Interrupt i : interrupts) {
-                requestedInterrupts = requestedInterrupts & i.mask;
+                requestedInterrupts = requestedInterrupts | i.mask;
             }
         }
 
@@ -279,7 +302,8 @@ public class CPU implements Registers {
 
         private void execute(Interrupt interrupt, MMU memory) {
             requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask);
-
+            interruptMasterEnable = false;
+            halted = false;
             stackPointer.push(memory, programCounter.read());
 
             switch (interrupt) {

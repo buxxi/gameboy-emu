@@ -37,7 +37,6 @@ public class Gameboy {
         int cycles = cpu.step(memory);
         timer.step(cycles);
         gpu.step(cycles);
-        cpu.interruptStep(memory);
         return cycles;
     }
 }
