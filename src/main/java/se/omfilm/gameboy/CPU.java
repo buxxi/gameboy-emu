@@ -301,7 +301,9 @@ public class CPU implements Registers {
         }
 
         private void execute(Interrupt interrupt, MMU memory) {
-            requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask);
+            if (!halted) { //TODO: wont this make the interrupt called twice after halted?
+                requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask);
+            }
             interruptMasterEnable = false;
             halted = false;
             stackPointer.push(memory, programCounter.read());
