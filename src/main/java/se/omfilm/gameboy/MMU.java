@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-import java.util.HashSet;
-
 public class MMU implements Memory {
     private static final Logger log = LoggerFactory.getLogger(MMU.class);
 
@@ -16,36 +14,38 @@ public class MMU implements Memory {
     private final GPU gpu;
     private final SerialConnection serial;
     private final Memory ram;
-    private final Memory[] switchableRam;
+    private final Memory switchableRam;
 
     private boolean isBooting = true;
 
-    public MMU(Memory boot, Memory rom, GPU gpu, Interrupts interrupts, Timer timer, SerialConnection serial) {
-        this.boot = boot;
-        this.rom = rom;
+    public MMU(byte[] boot, byte[] rom, GPU gpu, Interrupts interrupts, Timer timer, SerialConnection serial) {
+        ROMLoader.verifyRom(rom);
+        this.boot = new ByteArrayMemory(boot);
+        this.rom = ROMLoader.createROMBanks(rom);
         this.serial = serial;
         this.ioController = new IOController(interrupts, timer);
         this.gpu = gpu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
         this.ram = new ByteArrayMemory(MemoryType.RAM.allocate());
-        this.switchableRam = new Memory[1];
-        this.switchableRam[0] = new ByteArrayMemory(MemoryType.RAM_BANKS.allocate()); //TODO: handle multiple ram banks
+        this.switchableRam = ROMLoader.createRAMBanks(rom);
     }
 
     public int readByte(int address) {
         MemoryType type = MemoryType.fromAddress(address);
         int virtualAddress = address - type.from;
         switch (type) {
-            case ROM:
+            case ROM_BANK0:
                 if (isBooting && virtualAddress <= 0xFF) {
                     return boot.readByte(virtualAddress);
                 }
-                return rom.readByte(virtualAddress);
+                return rom.readByte(address);
+            case ROM_SWITCHABLE_BANKS:
+                return rom.readByte(address);
             case RAM:
             case ECHO_RAM:
                 return ram.readByte(virtualAddress);
             case RAM_BANKS:
-                return switchableRam[0].readByte(virtualAddress);
+                return switchableRam.readByte(virtualAddress);
             case ZERO_PAGE:
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:
@@ -65,14 +65,13 @@ public class MMU implements Memory {
             return;
         }
 
-        if (address == 0x2000) {
-            log.warn("ROM banking called, but not implemented");
-            return;
-        }
-
         MemoryType type = MemoryType.fromAddress(address);
         int virtualAddress = address - type.from;
         switch (type) {
+            case ROM_BANK0:
+            case ROM_SWITCHABLE_BANKS:
+                rom.writeByte(address, data);
+                return;
             case VIDEO_RAM:
             case OBJECT_ATTRIBUTE_MEMORY:
                 gpu.writeByte(address, data);
@@ -85,7 +84,7 @@ public class MMU implements Memory {
                 ioController.writeByte(address, data);
                 return;
             case RAM_BANKS:
-                switchableRam[0].writeByte(virtualAddress, data);
+                switchableRam.writeByte(virtualAddress, data);
                 return;
             case RAM:
             case ECHO_RAM:
@@ -136,6 +135,8 @@ public class MMU implements Memory {
                     return serial.getData();
                 case PREPARE_SPEED_SWITCH:
                     return speedSwitch;
+                case TIMER_COUNTER:
+                    return timer.counter();
                 default:
                     throw new UnsupportedOperationException(unhandledReadMessage(register));
             }
@@ -178,13 +179,13 @@ public class MMU implements Memory {
                     joypad = data;
                     return;
                 case TIMER_MODULO:
-                    timer.setModulo(data);
+                    timer.modulo(data);
                     return;
                 case TIMER_CONTROL:
-                    timer.setControl(data);
+                    timer.control(data);
                     return;
                 case TIMER_COUNTER:
-                    timer.setCounter(data);
+                    timer.counter(data);
                     return;
                 case LCD_STATUS:
                     gpu.setInterruptEnables(data);

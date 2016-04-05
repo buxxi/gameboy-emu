@@ -6,8 +6,6 @@ import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.util.Runner;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class Gameboy {
     private final MMU memory;
@@ -15,11 +13,11 @@ public class Gameboy {
     private final GPU gpu;
     private final Timer timer;
 
-    public Gameboy(Path bootPath, Path romPath, Screen screen) throws IOException {
+    public Gameboy(Screen screen, byte[] bootData, byte[] romData) throws IOException {
         this.cpu = new CPU();
         this.gpu = new GPU(screen, this.cpu.interrupts);
         this.timer = new Timer(this.cpu.interrupts);
-        this.memory = new MMU(new ByteArrayMemory(Files.readAllBytes(bootPath)), new ROM(Files.readAllBytes(romPath)), this.gpu, this.cpu.interrupts, timer, new ConsoleSerialConnection());
+        this.memory = new MMU(bootData, romData, this.gpu, this.cpu.interrupts, timer, new ConsoleSerialConnection());
     }
 
     public void run() throws InterruptedException {

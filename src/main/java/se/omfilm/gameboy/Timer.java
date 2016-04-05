@@ -39,11 +39,11 @@ public class Timer {
         }
     }
 
-    public void setModulo(int data) {
+    public void modulo(int data) {
         timerModulo = data;
     }
 
-    public void setControl(int data) {
+    public void control(int data) {
         enabled = (data & 0b0000_0100) != 0;
         FREQUENCY newFrequency = FREQUENCY.fromCode(data & 0b0000_0011);
         if (newFrequency != this.frequency) {
@@ -52,8 +52,12 @@ public class Timer {
         }
     }
 
-    public void setCounter(int data) {
+    public void counter(int data) {
         timerCounter = data;
+    }
+
+    public int counter() {
+        return timerCounter;
     }
 
     private enum FREQUENCY {

@@ -4,16 +4,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-public class ROM extends ByteArrayMemory {
-    private static final Logger log = LoggerFactory.getLogger(ROM.class);
+public class ROMLoader {
+    private static final Logger log = LoggerFactory.getLogger(ROMLoader.class);
 
-    public ROM(byte[] data) {
-        super(verifyRom(data));
+    public static Memory createRAMBanks(byte[] data) {
+        RAM_SIZE ramSize = RAM_SIZE.values()[data[0x149]];
+        return new BankableRAM(ramSize.banks, Memory.MemoryType.RAM_BANKS.size());
     }
 
-    private static byte[] verifyRom(byte[] rom) {
-        log.info("Game:\t\t" + readGameName(rom));
-        log.info("Model:\t\t" + ((rom[0x143] & 0xFF) == 0x80 ? "GameBoy Color" : "GameBoy"));
+    public static Memory createROMBanks(byte[] data) {
+        ByteArrayMemory rom = new ByteArrayMemory(data);
+        ROM_TYPE type = ROM_TYPE.fromValue(data[0x147]);
+        switch (type) {
+            case ROM_ONLY:
+                return rom;
+            case ROM_MBC1:
+            case ROM_MBC1_RAM:
+            case ROM_MBC1_RAM_BATTERY:
+                return new MBC1(rom);
+            default:
+                throw new IllegalArgumentException("Can't create ROM from type: " + type);
+        }
+    }
+
+    public static byte[] verifyRom(byte[] rom) {
         if (rom[0x146] != 0) {
             throw new IllegalArgumentException("Can only handle the original GameBoy");
         }
@@ -25,14 +39,13 @@ public class ROM extends ByteArrayMemory {
         if (romSize.expectedSize != rom.length) {
             throw new IllegalArgumentException("Roms actual size doesn't match the expected " + romSize.expectedSize + "!=" + rom.length);
         }
-        log.info("ROM Size:\t" + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
 
         RAM_SIZE ramSize = RAM_SIZE.values()[rom[0x149]];
+        log.info("Game:\t\t" + readGameName(rom));
+        log.info("Model:\t\t" + ((rom[0x143] & 0xFF) == 0x80 ? "GameBoy Color" : "GameBoy"));
+        log.info("ROM Type:\t" + type);
+        log.info("ROM Size:\t" + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
         log.info("RAM Size:\t" + ramSize + " (" + DebugPrinter.hex(ramSize.expectedSize, 4) + ")");
-        if (ramSize != RAM_SIZE._2KB) {
-            throw new IllegalArgumentException("Can only handle RAM Size " + RAM_SIZE._2KB);
-        }
-
         log.info("Region:\t\t" + (rom[0x14A] == 0 ? "Japan" : "International"));
         log.info("C-check:\t" + (rom[0x14D]));
         log.info("Checksum:\t" + DebugPrinter.hex((rom[0x14E] << 8) + rom[0x14F], 4));

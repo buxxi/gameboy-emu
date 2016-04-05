@@ -125,8 +125,8 @@ public class GPU implements Memory {
         }
 
         for (int i = 0; i < Screen.WIDTH; i++) {
-            int y = scanline + scrollY;
-            int x = i + scrollX;
+            int y = (scanline + scrollY) & 0xFF;
+            int x = (i + scrollX) & 0xFF;
             Tile tileNumber = resolveTile(y, x);
             Color color = color(tileNumber.getColorData(x, y)); //TODO: handle palette to get the correct color
             screen.setPixel(x, scanline - 1, color);
