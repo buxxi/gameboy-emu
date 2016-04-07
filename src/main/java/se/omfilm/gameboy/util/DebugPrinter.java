@@ -2,15 +2,12 @@ package se.omfilm.gameboy.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.omfilm.gameboy.*;
+import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.memory.Memory;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
 
 public class DebugPrinter {
     private static final Logger log = LoggerFactory.getLogger(DebugPrinter.class);

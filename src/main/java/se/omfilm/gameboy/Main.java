@@ -1,5 +1,6 @@
 package se.omfilm.gameboy;
 
+import se.omfilm.gameboy.internal.Gameboy;
 import se.omfilm.gameboy.io.screen.Screen;
 
 import java.nio.file.Files;
