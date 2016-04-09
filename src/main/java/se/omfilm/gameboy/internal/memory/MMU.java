@@ -141,6 +141,11 @@ public class MMU implements Memory {
                     return speedSwitch;
                 case TIMER_COUNTER:
                     return timer.counter();
+                case SOUND_1_FREQUENCY_HIGH:
+                case SOUND_2_FREQUENCY_HIGH:
+                case SOUND_3_FREQUENCY_HIGH:
+                case SOUND_4_COUNTER_CONSECUTIVE:
+                    return 0;
                 default:
                     throw new UnsupportedOperationException(unhandledReadMessage(register));
             }
@@ -217,15 +222,39 @@ public class MMU implements Memory {
                 case SOUND_1_ENVELOPE:
                 case SOUND_1_FREQUENCY_HIGH:
                 case SOUND_1_FREQUENCY_LOW:
+                case SOUND_2_LENGTH_PATTERN_DUTY:
                 case SOUND_2_ENVELOPE:
+                case SOUND_2_FREQUENCY_LOW:
                 case SOUND_2_FREQUENCY_HIGH:
                 case SOUND_3_ON_OFF:
+                case SOUND_3_LENGTH:
+                case SOUND_3_SELECT_OUTPUT:
+                case SOUND_3_FREQUENCY_LOW:
+                case SOUND_3_FREQUENCY_HIGH:
                 case SOUND_4_COUNTER_CONSECUTIVE:
                 case SOUND_4_ENVELOPE:
+                case SOUND_4_LENGTH:
+                case SOUND_4_POLYNOMIAL_COUNTER:
                 case SOUND_CHANNEL_CONTROL:
                 case SOUND_ON_OFF:
                 case SOUND_OUTPUT_TERMINAL:
                 case SOUND_SWEEP:
+                case SOUND_WAVE_PATTERN_RAM0:
+                case SOUND_WAVE_PATTERN_RAM1:
+                case SOUND_WAVE_PATTERN_RAM2:
+                case SOUND_WAVE_PATTERN_RAM3:
+                case SOUND_WAVE_PATTERN_RAM4:
+                case SOUND_WAVE_PATTERN_RAM5:
+                case SOUND_WAVE_PATTERN_RAM6:
+                case SOUND_WAVE_PATTERN_RAM7:
+                case SOUND_WAVE_PATTERN_RAM8:
+                case SOUND_WAVE_PATTERN_RAM9:
+                case SOUND_WAVE_PATTERN_RAMA:
+                case SOUND_WAVE_PATTERN_RAMB:
+                case SOUND_WAVE_PATTERN_RAMC:
+                case SOUND_WAVE_PATTERN_RAMD:
+                case SOUND_WAVE_PATTERN_RAME:
+                case SOUND_WAVE_PATTERN_RAMF:
                     log.warn(unhandledWriteMessage(data, register)); //TODO: this is only here to get somewhere without having to implement sound
                     return;
                 default:
@@ -255,14 +284,38 @@ public class MMU implements Memory {
         SOUND_1_ENVELOPE(0xFF12),
         SOUND_1_FREQUENCY_LOW(0xFF13),
         SOUND_1_FREQUENCY_HIGH(0xFF14),
+        SOUND_2_LENGTH_PATTERN_DUTY(0xFF16),
         SOUND_2_ENVELOPE(0xFF17),
+        SOUND_2_FREQUENCY_LOW(0xFF18),
         SOUND_2_FREQUENCY_HIGH(0xFF19),
         SOUND_3_ON_OFF(0xFF1A),
+        SOUND_3_LENGTH(0xFF1B),
+        SOUND_3_SELECT_OUTPUT(0xFF1C),
+        SOUND_3_FREQUENCY_LOW(0xFF1D),
+        SOUND_3_FREQUENCY_HIGH(0xFF1E),
+        SOUND_4_LENGTH(0xFF20),
         SOUND_4_ENVELOPE(0xFF21),
+        SOUND_4_POLYNOMIAL_COUNTER(0xFF22),
         SOUND_4_COUNTER_CONSECUTIVE(0xFF23),
         SOUND_CHANNEL_CONTROL(0xFF24),
         SOUND_OUTPUT_TERMINAL(0xFF25),
         SOUND_ON_OFF(0xFF26),
+        SOUND_WAVE_PATTERN_RAM0(0xFF30),
+        SOUND_WAVE_PATTERN_RAM1(0xFF31),
+        SOUND_WAVE_PATTERN_RAM2(0xFF32),
+        SOUND_WAVE_PATTERN_RAM3(0xFF33),
+        SOUND_WAVE_PATTERN_RAM4(0xFF34),
+        SOUND_WAVE_PATTERN_RAM5(0xFF35),
+        SOUND_WAVE_PATTERN_RAM6(0xFF36),
+        SOUND_WAVE_PATTERN_RAM7(0xFF37),
+        SOUND_WAVE_PATTERN_RAM8(0xFF38),
+        SOUND_WAVE_PATTERN_RAM9(0xFF39),
+        SOUND_WAVE_PATTERN_RAMA(0xFF3A),
+        SOUND_WAVE_PATTERN_RAMB(0xFF3B),
+        SOUND_WAVE_PATTERN_RAMC(0xFF3C),
+        SOUND_WAVE_PATTERN_RAMD(0xFF3D),
+        SOUND_WAVE_PATTERN_RAME(0xFF3E),
+        SOUND_WAVE_PATTERN_RAMF(0xFF3F),
         LCD_CONTROL(0xFF40),
         LCD_STATUS(0xFF41),
         SCROLL_Y(0xFF42),
