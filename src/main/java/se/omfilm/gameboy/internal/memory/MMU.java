@@ -255,8 +255,7 @@ public class MMU implements Memory {
                 case SOUND_WAVE_PATTERN_RAMD:
                 case SOUND_WAVE_PATTERN_RAME:
                 case SOUND_WAVE_PATTERN_RAMF:
-                    log.warn(unhandledWriteMessage(data, register)); //TODO: this is only here to get somewhere without having to implement sound
-                    return;
+                    return; //TODO: this is only here to get somewhere without having to implement sound
                 default:
                     throw new UnsupportedOperationException(unhandledWriteMessage(data, register));
             }

@@ -1,5 +1,7 @@
 package se.omfilm.gameboy.internal;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.io.screen.Screen;
@@ -10,6 +12,8 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class GPU implements Memory {
+    private static final Logger log = LoggerFactory.getLogger(GPU.class);
+
     private static final int TILE_MAP_ADDRESS_0 = 0x9800;
     private static final int TILE_MAP_ADDRESS_1 = 0x9C00;
     private static final int TILE_DATA_ADDRESS_0 = 0x8800;
@@ -114,33 +118,45 @@ public class GPU implements Memory {
 
     private void drawScanline() {
         if (backgroundDisplay) {
-            drawTiles();
+            for (int x = 0; x < Screen.WIDTH; x++) {
+                if (windowDisplay && windowY <= scanline) {
+                    drawBackgroundWindow(x);
+                } else {
+                    drawBackgroundPixel(x);
+                }
+            }
         }
         if (spriteDisplay) {
             drawSprites();
         }
     }
 
-    private void drawTiles() {
-        if (windowDisplay) {
-            throw new UnsupportedOperationException("Window rendering not implemented");
+    private void drawBackgroundWindow(int x) {
+        int y = scanline - windowY;
+        if (x >= windowX) {
+            x -= windowX;
         }
+        drawPixel(x, y, windowTileMapAddress);
+    }
 
-        for (int i = 0; i < Screen.WIDTH; i++) {
-            int y = (scanline + scrollY) & 0xFF;
-            int x = (i + scrollX) & 0xFF;
-            Tile tileNumber = resolveTile(y, x);
-            Color color = color(tileNumber.getColorData(x, y)); //TODO: handle palette to get the correct color
-            screen.setPixel(x, scanline - 1, color);
-        }
+    private void drawBackgroundPixel(int x) {
+        int y = (scanline + scrollY) & 0xFF;
+        x = (x + scrollX) & 0xFF;
+        drawPixel(x, y, backgroundTileMapAddress);
+    }
+
+    private void drawPixel(int x, int y, int tileMapAddress) {
+        Tile tileNumber = resolveTile(y, x, tileMapAddress);
+        Color color = color(tileNumber.getColorData(x, y)); //TODO: handle palette to get the correct color
+        screen.setPixel(x, scanline - 1, color);
     }
 
     private void drawSprites() {
         Arrays.stream(sprites).filter(s -> s.isOnScanline(scanline)).forEach(Sprite::render);
     }
 
-    private Tile resolveTile(int y, int x) {
-        int address = backgroundTileMapAddress - MemoryType.VIDEO_RAM.from + ((y / 8) * 32) + (x / 8); //Each row contains 32 tiles
+    private Tile resolveTile(int y, int x, int tileMapAddress) {
+        int address = tileMapAddress - MemoryType.VIDEO_RAM.from + ((y / 8) * 32) + (x / 8); //Each row contains 32 tiles
         int id = videoRam.readByte(address);
         return currentTiles[id];
     }
@@ -229,8 +245,8 @@ public class GPU implements Memory {
         vblankInterrupt =   (data & 0b0001_0000) != 0;
         hblankInterrupt =   (data & 0b0000_1000) != 0;
 
-        if (coincidence || oamInterrupt || vblankInterrupt || hblankInterrupt) {
-            throw new UnsupportedOperationException("Unhandled value for setInterruptsEnables " + DebugPrinter.hex(data, 4));
+        if (coincidence)  {
+            log.warn("Coincidence flag set but not implemented");
         }
     }
 
@@ -291,12 +307,8 @@ public class GPU implements Memory {
         }
 
         private boolean isOnScanline(int scanline) {
-            if (largeSprites) {
-                throw new UnsupportedOperationException("Not handling large sprites now");
-            }
-
             int y = y();
-            return scanline >= y && scanline < (y + 8);
+            return scanline >= y && scanline < (y + (largeSprites ? 16 : 8));
         }
 
         private int x() {
