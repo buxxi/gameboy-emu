@@ -6,6 +6,7 @@ import se.omfilm.gameboy.internal.memory.Memory;
 import java.util.function.Predicate;
 
 public class CallRoutine implements Instruction {
+    private static final Predicate<Flags> ALWAYS_TRUE = (flags) -> true;
     private final Predicate<Flags> predicate;
 
     private CallRoutine(Predicate<Flags> predicate) {
@@ -18,13 +19,14 @@ public class CallRoutine implements Instruction {
         if (predicate.test(flags)) {
             stackPointer.push(memory, programCounter.read());
             programCounter.write(nextProgramCounter);
+            return 24;
         }
 
         return 12;
     }
 
     public static Instruction unconditional() {
-        return new CallRoutine((flags) -> true);
+        return new CallRoutine(ALWAYS_TRUE);
     }
 
     public static Instruction ifLastNotZero() {

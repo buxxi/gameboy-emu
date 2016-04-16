@@ -6,6 +6,7 @@ import se.omfilm.gameboy.internal.memory.Memory;
 import java.util.function.Predicate;
 
 public class JumpRelative implements Instruction {
+    private static final Predicate<Flags> ALWAYS_TRUE = (flags) -> true;
     private final Predicate<Flags> predicate;
 
     private JumpRelative(Predicate<Flags> predicate) {
@@ -17,13 +18,14 @@ public class JumpRelative implements Instruction {
 
         if (predicate.test(flags)) {
             programCounter.write(programCounter.read() + ((byte) data));
+            return 12;
         }
 
         return 8;
     }
 
     public static Instruction unconditional() {
-        return new JumpRelative((flags) -> true);
+        return new JumpRelative(ALWAYS_TRUE);
     }
 
     public static Instruction ifLastNotZero() {

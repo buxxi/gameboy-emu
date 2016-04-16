@@ -14,7 +14,7 @@ public class Restart implements Instruction {
         stackPointer.push(memory, programCounter.read());
         programCounter.write(address);
 
-        return 32;
+        return 16;
     }
 
     public static Instruction to00() {

@@ -6,6 +6,7 @@ import se.omfilm.gameboy.internal.memory.Memory;
 import java.util.function.Predicate;
 
 public class Return implements Instruction {
+    private static final Predicate<Flags> ALWAYS_TRUE = (flags) -> true;
     private final Predicate<Flags> predicate;
 
     private Return(Predicate<Flags> predicate) {
@@ -15,13 +16,14 @@ public class Return implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         if (predicate.test(flags)) {
             programCounter.write(stackPointer.pop(memory));
+            return 16;
         }
 
         return 8;
     }
 
     public static Instruction unconditional() {
-        return new Return((flags) -> true);
+        return new Return(ALWAYS_TRUE);
     }
 
     public static Instruction ifNotZero() {
@@ -46,13 +48,13 @@ public class Return implements Instruction {
 
     private static class ReturnEnableInterrupts extends Return {
         private ReturnEnableInterrupts() {
-            super((flags) -> true);
+            super(ALWAYS_TRUE);
         }
 
         public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
             super.execute(memory, registers, flags, programCounter, stackPointer);
             flags.setInterruptsDisabled(false);
-            return 8;
+            return 16;
         }
     }
 }

@@ -32,7 +32,7 @@ public class RotateRegisterRight implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, false);
         flags.set(Flags.Flag.CARRY, carry);
 
-        return 8;
+        return 4;
     }
 
     private static int carryFromFlags(Flags flags, int n) {
@@ -44,11 +44,11 @@ public class RotateRegisterRight implements Instruction {
     }
 
     public static Instruction A() {
-        return new RotateRegisterRight(Registers::readA, Registers::writeA, RotateRegisterRight::carryFromBit0, false); //TODO: fix this having 4 cycles without anonymous class
+        return new RotateRegisterRight(Registers::readA, Registers::writeA, RotateRegisterRight::carryFromBit0, false);
     }
 
     public static Instruction AresetZero() {
-        return new RotateRegisterRight(Registers::readA, Registers::writeA, RotateRegisterRight::carryFromBit0, true); //TODO: fix this having 4 cycles without anonymous class
+        return new RotateRegisterRight(Registers::readA, Registers::writeA, RotateRegisterRight::carryFromBit0, true);
     }
 
     public static Instruction B() {

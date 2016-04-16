@@ -22,6 +22,8 @@ public class MBC1 implements Memory {
             if (currentBank == 0) {
                 currentBank = 1;
             }
+        } else {
+            throw new IllegalArgumentException("Can't write to " + getClass().getSimpleName());
         }
     }
 }

@@ -26,7 +26,7 @@ public class SubtractByteFromA implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 
-        return 8; //TODO: not in documentation, is this correct?
+        return 8;
     }
 
     private int carry(Flags flags) {

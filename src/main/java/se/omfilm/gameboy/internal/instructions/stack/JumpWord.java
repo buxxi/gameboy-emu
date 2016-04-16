@@ -6,6 +6,7 @@ import se.omfilm.gameboy.internal.memory.Memory;
 import java.util.function.Predicate;
 
 public class JumpWord implements Instruction {
+    private static final Predicate<Flags> ALWAYS_TRUE = (flags) -> true;
     private final Predicate<Flags> predicate;
 
     private JumpWord(Predicate<Flags> predicate) {
@@ -15,16 +16,14 @@ public class JumpWord implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int nn = programCounter.wordOperand(memory);
         if (predicate.test(flags)) {
-            /*if (nn == 0xC1B9) {
-                throw new RuntimeException();
-            }*/
             programCounter.write(nn);
+            return 16;
         }
         return 12;
     }
 
     public static Instruction unconditional() {
-        return new JumpWord((flags) -> true);
+        return new JumpWord(ALWAYS_TRUE);
     }
 
     public static Instruction ifLastNotZero() {

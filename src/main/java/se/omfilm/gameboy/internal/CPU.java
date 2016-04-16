@@ -56,7 +56,7 @@ public class CPU implements Registers {
     }
 
     public int step(MMU memory) {
-        interrupts.step(memory);
+        int interruptCycles = interrupts.step(memory);
 
         if (halted) {
             return 4;
@@ -75,7 +75,8 @@ public class CPU implements Registers {
         Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
         DebugPrinter.record(instructionType, sourceProgramCounter);
 
-        return instruction.execute(record(memory), DebugPrinter.record(this), DebugPrinter.record(this.flags), DebugPrinter.record(this.programCounter), DebugPrinter.record(this.stackPointer));
+        int instructionCycles = instruction.execute(record(memory), DebugPrinter.record(this), DebugPrinter.record(this.flags), DebugPrinter.record(this.programCounter), DebugPrinter.record(this.stackPointer));
+        return interruptCycles + instructionCycles;
     }
 
     private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
@@ -251,7 +252,7 @@ public class CPU implements Registers {
         private int enabledInterrupts = 0;
         private int requestedInterrupts = 0;
 
-        public void step(MMU memory) {
+        public int step(MMU memory) {
             switch (enableDelay) {
                 case 2:
                     enableDelay--;
@@ -263,14 +264,15 @@ public class CPU implements Registers {
             }
 
             if ((!interruptMasterEnable) || (requestedInterrupts & enabledInterrupts) == 0) {
-                return;
+                return 0;
             }
 
             for (Interrupt interrupt : Interrupt.values()) {
                 if ((interrupt.mask & requestedInterrupts & enabledInterrupts) != 0) {
-                    execute(interrupt, memory);
+                    return execute(interrupt, memory);
                 }
             }
+            return 0;
         }
 
         private void setInterruptsDisabled(boolean disabled) {
@@ -303,7 +305,7 @@ public class CPU implements Registers {
             return (requestedInterrupts & interrupt.mask) != 0;
         }
 
-        private void execute(Interrupt interrupt, MMU memory) {
+        private int execute(Interrupt interrupt, MMU memory) {
             if (!halted) { //TODO: wont this make the interrupt called twice after halted?
                 requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask);
             }
@@ -314,10 +316,10 @@ public class CPU implements Registers {
             switch (interrupt) {
                 case VBLANK:
                     programCounter.write(0x40);
-                    return;
+                    return 32;
                 case TIMER:
                     programCounter.write(0x50);
-                    return;
+                    return 32;
                 default:
                     throw new UnsupportedOperationException("Interrupt " + interrupt + " not implemented");
             }

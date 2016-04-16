@@ -23,7 +23,7 @@ public class CompareRegisterAgainstA implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 
-        return 8;
+        return 4;
     }
 
     public static Instruction A() {
