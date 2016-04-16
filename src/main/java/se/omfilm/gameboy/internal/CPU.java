@@ -316,10 +316,10 @@ public class CPU implements Registers {
             switch (interrupt) {
                 case VBLANK:
                     programCounter.write(0x40);
-                    return 32;
+                    return 20;
                 case TIMER:
                     programCounter.write(0x50);
-                    return 32;
+                    return 20;
                 default:
                     throw new UnsupportedOperationException("Interrupt " + interrupt + " not implemented");
             }

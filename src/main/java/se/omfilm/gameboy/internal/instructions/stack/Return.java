@@ -16,7 +16,7 @@ public class Return implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         if (predicate.test(flags)) {
             programCounter.write(stackPointer.pop(memory));
-            return 16;
+            return 16 + (predicate == ALWAYS_TRUE ? 0 : 4);
         }
 
         return 8;

@@ -32,7 +32,7 @@ public class RotateRegisterRight implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, false);
         flags.set(Flags.Flag.CARRY, carry);
 
-        return 4;
+        return resetZero ? 4 : 8;
     }
 
     private static int carryFromFlags(Flags flags, int n) {

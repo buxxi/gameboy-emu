@@ -31,7 +31,7 @@ public class RotateRegisterLeft implements Instruction {
         flags.set(Flags.Flag.ZERO, zero);
         flags.set(Flags.Flag.CARRY, carry);
 
-        return 4;
+        return resetZero ? 4 : 8;
     }
 
     private static int carryFromFlags(Flags flags, int n) {

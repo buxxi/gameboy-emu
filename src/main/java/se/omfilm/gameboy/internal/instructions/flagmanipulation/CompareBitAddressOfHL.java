@@ -19,7 +19,7 @@ public class CompareBitAddressOfHL implements Instruction {
         flags.reset(Flags.Flag.SUBTRACT);
         flags.set(Flags.Flag.HALF_CARRY, true);
 
-        return 16;
+        return 12;
     }
 
     public static Instruction bit0() {
