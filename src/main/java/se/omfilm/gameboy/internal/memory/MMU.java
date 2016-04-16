@@ -214,6 +214,7 @@ public class MMU implements Memory {
                 case COLOR_BACKGROUND_PALETTE_INDEX:
                 case COLOR_BACKGROUND_PALETTE_DATA:
                 case VRAM_BANK:
+                case UNKNOWN_CALLED_BY_TETRIS:
                     log.debug(unhandledWriteMessage(data, register)); //Only GameBoy Color
                     return;
 
@@ -331,6 +332,8 @@ public class MMU implements Memory {
         SOUND_SWEEP(0xFF50),
         COLOR_BACKGROUND_PALETTE_INDEX(0xFF68), //Only GBC
         COLOR_BACKGROUND_PALETTE_DATA(0xFF69), //Only GBC
+        UNKNOWN_CALLED_BY_TETRIS(0xFF7F),
+
         INTERRUPT_ENABLE(0xFFFF);
 
         private final int address;

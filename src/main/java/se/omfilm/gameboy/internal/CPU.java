@@ -50,6 +50,7 @@ public class CPU implements Registers {
     }
 
     private int halt(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+        log.warn("halt() called but i'm not sure it's implemented correctly");
         halted = true;
         interrupts.interruptMasterEnable = true;
         return 4;

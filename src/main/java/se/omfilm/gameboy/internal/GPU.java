@@ -40,6 +40,7 @@ public class GPU implements Memory {
     private int objectPalette1Data;
     private int cycleCounter = 0;
     private int scanline = 0;
+    private int compareWithScanline = 0;
 
     private boolean lcdDisplay = false;
     private int windowTileMapAddress = TILE_MAP_ADDRESS_0;
@@ -100,6 +101,10 @@ public class GPU implements Memory {
             updateCurrentMode(GPUMode.VRAM, false);
         } else {
             updateCurrentMode(GPUMode.HBLANK, hblankInterrupt);
+        }
+
+        if (coincidence && scanline == compareWithScanline) {
+            interrupts.request(Interrupts.Interrupt.LCD);
         }
 
         return true;
@@ -244,14 +249,15 @@ public class GPU implements Memory {
         oamInterrupt =      (data & 0b0010_0000) != 0;
         vblankInterrupt =   (data & 0b0001_0000) != 0;
         hblankInterrupt =   (data & 0b0000_1000) != 0;
-
-        if (coincidence)  {
-            log.warn("Coincidence flag set but not implemented");
-        }
     }
 
     public int getLCDStatus() {
-        return (coincidence ? 0b0000_0100 : 0) | mode.id;
+        return  (coincidence ?                      0b0100_0000 : 0) |
+                (oamInterrupt ?                     0b0010_0000 : 0) |
+                (vblankInterrupt ?                  0b0001_0000 : 0) |
+                (hblankInterrupt ?                  0b0000_1000 : 0) |
+                (scanline == compareWithScanline ?  0b0000_0100 : 0) |
+                mode.id;
     }
 
     public int scanline() {
