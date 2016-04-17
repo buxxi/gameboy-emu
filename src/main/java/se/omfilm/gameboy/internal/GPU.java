@@ -268,7 +268,11 @@ public class GPU implements Memory {
     }
 
     private Color color(int input) {
-        switch (input) {
+        int offset = input * 2;
+        int mask = (0b0000_0011 << offset);
+        int result = (backgroundPaletteData & mask) >> offset;
+
+        switch (result) {
             case 0:
             default:
                 return Color.WHITE;
