@@ -163,6 +163,9 @@ public class GPU implements Memory {
     private Tile resolveTile(int y, int x, int tileMapAddress) {
         int address = tileMapAddress - MemoryType.VIDEO_RAM.from + ((y / 8) * 32) + (x / 8); //Each row contains 32 tiles
         int id = videoRam.readByte(address);
+        if (currentTiles == tilesAddress0) {
+            id = 128 + ((byte) id);
+        }
         return currentTiles[id];
     }
 

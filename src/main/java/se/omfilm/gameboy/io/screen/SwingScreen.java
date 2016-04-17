@@ -1,7 +1,11 @@
 package se.omfilm.gameboy.io.screen;
 
+import se.omfilm.gameboy.util.DebugPrinter;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 public class SwingScreen extends JPanel implements Screen {
     private static final int SCALE = 4;
@@ -15,6 +19,32 @@ public class SwingScreen extends JPanel implements Screen {
         frame.setSize(Screen.WIDTH * SCALE, Screen.HEIGHT * SCALE);
         frame.add(this);
         frame.setVisible(true);
+        frame.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                DebugPrinter.debugCallStack();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+
+            }
+        });
     }
 
     public void turnOff() {

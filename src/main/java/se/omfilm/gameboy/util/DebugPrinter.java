@@ -43,10 +43,15 @@ public class DebugPrinter {
         e.printStackTrace();
         log.error(Instruction.InstructionType.values().length + " instructions implemented of 512");
         log.error("Instruction call stack: ");
-        while (!instructionStack.isEmpty()) {
-            log.error("\t" + instructionStack.removeLast());
-        }
+        debugCallStack();
         System.exit(0);
+    }
+
+    public static void debugCallStack() {
+        LinkedList<RecordedInstruction> copy = (LinkedList<RecordedInstruction>) instructionStack.clone();
+        while (!copy.isEmpty()) {
+            log.error("\t" + copy.removeLast());
+        }
     }
 
     public static void record(Instruction.InstructionType instructionType, int sourceProgramCounter) {
