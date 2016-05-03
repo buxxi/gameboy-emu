@@ -1,10 +1,14 @@
 package se.omfilm.gameboy.internal;
 
+import se.omfilm.gameboy.internal.memory.MMU;
+
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public interface Interrupts {
+    int step(MMU memory);
+
     void enable(Interrupt... interrupts);
 
     void request(Interrupt... interrupts);

@@ -41,14 +41,14 @@ public class ROMLoader {
         }
 
         RAM_SIZE ramSize = RAM_SIZE.values()[rom[0x149]];
-        log.info("Game:\t\t" + readGameName(rom));
-        log.info("Model:\t\t" + ((rom[0x143] & 0xFF) == 0x80 ? "GameBoy Color" : "GameBoy"));
-        log.info("ROM Type:\t" + type);
-        log.info("ROM Size:\t" + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
-        log.info("RAM Size:\t" + ramSize + " (" + DebugPrinter.hex(ramSize.expectedSize, 4) + ")");
-        log.info("Region:\t\t" + (rom[0x14A] == 0 ? "Japan" : "International"));
-        log.info("C-check:\t" + (rom[0x14D]));
-        log.info("Checksum:\t" + DebugPrinter.hex((rom[0x14E] << 8) + rom[0x14F], 4));
+        log.info("Game: " + readGameName(rom));
+        log.info("Model: " + ((rom[0x143] & 0xFF) == 0x80 ? "GameBoy Color" : "GameBoy"));
+        log.info("ROM Type: " + type);
+        log.info("ROM Size: " + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
+        log.info("RAM Size: " + ramSize + " (" + DebugPrinter.hex(ramSize.expectedSize, 4) + ")");
+        log.info("Region: " + (rom[0x14A] == 0 ? "Japan" : "International"));
+        log.info("C-check: " + (rom[0x14D]));
+        log.info("Checksum: " + DebugPrinter.hex((rom[0x14E] << 8) + rom[0x14F], 4));
         return rom;
     }
 

@@ -124,7 +124,7 @@ public class MMU implements Memory {
                 case LCD_SCANLINE:
                     return gpu.scanline();
                 case JOYPAD:
-                    return joypad;
+                    return 0xFF;
                 case INTERRUPT_ENABLE:
                     return Interrupts.Interrupt.enabledToValue(interrupts);
                 case INTERRUPT_REQUEST:
@@ -141,6 +141,7 @@ public class MMU implements Memory {
                     return speedSwitch;
                 case TIMER_COUNTER:
                     return timer.counter();
+                case SOUND_ON_OFF:
                 case SOUND_1_FREQUENCY_HIGH:
                 case SOUND_2_FREQUENCY_HIGH:
                 case SOUND_3_FREQUENCY_HIGH:

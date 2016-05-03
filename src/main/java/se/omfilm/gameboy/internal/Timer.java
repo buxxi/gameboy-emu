@@ -1,8 +1,11 @@
 package se.omfilm.gameboy.internal;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 public class Timer {
+    private static final Logger log = LoggerFactory.getLogger(Timer.class);
     private final Interrupts interrupts;
 
     private boolean enabled = false;
@@ -23,8 +26,8 @@ public class Timer {
 
         cycleCounter -= cycles;
 
-        if (cycleCounter <= 0) {
-            cycleCounter = frequency.counterInitialValue();
+        while (cycleCounter <= 0) {
+            cycleCounter += frequency.counterInitialValue();
 
             if (timerCounter == 0xFF) {
                 timerCounter = timerModulo;
@@ -42,6 +45,7 @@ public class Timer {
     public void control(int data) {
         enabled = (data & 0b0000_0100) != 0;
         FREQUENCY newFrequency = FREQUENCY.fromCode(data & 0b0000_0011);
+        log.debug("Changing timer frequency from " + this.frequency + " to " + newFrequency);
         if (newFrequency != this.frequency) {
             this.frequency = newFrequency;
             cycleCounter = this.frequency.counterInitialValue();
@@ -49,6 +53,7 @@ public class Timer {
     }
 
     public void counter(int data) {
+        log.debug("Writing timer counter: " + DebugPrinter.hex(data, 2));
         timerCounter = data;
     }
 
@@ -81,6 +86,11 @@ public class Timer {
                 }
             }
             throw new IllegalArgumentException("No " + FREQUENCY.class.getSimpleName() + " for code " + DebugPrinter.hex(code, 4));
+        }
+
+        @Override
+        public String toString() {
+            return name().substring(1) + "Hz";
         }
     }
 }

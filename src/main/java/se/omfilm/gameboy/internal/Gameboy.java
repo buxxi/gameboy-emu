@@ -16,9 +16,10 @@ public class Gameboy {
 
     public Gameboy(Screen screen, byte[] bootData, byte[] romData) throws IOException {
         this.cpu = new CPU();
-        this.gpu = new GPU(screen, this.cpu.interrupts);
-        this.timer = new Timer(this.cpu.interrupts);
-        this.memory = new MMU(bootData, romData, this.gpu, this.cpu.interrupts, timer, new ConsoleSerialConnection());
+        Interrupts interrupts = this.cpu.interrupts();
+        this.gpu = new GPU(screen, interrupts);
+        this.timer = new Timer(interrupts);
+        this.memory = new MMU(bootData, romData, gpu, interrupts, timer, new ConsoleSerialConnection());
     }
 
     public void run() throws InterruptedException {
@@ -36,6 +37,7 @@ public class Gameboy {
         int cycles = cpu.step(memory);
         timer.step(cycles);
         gpu.step(cycles);
+        cycles += cpu.interrupts().step(memory);
         return cycles;
     }
 }
