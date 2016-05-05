@@ -11,7 +11,10 @@ public class Timer {
     private boolean enabled = false;
     private FREQUENCY frequency = FREQUENCY._4096;
 
-    private int cycleCounter;
+    private int dividerCycles;
+    private int dividerCounter;
+
+    private int timerCycles;
     private int timerCounter;
     private int timerModulo;
 
@@ -20,14 +23,26 @@ public class Timer {
     }
 
     public void step(int cycles) {
-        if (!enabled) {
-            return;
+        stepDivider(cycles);
+        if (enabled) {
+            stepTimer(cycles);
         }
+    }
 
-        cycleCounter -= cycles;
+    private void stepDivider(int cycles) {
+        dividerCycles -= cycles;
 
-        while (cycleCounter <= 0) {
-            cycleCounter += frequency.counterInitialValue();
+        while (dividerCycles <= 0) {
+            dividerCycles += 0xFF;
+            dividerCounter = (dividerCounter + 1) & 0xFF;
+        }
+    }
+
+    private void stepTimer(int cycles) {
+        timerCycles -= cycles;
+
+        while (timerCycles <= 0) {
+            timerCycles += frequency.counterInitialValue();
 
             if (timerCounter == 0xFF) {
                 timerCounter = timerModulo;
@@ -48,7 +63,7 @@ public class Timer {
         log.debug("Changing timer frequency from " + this.frequency + " to " + newFrequency);
         if (newFrequency != this.frequency) {
             this.frequency = newFrequency;
-            cycleCounter = this.frequency.counterInitialValue();
+            timerCycles = this.frequency.counterInitialValue();
         }
     }
 
@@ -59,6 +74,14 @@ public class Timer {
 
     public int counter() {
         return timerCounter;
+    }
+
+    public int divider() {
+        return dividerCounter;
+    }
+
+    public void resetDivider() {
+        dividerCounter = 0;
     }
 
     private enum FREQUENCY {

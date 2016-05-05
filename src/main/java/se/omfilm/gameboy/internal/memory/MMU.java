@@ -163,6 +163,8 @@ public class MMU implements Memory {
                     return speedSwitch;
                 case TIMER_COUNTER:
                     return timer.counter();
+                case TIMER_DIVIDER:
+                    return timer.divider();
                 case SOUND_ON_OFF:
                 case SOUND_1_FREQUENCY_HIGH:
                 case SOUND_2_FREQUENCY_HIGH:
@@ -222,6 +224,9 @@ public class MMU implements Memory {
                     return;
                 case TIMER_COUNTER:
                     timer.counter(data);
+                    return;
+                case TIMER_DIVIDER:
+                    timer.resetDivider();
                     return;
                 case LCD_STATUS:
                     gpu.setInterruptEnables(data);
@@ -318,6 +323,7 @@ public class MMU implements Memory {
         JOYPAD(0xFF00),
         SERIAL_TRANSFER_DATA(0xFF01),
         SERIAL_TRANSFER_CONTROL(0xFF02),
+        TIMER_DIVIDER(0xFF04),
         TIMER_COUNTER(0xFF05),
         TIMER_MODULO(0xFF06),
         TIMER_CONTROL(0xFF07),
