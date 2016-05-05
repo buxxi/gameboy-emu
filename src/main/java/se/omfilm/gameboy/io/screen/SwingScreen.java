@@ -4,6 +4,7 @@ import se.omfilm.gameboy.util.DebugPrinter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -13,9 +14,12 @@ public class SwingScreen extends JPanel implements Screen {
     private JFrame frame;
     private long last = 0;
 
+    public SwingScreen() {
+        frame = new JFrame();
+    }
+
     public void turnOn() {
         data = new Color[Screen.HEIGHT][Screen.WIDTH];
-        frame = new JFrame();
         frame.setSize(Screen.WIDTH * SCALE, Screen.HEIGHT * SCALE);
         frame.add(this);
         frame.setVisible(true);
@@ -74,6 +78,11 @@ public class SwingScreen extends JPanel implements Screen {
         g.setColor(Color.RED);
         g.setFont(new Font("Verdana", Font.PLAIN, 13));
         g.drawString("fps: " + fps, 1, 14);
+    }
+
+    @Override
+    public synchronized void addKeyListener(KeyListener keyListener) {
+        frame.addKeyListener(keyListener);
     }
 
     public void draw() {

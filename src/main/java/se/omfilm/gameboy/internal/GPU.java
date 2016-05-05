@@ -152,7 +152,7 @@ public class GPU implements Memory {
 
     private void drawPixel(int x, int y, int tileMapAddress) {
         Tile tileNumber = resolveTile(y, x, tileMapAddress);
-        Color color = color(tileNumber.getColorData(x, y)); //TODO: handle palette to get the correct color
+        Color color = color(tileNumber.getColorData(x, y));
         screen.setPixel(x, scanline - 1, color);
     }
 
