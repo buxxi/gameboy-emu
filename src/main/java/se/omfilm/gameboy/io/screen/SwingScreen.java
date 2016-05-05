@@ -20,7 +20,7 @@ public class SwingScreen extends JPanel implements Screen {
 
     public void turnOn() {
         data = new Color[Screen.HEIGHT][Screen.WIDTH];
-        frame.setSize(Screen.WIDTH * SCALE, Screen.HEIGHT * SCALE);
+        this.setPreferredSize(new Dimension(Screen.WIDTH * SCALE, Screen.HEIGHT * SCALE));
         frame.add(this);
         frame.setVisible(true);
         frame.addMouseListener(new MouseListener() {
@@ -49,6 +49,7 @@ public class SwingScreen extends JPanel implements Screen {
 
             }
         });
+        frame.pack();
     }
 
     public void turnOff() {
