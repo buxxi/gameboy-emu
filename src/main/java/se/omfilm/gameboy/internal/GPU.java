@@ -1,7 +1,5 @@
 package se.omfilm.gameboy.internal;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.io.screen.Screen;
@@ -12,8 +10,6 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class GPU implements Memory {
-    private static final Logger log = LoggerFactory.getLogger(GPU.class);
-
     private static final int TILE_MAP_ADDRESS_0 = 0x9800;
     private static final int TILE_MAP_ADDRESS_1 = 0x9C00;
     private static final int TILE_DATA_ADDRESS_0 = 0x8800;
@@ -125,7 +121,7 @@ public class GPU implements Memory {
         if (backgroundDisplay) {
             for (int x = 0; x < Screen.WIDTH; x++) {
                 if (windowDisplay && windowY <= scanline) {
-                    drawBackgroundWindow(x);
+                    drawBackgroundWindowPixel(x);
                 } else {
                     drawBackgroundPixel(x);
                 }
@@ -136,7 +132,7 @@ public class GPU implements Memory {
         }
     }
 
-    private void drawBackgroundWindow(int x) {
+    private void drawBackgroundWindowPixel(int x) {
         int y = scanline - windowY;
         if (x >= windowX) {
             x -= windowX;
@@ -152,12 +148,12 @@ public class GPU implements Memory {
 
     private void drawPixel(int x, int y, int tileMapAddress) {
         Tile tileNumber = resolveTile(y, x, tileMapAddress);
-        Color color = color(tileNumber.getColorData(x, y));
+        Color color = color(tileNumber.getColorData(x, y), backgroundPaletteData);
         screen.setPixel(x, scanline - 1, color);
     }
 
     private void drawSprites() {
-        Arrays.stream(sprites).filter(s -> s.isOnScanline(scanline)).forEach(Sprite::render);
+        Arrays.stream(sprites).filter(s -> s.isOnScanline(scanline)).forEach(s -> s.renderOn(scanline));
     }
 
     private Tile resolveTile(int y, int x, int tileMapAddress) {
@@ -267,10 +263,18 @@ public class GPU implements Memory {
         return scanline;
     }
 
-    private Color color(int input) {
+    public int scanlineCompare() {
+        return compareWithScanline;
+    }
+
+    public void scanlineCompare(int compareWithScanline) {
+        this.compareWithScanline = compareWithScanline;
+    }
+
+    private Color color(int input, int palette) {
         int offset = input * 2;
         int mask = (0b0000_0011 << offset);
-        int result = (backgroundPaletteData & mask) >> offset;
+        int result = (palette & mask) >> offset;
 
         switch (result) {
             case 0:
@@ -332,8 +336,36 @@ public class GPU implements Memory {
             return objectAttributeMemory.readByte(spriteNum * 4) - 16;
         }
 
-        private void render() {
-            throw new UnsupportedOperationException("Rendering of sprite not implemented");
+        private int tileNumber() {
+            return objectAttributeMemory.readByte((spriteNum * 4) + 2);
+        }
+
+        private void renderOn(int scanline) {
+            Tile tile = tilesAddress1[tileNumber()];
+            int attributes = objectAttributeMemory.readByte((spriteNum * 4) + 3);
+
+            boolean prioritizeSprite =  (attributes & 0b1000_0000) == 0;
+            boolean flipY =             (attributes & 0b0100_0000) != 0;
+            boolean flipX =             (attributes & 0b0010_0000) != 0;
+            int colorPalette =          (attributes & 0b0001_0000) == 0 ? objectPalette0Data : objectPalette1Data;
+
+            if (!prioritizeSprite) {
+                throw new UnsupportedOperationException("Prioritization of background not implemented");
+            }
+
+            for (int i = 0; i < 8; i++) {
+                int x = (x() + i % 8);
+                int y = scanline - y();
+                if (flipX) {
+                    x = 8 - x;
+                }
+                if (flipY) {
+                    y = (largeSprites ? 16 : 8) - y;
+                }
+
+                Color color = color(tile.getColorData(x, y), colorPalette);
+                screen.setPixel(x() + i, scanline - 1, color);
+            }
         }
     }
 

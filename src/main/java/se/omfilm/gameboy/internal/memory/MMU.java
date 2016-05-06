@@ -145,6 +145,8 @@ public class MMU implements Memory {
                     return gpu.scrollY();
                 case LCD_SCANLINE:
                     return gpu.scanline();
+                case LCD_SCANLINE_COMPARE:
+                    return gpu.scanlineCompare();
                 case JOYPAD:
                     return controllerState;
                 case INTERRUPT_ENABLE:
@@ -230,6 +232,9 @@ public class MMU implements Memory {
                     return;
                 case LCD_STATUS:
                     gpu.setInterruptEnables(data);
+                    return;
+                case LCD_SCANLINE_COMPARE:
+                    gpu.scanlineCompare(data);
                     return;
                 case DMA_TRANSFER:
                     gpu.transferDMA((data * 0x100) - MemoryType.RAM.from, ram);
@@ -370,6 +375,7 @@ public class MMU implements Memory {
         SCROLL_Y(0xFF42),
         SCROLL_X(0xFF43),
         LCD_SCANLINE(0xFF44),
+        LCD_SCANLINE_COMPARE(0xFF45),
         DMA_TRANSFER(0xFF46),
         BACKGROUND_PALETTE_DATA(0xFF47),
         OBJECT_PALETTE_0_DATA(0xFF48),
