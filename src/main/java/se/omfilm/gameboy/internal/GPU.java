@@ -16,7 +16,6 @@ public class GPU implements Memory {
     private static final int TILE_DATA_ADDRESS_1 = 0x8000;
 
     private final Memory videoRam;
-    private final Memory objectAttributeMemory;
     private final Screen screen;
     private final Interrupts interrupts;
 
@@ -54,7 +53,6 @@ public class GPU implements Memory {
     public GPU(Screen screen, Interrupts interrupts) {
         this.interrupts = interrupts;
         this.videoRam = new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate());
-        this.objectAttributeMemory = new ByteArrayMemory(MemoryType.OBJECT_ATTRIBUTE_MEMORY.allocate());
         this.screen = screen;
     }
 
@@ -176,7 +174,8 @@ public class GPU implements Memory {
                 videoRam.writeByte(address - type.from, data);
                 return;
             case OBJECT_ATTRIBUTE_MEMORY:
-                objectAttributeMemory.writeByte(address - type.from, data);
+                int virtualAddress = address - type.from;
+                writeOAMByte(virtualAddress, data);
                 return;
             default:
                 throw new UnsupportedOperationException("Can't write to address " + DebugPrinter.hex(address, 4) + " in " + getClass().getSimpleName());
@@ -291,7 +290,34 @@ public class GPU implements Memory {
 
     public void transferDMA(int offset, Memory ram) {
         for (int i = 0; i < MemoryType.OBJECT_ATTRIBUTE_MEMORY.size(); i++) {
-            objectAttributeMemory.writeByte(i, ram.readByte(offset + i));
+            writeOAMByte(i, ram.readByte(offset + i));
+        }
+    }
+
+    private void writeOAMByte(int virtualAddress, int value) {
+        int spriteNumber = virtualAddress / 4;
+        int type = virtualAddress % 4;
+
+        Sprite sprite = sprites[spriteNumber];
+        switch (type) {
+            case 0:
+                sprite.y = value - 16;
+                break;
+            case 1:
+                sprite.x = value - 8;
+                break;
+            case 2:
+                sprite.tileNumber = value;
+                break;
+            case 3:
+                sprite.prioritizeSprite =   (value & 0b1000_0000) == 0;
+                sprite.flipY =              (value & 0b0100_0000) != 0;
+                sprite.flipX =              (value & 0b0010_0000) != 0;
+                sprite.colorPalette =       (value & 0b0001_0000) == 0 ? objectPalette0Data : objectPalette1Data;
+
+                if (!sprite.prioritizeSprite) {
+                    throw new UnsupportedOperationException("Prioritization of background not implemented");
+                }
         }
     }
 
@@ -317,45 +343,28 @@ public class GPU implements Memory {
     }
 
     private class Sprite {
-        private final int spriteNum;
+        private int x = 0;
+        private int y = 0;
+        private int tileNumber = 0;
+        private boolean prioritizeSprite = true;
+        private boolean flipY = false;
+        private boolean flipX = false;
+        private int colorPalette = objectPalette0Data;
 
         private Sprite(int spriteNum) {
-            this.spriteNum = spriteNum;
         }
 
         private boolean isOnScanline(int scanline) {
-            int y = y();
+            int y = this.y;
             return scanline >= y && scanline < (y + (largeSprites ? 16 : 8));
         }
 
-        private int x() {
-            return objectAttributeMemory.readByte((spriteNum * 4) + 1) - 8;
-        }
-
-        private int y() {
-            return objectAttributeMemory.readByte(spriteNum * 4) - 16;
-        }
-
-        private int tileNumber() {
-            return objectAttributeMemory.readByte((spriteNum * 4) + 2);
-        }
-
         private void renderOn(int scanline) {
-            Tile tile = tilesAddress1[tileNumber()];
-            int attributes = objectAttributeMemory.readByte((spriteNum * 4) + 3);
-
-            boolean prioritizeSprite =  (attributes & 0b1000_0000) == 0;
-            boolean flipY =             (attributes & 0b0100_0000) != 0;
-            boolean flipX =             (attributes & 0b0010_0000) != 0;
-            int colorPalette =          (attributes & 0b0001_0000) == 0 ? objectPalette0Data : objectPalette1Data;
-
-            if (!prioritizeSprite) {
-                throw new UnsupportedOperationException("Prioritization of background not implemented");
-            }
+            Tile tile = tilesAddress1[this.tileNumber];
 
             for (int i = 0; i < 8; i++) {
-                int x = (x() + i % 8);
-                int y = scanline - y();
+                int x = (this.x + i % 8);
+                int y = scanline - this.y;
                 if (flipX) {
                     x = 8 - x;
                 }
@@ -364,7 +373,7 @@ public class GPU implements Memory {
                 }
 
                 Color color = color(tile.getColorData(x, y), colorPalette);
-                screen.setPixel(x() + i, scanline - 1, color);
+                screen.setPixel(this.x + i, scanline - 1, color);
             }
         }
     }

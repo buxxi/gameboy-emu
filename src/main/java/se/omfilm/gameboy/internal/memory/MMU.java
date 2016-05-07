@@ -59,6 +59,8 @@ public class MMU implements Memory {
             case INTERRUPT_ENABLE:
             case IO_REGISTERS:
                 return ioController.readByte(address);
+            case UNUSABLE_MEMORY:
+                return 0; //TODO: log?
             default:
                 throw new UnsupportedOperationException("Can't read from " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));
         }
@@ -95,6 +97,8 @@ public class MMU implements Memory {
             case ECHO_RAM:
                 ram.writeByte(virtualAddress, data);
                 return;
+            case UNUSABLE_MEMORY:
+                return; //TODO: log?
             default:
                 throw new UnsupportedOperationException("Can't write to " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4) + " with value " + DebugPrinter.hex(data, 4));
         }

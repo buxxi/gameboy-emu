@@ -17,16 +17,17 @@ public interface Memory {
     }
 
     enum MemoryType {
-        ROM_BANK0(0x0000, 0x3FFF),
-        ROM_SWITCHABLE_BANKS(0x4000, 0x7FFF),
-        VIDEO_RAM(0x8000, 0x9FFF),
-        IO_REGISTERS(0xFF00, 0xFF7F),
-        ZERO_PAGE(0xFF80, 0xFFFE),
-        RAM_BANKS(0xA000, 0xBFFF),
-        RAM(0xC000, 0xDFFF),
-        ECHO_RAM(0xE000, 0xFDFF),
-        OBJECT_ATTRIBUTE_MEMORY(0xFE00, 0xFFA0),
-        INTERRUPT_ENABLE(0xFFFF, 0xFFFF);
+        ROM_BANK0(              0x0000, 0x3FFF),
+        ROM_SWITCHABLE_BANKS(   0x4000, 0x7FFF),
+        VIDEO_RAM(              0x8000, 0x9FFF),
+        RAM_BANKS(              0xA000, 0xBFFF),
+        RAM(                    0xC000, 0xDFFF),
+        ECHO_RAM(               0xE000, 0xFDFF),
+        OBJECT_ATTRIBUTE_MEMORY(0xFE00, 0xFE9F),
+        UNUSABLE_MEMORY(        0xFEA0, 0xFEFF),
+        IO_REGISTERS(           0xFF00, 0xFF7F),
+        ZERO_PAGE(              0xFF80, 0xFFFE),
+        INTERRUPT_ENABLE(       0xFFFF, 0xFFFF);
 
         public final int from;
         public final int to;
