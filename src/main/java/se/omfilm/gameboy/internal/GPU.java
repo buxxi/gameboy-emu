@@ -15,6 +15,10 @@ public class GPU implements Memory {
     private final Screen screen;
     private final Interrupts interrupts;
 
+    private Palette backgroundPaletteData = new Palette(0);
+    private Palette objectPalette0Data = new Palette(0);
+    private Palette objectPalette1Data = new Palette(0);
+
     private Tile[] tiles = IntStream.range(0, 384).mapToObj(Tile::new).toArray(Tile[]::new);
     private int tileOffset = 0;
     private int[][] tileMap0 = new int[32][32];
@@ -29,9 +33,6 @@ public class GPU implements Memory {
     private int scrollY = 0;
     private int windowY = 0;
     private int windowX;
-    private int backgroundPaletteData;
-    private int objectPalette0Data;
-    private int objectPalette1Data;
     private int cycleCounter = 0;
     private int scanline = 0;
     private int compareWithScanline = 0;
@@ -112,46 +113,49 @@ public class GPU implements Memory {
     }
 
     private void drawScanline() {
+        Color[] scanlineBuffer = new Color[Screen.WIDTH];
         if (backgroundDisplay) {
             for (int x = 0; x < Screen.WIDTH; x++) {
                 if (windowDisplay && windowY <= scanline) {
-                    drawBackgroundWindowPixel(x);
+                    drawBackgroundWindowPixel(scanlineBuffer, x);
                 } else {
-                    drawBackgroundPixel(x);
+                    drawBackgroundPixel(scanlineBuffer, x);
                 }
             }
         }
         if (spriteDisplay) {
-            drawSprites();
+            drawSprites(scanlineBuffer);
+        }
+        for (int x = 0; x < Screen.WIDTH; x++) {
+            screen.setPixel(x, scanline - 1, scanlineBuffer[x]);
         }
     }
 
-    private void drawBackgroundWindowPixel(int x) {
+    private void drawBackgroundWindowPixel(Color[] scanlineBuffer, int x) {
         int y = scanline - windowY;
         if (x >= windowX) {
             x -= windowX;
         }
-        drawPixel(x, y, windowTileMap);
+        drawTilePixel(scanlineBuffer, x, y, windowTileMap);
     }
 
-    private void drawBackgroundPixel(int x) {
+    private void drawBackgroundPixel(Color[] scanlineBuffer, int x) {
         int y = (scanline + scrollY) & 0xFF;
         x = (x + scrollX) & 0xFF;
-        drawPixel(x, y, backgroundTileMap);
+        drawTilePixel(scanlineBuffer, x, y, backgroundTileMap);
     }
 
-    private void drawPixel(int x, int y, int[][] tileMap) {
+    private void drawTilePixel(Color[] scanlineBuffer, int x, int y, int[][] tileMap) {
         int id = tileMap[y / 8][x / 8];
         if (tileOffset != 0) {
             id = tileOffset + ((byte) id);
         }
-        Tile tileNumber = tiles[id];
-        Color color = color(tileNumber.getColorData(x, y), backgroundPaletteData);
-        screen.setPixel(x, scanline - 1, color);
+        Tile tile = tiles[id];
+        tile.renderOn(scanlineBuffer, y, x);
     }
 
-    private void drawSprites() {
-        Arrays.stream(sprites).filter(s -> s.isOnScanline(scanline)).forEach(s -> s.renderOn(scanline));
+    private void drawSprites(Color[] scanlineBuffer) {
+        Arrays.stream(sprites).filter(Sprite::isOnScanline).forEach(s -> s.renderOn(scanlineBuffer));
     }
 
     public int readByte(int address) {
@@ -211,15 +215,15 @@ public class GPU implements Memory {
     }
 
     public void setBackgroundPaletteData(int backgroundPaletteData) {
-        this.backgroundPaletteData = backgroundPaletteData;
+        this.backgroundPaletteData = new Palette(backgroundPaletteData);
     }
 
     public void setObjectPalette0Data(int data) {
-        this.objectPalette0Data = data;
+        this.objectPalette0Data = new Palette(data);
     }
 
     public void setObjectPalette1Data(int data) {
-        this.objectPalette1Data = data;
+        this.objectPalette1Data = new Palette(data);
     }
 
     public void setLCDControl(int data) {
@@ -277,24 +281,6 @@ public class GPU implements Memory {
         this.compareWithScanline = compareWithScanline;
     }
 
-    private Color color(int input, int palette) {
-        int offset = input * 2;
-        int mask = (0b0000_0011 << offset);
-        int result = (palette & mask) >> offset;
-
-        switch (result) {
-            case 0:
-            default:
-                return Color.WHITE;
-            case 1:
-                return Color.LIGHT_GRAY;
-            case 2:
-                return Color.DARK_GRAY;
-            case 3:
-                return Color.BLACK;
-        }
-    }
-
     public void transferDMA(int offset, Memory ram) {
         for (int i = 0; i < MemoryType.OBJECT_ATTRIBUTE_MEMORY.size(); i++) {
             writeOAMByte(i, ram.readByte(offset + i));
@@ -320,11 +306,7 @@ public class GPU implements Memory {
                 sprite.prioritizeSprite =   (value & 0b1000_0000) == 0;
                 sprite.flipY =              (value & 0b0100_0000) != 0;
                 sprite.flipX =              (value & 0b0010_0000) != 0;
-                sprite.colorPalette =       (value & 0b0001_0000) == 0 ? objectPalette0Data : objectPalette1Data;
-
-                if (!sprite.prioritizeSprite) {
-                    throw new UnsupportedOperationException("Prioritization of background not implemented");
-                }
+                sprite.palette =            (value & 0b0001_0000) == 0 ? objectPalette0Data : objectPalette1Data;
         }
     }
 
@@ -371,7 +353,7 @@ public class GPU implements Memory {
                 return  (!sprite.prioritizeSprite ?                     0b1000_0000 : 0) |
                         (sprite.flipY ?                                 0b0100_0000 : 0) |
                         (sprite.flipX ?                                 0b0010_0000 : 0) |
-                        (sprite.colorPalette == objectPalette1Data ?    0b0001_0000 : 0);
+                        (sprite.palette == objectPalette1Data ?         0b0001_0000 : 0);
         }
         throw new IllegalArgumentException("Unreachable code");
     }
@@ -409,34 +391,48 @@ public class GPU implements Memory {
     }
 
     private class Tile {
+        private final int tileNumber;
+
         private final int[][] graphics = new int[8][8];
 
         private Tile(int tileNumber) {
+            this.tileNumber = tileNumber;
         }
 
-        private int getColorData(int x, int y) {
-            return graphics[y & 7][x & 7];
+        private void renderOn(Color[] scanlineBuffer, int y, int x) {
+            if (x >= Screen.WIDTH || x < 0) {
+                return;
+            }
+            scanlineBuffer[x] = backgroundPaletteData.color(graphics[y & 7][x & 7]);
+        }
+
+        @Override
+        public String toString() {
+            return "Tile(" + tileNumber + ")";
         }
     }
 
     private class Sprite {
+        private final int spriteNum;
+
         private int x = 0;
         private int y = 0;
         private int tileNumber = 0;
         private boolean prioritizeSprite = true;
         private boolean flipY = false;
         private boolean flipX = false;
-        private int colorPalette = objectPalette0Data;
+        private Palette palette = objectPalette0Data;
 
         private Sprite(int spriteNum) {
+            this.spriteNum = spriteNum;
         }
 
-        private boolean isOnScanline(int scanline) {
+        private boolean isOnScanline() {
             int y = this.y;
             return scanline >= y && scanline < (y + (largeSprites ? 16 : 8));
         }
 
-        private void renderOn(int scanline) {
+        private void renderOn(Color[] scanlineBuffer) {
             Tile tile = tiles[this.tileNumber];
 
             for (int i = 0; i < 8; i++) {
@@ -449,8 +445,46 @@ public class GPU implements Memory {
                     y = (largeSprites ? 16 : 8) - y;
                 }
 
-                Color color = color(tile.getColorData(x, y), colorPalette);
-                screen.setPixel(this.x + i, scanline - 1, color);
+                if (this.x + i >= Screen.WIDTH || this.x + i < 0) {
+                    return;
+                }
+
+                if (!prioritizeSprite && scanlineBuffer[this.x + i] != Color.WHITE) {
+                    return;
+                }
+
+                scanlineBuffer[this.x + i] = palette.color(tile.graphics[y & 7][x & 7]);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Sprite(" + spriteNum + ")";
+        }
+    }
+
+    private class Palette {
+        private int palette;
+
+        private Palette(int palette) {
+            this.palette = palette;
+        }
+
+        private Color color(int input) {
+            int offset = input * 2;
+            int mask = (0b0000_0011 << offset);
+            int result = (palette & mask) >> offset;
+
+            switch (result) {
+                case 0:
+                default:
+                    return Color.WHITE;
+                case 1:
+                    return Color.LIGHT_GRAY;
+                case 2:
+                    return Color.DARK_GRAY;
+                case 3:
+                    return Color.BLACK;
             }
         }
     }
