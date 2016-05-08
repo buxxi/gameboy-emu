@@ -127,12 +127,14 @@ public class GPU implements Memory {
             drawSprites(scanlineBuffer);
         }
         for (int x = 0; x < Screen.WIDTH; x++) {
-            screen.setPixel(x, scanline - 1, scanlineBuffer[x]);
+            Color color = scanlineBuffer[x] != null ? scanlineBuffer[x] : Color.WHITE;
+            screen.setPixel(x, scanline - 1, color);
         }
     }
 
     private void drawBackgroundWindowPixel(Color[] scanlineBuffer, int x) {
         int y = scanline - windowY;
+        x = (x + scrollX) & 0xFF;
         if (x >= windowX) {
             x -= windowX;
         }
@@ -436,13 +438,13 @@ public class GPU implements Memory {
             Tile tile = tiles[this.tileNumber];
 
             for (int i = 0; i < 8; i++) {
-                int x = (this.x + i % 8);
-                int y = scanline - this.y;
+                int x = i;
+                int y = (scanline - this.y) % 8;
                 if (flipX) {
-                    x = 8 - x;
+                    x = 7 - x;
                 }
                 if (flipY) {
-                    y = (largeSprites ? 16 : 8) - y;
+                    y = 7 - y;
                 }
 
                 if (this.x + i >= Screen.WIDTH || this.x + i < 0) {
@@ -453,7 +455,10 @@ public class GPU implements Memory {
                     return;
                 }
 
-                scanlineBuffer[this.x + i] = palette.color(tile.graphics[y & 7][x & 7]);
+                Color color = palette.color(tile.graphics[y][x]);
+                if (color != Color.WHITE) {
+                    scanlineBuffer[this.x + i] = color;
+                }
             }
         }
 
