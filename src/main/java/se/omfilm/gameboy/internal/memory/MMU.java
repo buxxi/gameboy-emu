@@ -55,12 +55,13 @@ public class MMU implements Memory {
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:
             case OBJECT_ATTRIBUTE_MEMORY:
-                return gpu.readByte(virtualAddress);
+                return gpu.readByte(address);
             case INTERRUPT_ENABLE:
             case IO_REGISTERS:
                 return ioController.readByte(address);
             case UNUSABLE_MEMORY:
-                return 0; //TODO: log?
+                log.warn("Reading from " + MemoryType.UNUSABLE_MEMORY + " at address " + DebugPrinter.hex(address, 4));
+                return 0;
             default:
                 throw new UnsupportedOperationException("Can't read from " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));
         }
@@ -98,7 +99,8 @@ public class MMU implements Memory {
                 ram.writeByte(virtualAddress, data);
                 return;
             case UNUSABLE_MEMORY:
-                return; //TODO: log?
+                log.warn("Writing " + DebugPrinter.hex(data, 2) + " to " + MemoryType.UNUSABLE_MEMORY + " at " + DebugPrinter.hex(address, 4));
+                return;
             default:
                 throw new UnsupportedOperationException("Can't write to " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4) + " with value " + DebugPrinter.hex(data, 4));
         }

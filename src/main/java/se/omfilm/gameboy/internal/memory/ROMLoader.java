@@ -17,7 +17,7 @@ public class ROMLoader {
         ROM_TYPE type = ROM_TYPE.fromValue(data[0x147]);
         switch (type) {
             case ROM_ONLY:
-                return rom;
+                return rom; //TODO: make readonly
             case ROM_MBC1:
             case ROM_MBC1_RAM:
             case ROM_MBC1_RAM_BATTERY:

@@ -164,7 +164,15 @@ public class GPU implements Memory {
     }
 
     public int readByte(int address) {
-        return videoRam.readByte(address);
+        MemoryType type = MemoryType.fromAddress(address);
+        switch (type) {
+            case VIDEO_RAM:
+                return videoRam.readByte(address - type.from);
+            case OBJECT_ATTRIBUTE_MEMORY:
+                //TODO: do I need to implement this?
+            default:
+                throw new UnsupportedOperationException("Can't read from address " + DebugPrinter.hex(address, 4) + " in " + getClass().getSimpleName());
+        }
     }
 
     public void writeByte(int address, int data) {
