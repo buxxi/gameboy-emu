@@ -1,6 +1,5 @@
 package se.omfilm.gameboy.internal;
 
-import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.util.DebugPrinter;
@@ -12,16 +11,16 @@ import java.util.stream.IntStream;
 public class GPU implements Memory {
     private static final int TILE_MAP_ADDRESS_0 = 0x9800;
     private static final int TILE_MAP_ADDRESS_1 = 0x9C00;
-    private static final int TILE_DATA_ADDRESS_0 = 0x8800;
-    private static final int TILE_DATA_ADDRESS_1 = 0x8000;
 
-    private final Memory videoRam;
     private final Screen screen;
     private final Interrupts interrupts;
 
-    private final Tile[] tilesAddress0 = IntStream.range(0, 256).mapToObj(i -> new Tile(i, TILE_DATA_ADDRESS_0)).toArray(Tile[]::new);
-    private final Tile[] tilesAddress1 = IntStream.range(0, 256).mapToObj(i -> new Tile(i, TILE_DATA_ADDRESS_1)).toArray(Tile[]::new);
-    private Tile[] currentTiles = tilesAddress0;
+    private Tile[] tiles = IntStream.range(0, 384).mapToObj(Tile::new).toArray(Tile[]::new);
+    private int tileOffset = 0;
+    private int[][] tileMap0 = new int[32][32];
+    private int[][] tileMap1 = new int[32][32];
+    private int[][] windowTileMap = tileMap0;
+    private int[][] backgroundTileMap = tileMap0;
 
     private final Sprite[] sprites = IntStream.range(0, 40).mapToObj(Sprite::new).toArray(Sprite[]::new);
 
@@ -38,9 +37,7 @@ public class GPU implements Memory {
     private int compareWithScanline = 0;
 
     private boolean lcdDisplay = false;
-    private int windowTileMapAddress = TILE_MAP_ADDRESS_0;
     private boolean windowDisplay = false;
-    private int backgroundTileMapAddress = TILE_MAP_ADDRESS_0;
     private boolean largeSprites = false;
     private boolean spriteDisplay = false;
     private boolean backgroundDisplay = false;
@@ -52,7 +49,6 @@ public class GPU implements Memory {
 
     public GPU(Screen screen, Interrupts interrupts) {
         this.interrupts = interrupts;
-        this.videoRam = new ByteArrayMemory(Memory.MemoryType.VIDEO_RAM.allocate());
         this.screen = screen;
     }
 
@@ -135,17 +131,21 @@ public class GPU implements Memory {
         if (x >= windowX) {
             x -= windowX;
         }
-        drawPixel(x, y, windowTileMapAddress);
+        drawPixel(x, y, windowTileMap);
     }
 
     private void drawBackgroundPixel(int x) {
         int y = (scanline + scrollY) & 0xFF;
         x = (x + scrollX) & 0xFF;
-        drawPixel(x, y, backgroundTileMapAddress);
+        drawPixel(x, y, backgroundTileMap);
     }
 
-    private void drawPixel(int x, int y, int tileMapAddress) {
-        Tile tileNumber = resolveTile(y, x, tileMapAddress);
+    private void drawPixel(int x, int y, int[][] tileMap) {
+        int id = tileMap[y / 8][x / 8];
+        if (tileOffset != 0) {
+            id = tileOffset + ((byte) id);
+        }
+        Tile tileNumber = tiles[id];
         Color color = color(tileNumber.getColorData(x, y), backgroundPaletteData);
         screen.setPixel(x, scanline - 1, color);
     }
@@ -154,22 +154,17 @@ public class GPU implements Memory {
         Arrays.stream(sprites).filter(s -> s.isOnScanline(scanline)).forEach(s -> s.renderOn(scanline));
     }
 
-    private Tile resolveTile(int y, int x, int tileMapAddress) {
-        int address = tileMapAddress - MemoryType.VIDEO_RAM.from + ((y / 8) * 32) + (x / 8); //Each row contains 32 tiles
-        int id = videoRam.readByte(address);
-        if (currentTiles == tilesAddress0) {
-            id = 128 + ((byte) id);
-        }
-        return currentTiles[id];
-    }
-
     public int readByte(int address) {
         MemoryType type = MemoryType.fromAddress(address);
         switch (type) {
             case VIDEO_RAM:
-                return videoRam.readByte(address - type.from);
+                if (address >= TILE_MAP_ADDRESS_0) {
+                    return readTileMapByte(address);
+                } else {
+                    return readTileByte(address - type.from);
+                }
             case OBJECT_ATTRIBUTE_MEMORY:
-                //TODO: do I need to implement this?
+                return readOAMByte(address - type.from);
             default:
                 throw new UnsupportedOperationException("Can't read from address " + DebugPrinter.hex(address, 4) + " in " + getClass().getSimpleName());
         }
@@ -179,7 +174,11 @@ public class GPU implements Memory {
         MemoryType type = MemoryType.fromAddress(address);
         switch (type) {
             case VIDEO_RAM:
-                videoRam.writeByte(address - type.from, data);
+                if (address >= TILE_MAP_ADDRESS_0) {
+                    writeTileMapByte(address, data);
+                } else {
+                    writeTileByte(address - MemoryType.VIDEO_RAM.from, data);
+                }
                 return;
             case OBJECT_ATTRIBUTE_MEMORY:
                 int virtualAddress = address - type.from;
@@ -225,10 +224,10 @@ public class GPU implements Memory {
 
     public void setLCDControl(int data) {
         lcdDisplay =                (data & 0b1000_0000) != 0;
-        windowTileMapAddress =      (data & 0b0100_0000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
+        windowTileMap =             (data & 0b0100_0000) != 0 ? tileMap1 : tileMap0;
         windowDisplay =             (data & 0b0010_0000) != 0;
-        currentTiles =              (data & 0b0001_0000) != 0 ? tilesAddress1 : tilesAddress0;
-        backgroundTileMapAddress =  (data & 0b0000_1000) != 0 ? TILE_MAP_ADDRESS_1 : TILE_MAP_ADDRESS_0;
+        tileOffset =                (data & 0b0001_0000) != 0 ? 0 : 256;
+        backgroundTileMap =         (data & 0b0000_1000) != 0 ? tileMap1 : tileMap0;
         largeSprites =              (data & 0b0000_0100) != 0;
         spriteDisplay =             (data & 0b0000_0010) != 0;
         backgroundDisplay =         (data & 0b0000_0001) != 0;
@@ -240,10 +239,10 @@ public class GPU implements Memory {
 
     public int getLCDControl() {
         return  (lcdDisplay ?                                       0b1000_0000 : 0) |
-                (windowTileMapAddress == TILE_MAP_ADDRESS_1 ?       0b0100_0000 : 0) |
+                (windowTileMap == tileMap1 ?                        0b0100_0000 : 0) |
                 (windowDisplay ?                                    0b0010_0000 : 0) |
-                (currentTiles == tilesAddress1 ?                    0b0001_0000 : 0) |
-                (backgroundTileMapAddress == TILE_MAP_ADDRESS_1 ?   0b0000_1000 : 0) |
+                (tileOffset == 0 ?                                  0b0001_0000 : 0) |
+                (backgroundTileMap == tileMap1 ?                    0b0000_1000 : 0) |
                 (largeSprites ?                                     0b0000_0100 : 0) |
                 (spriteDisplay ?                                    0b0000_0010 : 0) |
                 (backgroundDisplay ?                                0b0000_0001 : 0);
@@ -329,24 +328,94 @@ public class GPU implements Memory {
         }
     }
 
-    private class Tile {
-        private final int tileNumber;
-        private final int dataAddress;
+    private void writeTileMapByte(int address, int value) {
+        int[][] tileMap;
+        if (address < TILE_MAP_ADDRESS_1) {
+            address -= TILE_MAP_ADDRESS_0;
+            tileMap = tileMap0;
+        } else {
+            address -= TILE_MAP_ADDRESS_1;
+            tileMap = tileMap1;
+        }
 
-        private Tile(int tileNumber, int dataAddress) {
-            this.tileNumber = tileNumber;
-            this.dataAddress = dataAddress;
+        tileMap[address / 32][address % 32] = value;
+    }
+
+    private void writeTileByte(int virtualAddress, int value) {
+        Tile tile = tiles[virtualAddress / 16]; //Each tile uses 16 bytes
+        int rowData = virtualAddress % 16;
+        int y = rowData / 2; //Each row uses 2 bytes
+        for (int x = 0; x < 8; x++) {
+            int colorBit = 1 << (7 - x); //The x-coordinates are backwards
+            if (rowData % 2 == 0) { //The 2 bytes for each row should be combined into a single value with the first bytes value in bit 1 and the second bytes value in bit 0
+                tile.graphics[y][x] = ((value & colorBit) != 0 ? 0b01 : 0b00) | (tile.graphics[y][x] & 0b10);
+            } else {
+                tile.graphics[y][x] = ((value & colorBit) != 0 ? 0b10 : 0b00) | (tile.graphics[y][x] & 0b01);
+            }
+        }
+    }
+
+    private int readOAMByte(int virtualAddress) {
+        int spriteNumber = virtualAddress / 4;
+        int type = virtualAddress % 4;
+
+        Sprite sprite = sprites[spriteNumber];
+        switch (type) {
+            case 0:
+                return sprite.y + 16;
+            case 1:
+                return sprite.x + 8;
+            case 2:
+                return sprite.tileNumber;
+            case 3:
+                return  (!sprite.prioritizeSprite ?                     0b1000_0000 : 0) |
+                        (sprite.flipY ?                                 0b0100_0000 : 0) |
+                        (sprite.flipX ?                                 0b0010_0000 : 0) |
+                        (sprite.colorPalette == objectPalette1Data ?    0b0001_0000 : 0);
+        }
+        throw new IllegalArgumentException("Unreachable code");
+    }
+
+    private int readTileMapByte(int address) {
+        int[][] tileMap;
+        if (address < TILE_MAP_ADDRESS_1) {
+            address -= TILE_MAP_ADDRESS_0;
+            tileMap = tileMap0;
+        } else {
+            address -= TILE_MAP_ADDRESS_1;
+            tileMap = tileMap1;
+        }
+
+        return tileMap[address / 32][address % 32];
+    }
+
+    //TODO: can some code be reused from writeTileByte?
+    private int readTileByte(int virtualAddress) {
+        int result = 0;
+
+        Tile tile = tiles[virtualAddress / 16];
+        int rowData = virtualAddress % 16;
+        int y = rowData / 2;
+        for (int x = 0; x < 8; x++) {
+            int colorBit = 1 << (7 - x);
+            int pixel = tile.graphics[y][x];
+            if (rowData % 2 == 0) {
+                result = result | ((pixel & 0b01) != 0 ? colorBit : 0);
+            } else {
+                result = result | ((pixel & 0b10) != 0 ? colorBit : 0);
+            }
+        }
+        return result;
+    }
+
+    private class Tile {
+        private final int[][] graphics = new int[8][8];
+
+        private Tile(int tileNumber) {
         }
 
         private int getColorData(int x, int y) {
-            int rowData = resolveRowData(tileNumber, y);
-            int colorBit = 1 << (7 - x % 8);
-            return ((rowData & colorBit) != 0 ? 0b10 : 0b00) | (((rowData >> 8) & colorBit) != 0 ? 0b01 : 0b00);
-        }
-
-        private int resolveRowData(int tileNumber, int y) {
-            int tileLocation = dataAddress - MemoryType.VIDEO_RAM.from + (tileNumber * 8 * 2); //Since each tile is 2 bytes and 8 rows long
-            return videoRam.readWord(tileLocation + ((y % 8) * 2));
+            return graphics[y & 7][x & 7];
         }
     }
 
@@ -368,7 +437,7 @@ public class GPU implements Memory {
         }
 
         private void renderOn(int scanline) {
-            Tile tile = tilesAddress1[this.tileNumber];
+            Tile tile = tiles[this.tileNumber];
 
             for (int i = 0; i < 8; i++) {
                 int x = (this.x + i % 8);
