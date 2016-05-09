@@ -431,35 +431,42 @@ public class GPU implements Memory {
 
         private boolean isOnScanline() {
             int y = this.y;
-            return scanline >= y && scanline < (y + (largeSprites ? 16 : 8));
+            return scanline >= y && scanline < (y + height());
         }
 
         private void renderOn(Color[] scanlineBuffer) {
-            Tile tile = tiles[this.tileNumber];
-
             for (int i = 0; i < 8; i++) {
                 int x = i;
-                int y = (scanline - this.y) % 8;
+                int y = (scanline - this.y);
                 if (flipX) {
                     x = 7 - x;
                 }
                 if (flipY) {
-                    y = 7 - y;
+                    y = height() - 1 - y;
                 }
 
                 if (this.x + i >= Screen.WIDTH || this.x + i < 0) {
-                    return;
+                    continue;
                 }
 
                 if (!prioritizeSprite && scanlineBuffer[this.x + i] != Color.WHITE) {
-                    return;
+                    continue;
                 }
 
-                Color color = palette.color(tile.graphics[y][x]);
-                if (color != Color.WHITE) {
-                    scanlineBuffer[this.x + i] = color;
+                Tile tile = tiles[this.tileNumber + (y / 8)];
+
+                int colorData = tile.graphics[y % 8][x];
+                Color color = palette.color(colorData);
+                if (colorData == 0) {
+                    continue;
                 }
+
+                scanlineBuffer[this.x + i] = color;
             }
+        }
+
+        private int height() {
+            return largeSprites ? 16 : 8;
         }
 
         @Override
