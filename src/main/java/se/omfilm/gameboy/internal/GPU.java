@@ -11,6 +11,18 @@ import java.util.stream.IntStream;
 public class GPU implements Memory {
     private static final int TILE_MAP_ADDRESS_0 = 0x9800;
     private static final int TILE_MAP_ADDRESS_1 = 0x9C00;
+    private static final int TILE_MAP_WIDTH = 32;
+    private static final int TILE_MAP_HEIGHT = 32;
+
+    private static final int TILE_WIDTH = 8;
+    private static final int TILE_HEIGHT = 8;
+    private static final int TILE_COUNT = 384;
+    private static final int TILE_BYTE_SIZE = 16;
+
+    private static final int SPRITE_COUNT = 40;
+    private static final int SPRITE_BYTE_SIZE = 4;
+    private static final int SPRITE_HEIGHT = 16;
+    private static final int SPRITE_WIDTH = 8;
 
     private final Screen screen;
     private final Interrupts interrupts;
@@ -19,20 +31,20 @@ public class GPU implements Memory {
     private Palette objectPalette0Data = new Palette(0);
     private Palette objectPalette1Data = new Palette(0);
 
-    private Tile[] tiles = IntStream.range(0, 384).mapToObj(Tile::new).toArray(Tile[]::new);
+    private final Tile[] tiles = IntStream.range(0, TILE_COUNT).mapToObj(Tile::new).toArray(Tile[]::new);
+    private final Sprite[] sprites = IntStream.range(0, SPRITE_COUNT).mapToObj(Sprite::new).toArray(Sprite[]::new);
     private int tileOffset = 0;
-    private int[][] tileMap0 = new int[32][32];
-    private int[][] tileMap1 = new int[32][32];
+    private int[][] tileMap0 = new int[TILE_MAP_HEIGHT][TILE_MAP_WIDTH];
+    private int[][] tileMap1 = new int[TILE_MAP_HEIGHT][TILE_MAP_WIDTH];
     private int[][] windowTileMap = tileMap0;
     private int[][] backgroundTileMap = tileMap0;
-
-    private final Sprite[] sprites = IntStream.range(0, 40).mapToObj(Sprite::new).toArray(Sprite[]::new);
 
     private GPUMode mode = GPUMode.HBLANK;
     private int scrollX = 0;
     private int scrollY = 0;
     private int windowY = 0;
-    private int windowX;
+    private int windowX; //TODO: handle this too
+
     private int cycleCounter = 0;
     private int scanline = 0;
     private int compareWithScanline = 0;
@@ -133,31 +145,30 @@ public class GPU implements Memory {
     }
 
     private void drawBackgroundWindowPixel(Color[] scanlineBuffer, int x) {
-        int y = scanline - windowY;
-        x = (x + scrollX) & 0xFF;
-        if (x >= windowX) {
-            x -= windowX;
-        }
-        drawTilePixel(scanlineBuffer, x, y, windowTileMap);
+        int y = scanline;
+        Tile tile = tileAt(x, y, windowTileMap);
+        scanlineBuffer[x] = tile.colorAt(x, y, backgroundPaletteData);
     }
 
     private void drawBackgroundPixel(Color[] scanlineBuffer, int x) {
-        int y = (scanline + scrollY) & 0xFF;
-        x = (x + scrollX) & 0xFF;
-        drawTilePixel(scanlineBuffer, x, y, backgroundTileMap);
-    }
-
-    private void drawTilePixel(Color[] scanlineBuffer, int x, int y, int[][] tileMap) {
-        int id = tileMap[y / 8][x / 8];
-        if (tileOffset != 0) {
-            id = tileOffset + ((byte) id);
-        }
-        Tile tile = tiles[id];
-        tile.renderOn(scanlineBuffer, y, x);
+        int y = scanline + scrollY;
+        int adjustedX = x + scrollX;
+        Tile tile = tileAt(adjustedX, y, backgroundTileMap);
+        scanlineBuffer[x] = tile.colorAt(adjustedX, y, backgroundPaletteData);
     }
 
     private void drawSprites(Color[] scanlineBuffer) {
         Arrays.stream(sprites).filter(Sprite::isOnScanline).forEach(s -> s.renderOn(scanlineBuffer));
+    }
+
+    private Tile tileAt(int x, int y, int[][] tileMap) {
+        x = ((x / TILE_WIDTH) + TILE_MAP_WIDTH) % TILE_MAP_WIDTH;
+        y = ((y / TILE_HEIGHT) + TILE_MAP_HEIGHT) % TILE_MAP_HEIGHT;
+        int id = tileMap[y][x];
+        if (tileOffset != 0) {
+            id = tileOffset + ((byte) id);
+        }
+        return tiles[id];
     }
 
     public int readByte(int address) {
@@ -229,14 +240,14 @@ public class GPU implements Memory {
     }
 
     public void setLCDControl(int data) {
-        lcdDisplay =                (data & 0b1000_0000) != 0;
-        windowTileMap =             (data & 0b0100_0000) != 0 ? tileMap1 : tileMap0;
-        windowDisplay =             (data & 0b0010_0000) != 0;
-        tileOffset =                (data & 0b0001_0000) != 0 ? 0 : 256;
-        backgroundTileMap =         (data & 0b0000_1000) != 0 ? tileMap1 : tileMap0;
-        largeSprites =              (data & 0b0000_0100) != 0;
-        spriteDisplay =             (data & 0b0000_0010) != 0;
-        backgroundDisplay =         (data & 0b0000_0001) != 0;
+        lcdDisplay =        (data & 0b1000_0000) != 0;
+        windowTileMap =     (data & 0b0100_0000) != 0 ? tileMap1 : tileMap0;
+        windowDisplay =     (data & 0b0010_0000) != 0;
+        tileOffset =        (data & 0b0001_0000) != 0 ? 0 : (0xFF + 1);
+        backgroundTileMap = (data & 0b0000_1000) != 0 ? tileMap1 : tileMap0;
+        largeSprites =      (data & 0b0000_0100) != 0;
+        spriteDisplay =     (data & 0b0000_0010) != 0;
+        backgroundDisplay = (data & 0b0000_0001) != 0;
 
         if (lcdDisplay && !screen.isOn()) {
             screen.turnOn();
@@ -244,14 +255,14 @@ public class GPU implements Memory {
     }
 
     public int getLCDControl() {
-        return  (lcdDisplay ?                                       0b1000_0000 : 0) |
-                (windowTileMap == tileMap1 ?                        0b0100_0000 : 0) |
-                (windowDisplay ?                                    0b0010_0000 : 0) |
-                (tileOffset == 0 ?                                  0b0001_0000 : 0) |
-                (backgroundTileMap == tileMap1 ?                    0b0000_1000 : 0) |
-                (largeSprites ?                                     0b0000_0100 : 0) |
-                (spriteDisplay ?                                    0b0000_0010 : 0) |
-                (backgroundDisplay ?                                0b0000_0001 : 0);
+        return  (lcdDisplay ?                       0b1000_0000 : 0) |
+                (windowTileMap == tileMap1 ?        0b0100_0000 : 0) |
+                (windowDisplay ?                    0b0010_0000 : 0) |
+                (tileOffset == 0 ?                  0b0001_0000 : 0) |
+                (backgroundTileMap == tileMap1 ?    0b0000_1000 : 0) |
+                (largeSprites ?                     0b0000_0100 : 0) |
+                (spriteDisplay ?                    0b0000_0010 : 0) |
+                (backgroundDisplay ?                0b0000_0001 : 0);
 
     }
 
@@ -290,16 +301,16 @@ public class GPU implements Memory {
     }
 
     private void writeOAMByte(int virtualAddress, int value) {
-        int spriteNumber = virtualAddress / 4;
-        int type = virtualAddress % 4;
+        int spriteNumber = virtualAddress / SPRITE_BYTE_SIZE;
+        int type = virtualAddress % SPRITE_BYTE_SIZE;
 
         Sprite sprite = sprites[spriteNumber];
         switch (type) {
             case 0:
-                sprite.y = value - 16;
+                sprite.y = value - SPRITE_HEIGHT;
                 break;
             case 1:
-                sprite.x = value - 8;
+                sprite.x = value - SPRITE_WIDTH;
                 break;
             case 2:
                 sprite.tileNumber = value;
@@ -322,15 +333,15 @@ public class GPU implements Memory {
             tileMap = tileMap1;
         }
 
-        tileMap[address / 32][address % 32] = value;
+        tileMap[address / TILE_MAP_HEIGHT][address % TILE_MAP_HEIGHT] = value;
     }
 
     private void writeTileByte(int virtualAddress, int value) {
-        Tile tile = tiles[virtualAddress / 16]; //Each tile uses 16 bytes
-        int rowData = virtualAddress % 16;
+        Tile tile = tiles[virtualAddress / TILE_BYTE_SIZE]; //Each tile uses 16 bytes
+        int rowData = virtualAddress % TILE_BYTE_SIZE;
         int y = rowData / 2; //Each row uses 2 bytes
-        for (int x = 0; x < 8; x++) {
-            int colorBit = 1 << (7 - x); //The x-coordinates are backwards
+        for (int x = 0; x < TILE_WIDTH; x++) {
+            int colorBit = 1 << (TILE_WIDTH - 1 - x); //The x-coordinates are backwards
             if (rowData % 2 == 0) { //The 2 bytes for each row should be combined into a single value with the first bytes value in bit 1 and the second bytes value in bit 0
                 tile.graphics[y][x] = ((value & colorBit) != 0 ? 0b01 : 0b00) | (tile.graphics[y][x] & 0b10);
             } else {
@@ -340,15 +351,15 @@ public class GPU implements Memory {
     }
 
     private int readOAMByte(int virtualAddress) {
-        int spriteNumber = virtualAddress / 4;
-        int type = virtualAddress % 4;
+        int spriteNumber = virtualAddress / SPRITE_BYTE_SIZE;
+        int type = virtualAddress % SPRITE_BYTE_SIZE;
 
         Sprite sprite = sprites[spriteNumber];
         switch (type) {
             case 0:
-                return sprite.y + 16;
+                return sprite.y + SPRITE_HEIGHT;
             case 1:
-                return sprite.x + 8;
+                return sprite.x + SPRITE_WIDTH;
             case 2:
                 return sprite.tileNumber;
             case 3:
@@ -370,20 +381,19 @@ public class GPU implements Memory {
             tileMap = tileMap1;
         }
 
-        return tileMap[address / 32][address % 32];
+        return tileMap[address / TILE_MAP_HEIGHT][address % TILE_MAP_HEIGHT];
     }
 
-    //TODO: can some code be reused from writeTileByte?
     private int readTileByte(int virtualAddress) {
         int result = 0;
 
-        Tile tile = tiles[virtualAddress / 16];
-        int rowData = virtualAddress % 16;
-        int y = rowData / 2;
-        for (int x = 0; x < 8; x++) {
-            int colorBit = 1 << (7 - x);
+        Tile tile = tiles[virtualAddress / TILE_BYTE_SIZE]; //Each tile uses 16 bytes
+        int rowData = virtualAddress % TILE_BYTE_SIZE;
+        int y = rowData / 2; //Each row uses 2 bytes
+        for (int x = 0; x < TILE_WIDTH; x++) {
+            int colorBit = 1 << (TILE_WIDTH - 1 - x);  //The x-coordinates are backwards
             int pixel = tile.graphics[y][x];
-            if (rowData % 2 == 0) {
+            if (rowData % 2 == 0) { //The 2 bytes for each row should be combined into a single value with the first bytes value in bit 1 and the second bytes value in bit 0
                 result = result | ((pixel & 0b01) != 0 ? colorBit : 0);
             } else {
                 result = result | ((pixel & 0b10) != 0 ? colorBit : 0);
@@ -395,17 +405,14 @@ public class GPU implements Memory {
     private class Tile {
         private final int tileNumber;
 
-        private final int[][] graphics = new int[8][8];
+        private final int[][] graphics = new int[TILE_HEIGHT][TILE_WIDTH];
 
         private Tile(int tileNumber) {
             this.tileNumber = tileNumber;
         }
 
-        private void renderOn(Color[] scanlineBuffer, int y, int x) {
-            if (x >= Screen.WIDTH || x < 0) {
-                return;
-            }
-            scanlineBuffer[x] = backgroundPaletteData.color(graphics[y & 7][x & 7]);
+        private Color colorAt(int x, int y, Palette palette) {
+            return palette.color(graphics[y % TILE_HEIGHT][x % TILE_WIDTH]);
         }
 
         @Override
@@ -435,7 +442,7 @@ public class GPU implements Memory {
         }
 
         private void renderOn(Color[] scanlineBuffer) {
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < SPRITE_WIDTH; i++) {
                 int x = i;
                 int y = (scanline - this.y);
                 if (flipX) {
@@ -453,20 +460,19 @@ public class GPU implements Memory {
                     continue;
                 }
 
-                Tile tile = tiles[this.tileNumber + (y / 8)];
+                Tile tile = tiles[this.tileNumber + (y / TILE_HEIGHT)];
 
-                int colorData = tile.graphics[y % 8][x];
-                Color color = palette.color(colorData);
+                int colorData = tile.graphics[y % TILE_HEIGHT][x];
                 if (colorData == 0) {
                     continue;
                 }
 
-                scanlineBuffer[this.x + i] = color;
+                scanlineBuffer[this.x + i] = tile.colorAt(x, y, palette);
             }
         }
 
         private int height() {
-            return largeSprites ? 16 : 8;
+            return largeSprites ? SPRITE_HEIGHT : (SPRITE_HEIGHT / 2);
         }
 
         @Override
