@@ -7,21 +7,21 @@ import se.omfilm.gameboy.util.DebugPrinter;
 public class ROMLoader {
     private static final Logger log = LoggerFactory.getLogger(ROMLoader.class);
 
-    public static Memory createRAMBanks(byte[] data) {
+    public static BankableRAM createRAMBanks(byte[] data) {
         RAM_SIZE ramSize = RAM_SIZE.values()[data[0x149]];
         return new BankableRAM(ramSize.banks, Memory.MemoryType.RAM_BANKS.size());
     }
 
-    public static Memory createROMBanks(byte[] data) {
+    public static Memory createROMBanks(byte[] data, BankableRAM ramBanks) {
         ByteArrayMemory rom = new ByteArrayMemory(data);
         ROM_TYPE type = ROM_TYPE.fromValue(data[0x147]);
         switch (type) {
             case ROM_ONLY:
-                return rom; //TODO: make readonly
+                return new ReadOnlyMemory(rom);
             case ROM_MBC1:
             case ROM_MBC1_RAM:
             case ROM_MBC1_RAM_BATTERY:
-                return new MBC1(rom);
+                return new MBC1(rom, ramBanks);
             default:
                 throw new IllegalArgumentException("Can't create ROM from type: " + type);
         }

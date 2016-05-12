@@ -57,6 +57,10 @@ public class Timer {
         timerModulo = data;
     }
 
+    public int modulo() {
+        return timerModulo;
+    }
+
     public void control(int data) {
         enabled = (data & 0b0000_0100) != 0;
         FREQUENCY newFrequency = FREQUENCY.fromCode(data & 0b0000_0011);

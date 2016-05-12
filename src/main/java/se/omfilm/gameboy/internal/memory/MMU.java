@@ -19,20 +19,20 @@ public class MMU implements Memory {
     private final GPU gpu;
     private final SerialConnection serial;
     private final Memory ram;
-    private final Memory switchableRam;
+    private final BankableRAM switchableRam;
 
     private boolean isBooting = true;
 
     public MMU(byte[] boot, byte[] rom, GPU gpu, Interrupts interrupts, Timer timer, SerialConnection serial, Controller controller) {
         ROMLoader.verifyRom(rom);
         this.boot = new ByteArrayMemory(boot);
-        this.rom = ROMLoader.createROMBanks(rom);
+        this.switchableRam = ROMLoader.createRAMBanks(rom);
+        this.rom = ROMLoader.createROMBanks(rom, switchableRam);
         this.serial = serial;
         this.ioController = new IOController(interrupts, timer, controller);
         this.gpu = gpu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
         this.ram = new ByteArrayMemory(MemoryType.RAM.allocate());
-        this.switchableRam = ROMLoader.createRAMBanks(rom);
     }
 
     public int readByte(int address) {
@@ -68,11 +68,6 @@ public class MMU implements Memory {
     }
 
     public void writeByte(int address, int data) {
-        if (address == 0x0000) {
-            log.warn("RAM banking called, but not implemented");
-            return;
-        }
-
         MemoryType type = MemoryType.fromAddress(address);
         int virtualAddress = address - type.from;
         switch (type) {
@@ -173,7 +168,10 @@ public class MMU implements Memory {
                     return timer.counter();
                 case TIMER_DIVIDER:
                     return timer.divider();
+                case TIMER_MODULO:
+                    return timer.modulo();
                 case SOUND_ON_OFF:
+                case SOUND_CHANNEL_CONTROL:
                 case SOUND_1_FREQUENCY_HIGH:
                 case SOUND_2_FREQUENCY_HIGH:
                 case SOUND_3_FREQUENCY_HIGH:
