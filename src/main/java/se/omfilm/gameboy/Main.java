@@ -5,6 +5,7 @@ import se.omfilm.gameboy.io.controller.Controller;
 import se.omfilm.gameboy.io.controller.SwingController;
 import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.io.screen.SwingScreen;
+import se.omfilm.gameboy.io.serial.ConsoleSerialConnection;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,6 +24,6 @@ public class Main {
 
         byte[] bootData = Files.readAllBytes(Paths.get(args[0]));
         byte[] romData = Files.readAllBytes(Paths.get(args[1]));
-        new Gameboy(screen, controller, bootData, romData).run();
+        new Gameboy(screen, controller, new ConsoleSerialConnection(), bootData, romData).run();
     }
 }

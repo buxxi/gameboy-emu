@@ -5,7 +5,7 @@ My attempt at learning to write an emulator
 __Current status:__
  - cpu_instrs: __All tests passed__
      - 01-special: __Passed__
-     - 02-interrupts: __Passed__
+     - 02-interrupts: (HALT broken again)
      - 03-op sp,hl: __Passed__
      - 04-op r,imm: __Passed__
      - 05-op rp: __Passed__

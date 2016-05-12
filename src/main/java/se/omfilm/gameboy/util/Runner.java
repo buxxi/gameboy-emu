@@ -3,11 +3,12 @@ package se.omfilm.gameboy.util;
 import java.util.concurrent.Callable;
 
 public class Runner {
-    public static void atFrequence(Callable<Void> callable, int fps) throws Exception {
+    public static void atFrequency(Callable<Boolean> callable, int fps) throws Exception {
         long expectedDiff = 1000 / fps;
-        while (true) {
+        boolean running = true;
+        while (running) {
             long before = System.currentTimeMillis();
-            callable.call();
+            running = callable.call();
             long after = System.currentTimeMillis();
             long diff = after - before;
             if (diff < expectedDiff) {
