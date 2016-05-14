@@ -13,7 +13,6 @@ public class DebugPrinter {
     private static final Logger log = LoggerFactory.getLogger(DebugPrinter.class);
 
     private static LinkedList<RecordedInstruction> instructionStack = new LinkedList<>();
-    private static RecordedInstruction currentInstruction;
 
     public static String hex(int val, int length) {
         String result = Integer.toHexString(val).toUpperCase();
@@ -38,234 +37,246 @@ public class DebugPrinter {
         }
     }
 
-    public static void record(Instruction.InstructionType instructionType, int sourceProgramCounter) {
-        currentInstruction = new RecordedInstruction(instructionType, sourceProgramCounter);
-        instructionStack.add(currentInstruction);
-        while (instructionStack.size() > 32) {
-            instructionStack.remove();
+    public static class DebuggableInstructionProvider extends CPU.InstructionProvider {
+        @Override
+        public Instruction read(ProgramCounter programCounter, Memory memory) {
+            int sourceProgramCounter = programCounter.read();
+            Instruction.InstructionType type = resolveType(programCounter, memory);
+            RecordedInstruction result = new RecordedInstruction(type, sourceProgramCounter, resolveImpl(type));
+            instructionStack.add(result);
+            while (instructionStack.size() > 32) {
+                instructionStack.remove();
+            }
+            return result;
         }
     }
 
-    public static Memory record(Memory memory) {
-        return new Memory() {
-            public int readByte(int address) {
-                return memory.readByte(address);
-            }
-
-            public void writeByte(int address, int data) {
-                String previousValue = "0x??";
-                boolean add = true;
-                try {
-                    int oldValue = readByte(address);
-                    previousValue = hex(oldValue, 2);
-                    add = oldValue != data;
-                } catch (Exception ignored) {}
-                if (add) {
-                    currentInstruction.modifications.add(
-                            "Mem @ " + DebugPrinter.hex(address, 4) + ": " + previousValue + " -> " + hex(data, 2)
-                    );
-                }
-                memory.writeByte(address, data);
-            }
-        };
-    }
-
-    public static Registers record(Registers registers) {
-        return new Registers() {
-            public int readH() {
-                return registers.readH();
-            }
-
-            public void writeH(int val) {
-                currentInstruction.modifications.add(
-                        "H: " + hex(readH(), 2) + " -> " + hex(val, 2)
-                );
-                registers.writeH(val);
-            }
-
-            public int readL() {
-                return registers.readL();
-            }
-
-            public void writeL(int val) {
-                currentInstruction.modifications.add(
-                        "L: " + hex(readL(), 2) + " -> " + hex(val, 2)
-                );
-                registers.writeL(val);
-            }
-
-            public int readHL() {
-                return registers.readHL();
-            }
-
-            public void writeHL(int val) {
-                currentInstruction.modifications.add(
-                        "HL: " + hex(readHL(), 4) + " -> " + hex(val, 4)
-                );
-                registers.writeHL(val);
-            }
-
-            public int readDE() {
-                return registers.readDE();
-            }
-
-            public void writeDE(int val) {
-                currentInstruction.modifications.add(
-                        "DE: " + hex(readDE(), 4) + " -> " + hex(val, 4)
-                );
-                registers.writeDE(val);
-            }
-
-            public int readA() {
-                return registers.readA();
-            }
-
-            public void writeA(int val) {
-                currentInstruction.modifications.add(
-                        "A: " + hex(readA(), 2) + " -> " + hex(val, 2)
-                );
-                registers.writeA(val);
-            }
-
-            public int readC() {
-                return registers.readC();
-            }
-
-            public void writeC(int val) {
-                currentInstruction.modifications.add(
-                        "C: " + hex(readC(), 2) + " -> " + hex(val, 2)
-                );
-                registers.writeC(val);
-            }
-
-            public int readB() {
-                return registers.readB();
-            }
-
-            public void writeB(int val) {
-                currentInstruction.modifications.add(
-                        "B: " + hex(readB(), 2) + " -> " + hex(val, 2)
-                );
-                registers.writeB(val);
-            }
-
-            public int readBC() {
-                return registers.readBC();
-            }
-
-            public void writeBC(int val) {
-                currentInstruction.modifications.add(
-                        "BC: " + hex(readBC(), 4) + " -> " + hex(val, 4)
-                );
-                registers.writeBC(val);
-            }
-
-            public int readD() {
-                return registers.readD();
-            }
-
-            public void writeD(int val) {
-                currentInstruction.modifications.add(
-                        "D: " + hex(readD(), 2) + " -> " + hex(val, 2)
-                );
-                registers.writeD(val);
-            }
-
-            public int readE() {
-                return registers.readE();
-            }
-
-            public void writeE(int val) {
-                currentInstruction.modifications.add(
-                        "E: " + hex(readE(), 2) + " -> " + hex(val, 2)
-                );
-                registers.writeE(val);
-            }
-
-            public int readF() {
-                return registers.readF();
-            }
-
-            public void writeF(int val) {
-                currentInstruction.modifications.add(
-                        "F: " + hex(readF(), 2) + " -> " + hex(val, 2)
-                );
-                registers.writeF(val);
-            }
-
-            public int readAF() {
-                return registers.readAF();
-            }
-
-            public void writeAF(int val) {
-                currentInstruction.modifications.add(
-                        "AF: " + hex(readAF(), 4) + " -> " + hex(val, 4)
-                );
-                registers.writeAF(val);
-            }
-        };
-    }
-
-    public static Flags record(Flags flags) {
-        return new Flags() {
-            public boolean isSet(Flag flag) {
-                return flags.isSet(flag);
-            }
-
-            public void set(Flag flag, boolean set) {
-                if (isSet(flag) != set) {
-                    currentInstruction.modifications.add(
-                            "Flag " + flag + ": " + !set + " -> " + set
-                    );
-                }
-                flags.set(flag, set);
-            }
-
-            public void setInterruptsDisabled(boolean disabled) {
-                flags.setInterruptsDisabled(disabled);
-            }
-        };
-    }
-
-    public static ProgramCounter record(ProgramCounter programCounter) {
-        return new ProgramCounter() {
-            public int read() {
-                return programCounter.read();
-            }
-
-            public void write(int data) {
-                currentInstruction.modifications.add(
-                    "PC: " + hex(read(), 4) + " -> " + hex(data, 4)
-                );
-                programCounter.write(data);
-            }
-        };
-    }
-
-    public static StackPointer record(StackPointer stackPointer) {
-        return new StackPointer() {
-            public void write(int value) {
-                currentInstruction.modifications.add(
-                    "SP: " + hex(read(), 4) + " -> " + hex(value, 4)
-                );
-                stackPointer.write(value);
-            }
-
-            public int read() {
-                return stackPointer.read();
-            }
-        };
-    }
-
-    private static class RecordedInstruction {
+    private static class RecordedInstruction implements Instruction {
         private final Instruction.InstructionType instructionType;
         private final int sourceProgramCounter;
+        private final Instruction delegate;
 
         private List<String> modifications = new ArrayList<>();
 
-        public RecordedInstruction(Instruction.InstructionType instructionType, int sourceProgramCounter) {
+        public RecordedInstruction(InstructionType instructionType, int sourceProgramCounter, Instruction delegate) {
             this.instructionType = instructionType;
             this.sourceProgramCounter = sourceProgramCounter;
+            this.delegate = delegate;
+        }
+
+        public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
+            return delegate.execute(record(memory), record(registers), record(flags), record(programCounter), record(stackPointer));
+        }
+
+        public Memory record(Memory memory) {
+            return new Memory() {
+                public int readByte(int address) {
+                    return memory.readByte(address);
+                }
+
+                public void writeByte(int address, int data) {
+                    String previousValue = "0x??";
+                    boolean add = true;
+                    try {
+                        int oldValue = readByte(address);
+                        previousValue = hex(oldValue, 2);
+                        add = oldValue != data;
+                    } catch (Exception ignored) {}
+                    if (add) {
+                        modifications.add(
+                                "Mem @ " + DebugPrinter.hex(address, 4) + ": " + previousValue + " -> " + hex(data, 2)
+                        );
+                    }
+                    memory.writeByte(address, data);
+                }
+            };
+        }
+
+        public Registers record(Registers registers) {
+            return new Registers() {
+                public int readH() {
+                    return registers.readH();
+                }
+
+                public void writeH(int val) {
+                    modifications.add(
+                            "H: " + hex(readH(), 2) + " -> " + hex(val, 2)
+                    );
+                    registers.writeH(val);
+                }
+
+                public int readL() {
+                    return registers.readL();
+                }
+
+                public void writeL(int val) {
+                    modifications.add(
+                            "L: " + hex(readL(), 2) + " -> " + hex(val, 2)
+                    );
+                    registers.writeL(val);
+                }
+
+                public int readHL() {
+                    return registers.readHL();
+                }
+
+                public void writeHL(int val) {
+                    modifications.add(
+                            "HL: " + hex(readHL(), 4) + " -> " + hex(val, 4)
+                    );
+                    registers.writeHL(val);
+                }
+
+                public int readDE() {
+                    return registers.readDE();
+                }
+
+                public void writeDE(int val) {
+                    modifications.add(
+                            "DE: " + hex(readDE(), 4) + " -> " + hex(val, 4)
+                    );
+                    registers.writeDE(val);
+                }
+
+                public int readA() {
+                    return registers.readA();
+                }
+
+                public void writeA(int val) {
+                    modifications.add(
+                            "A: " + hex(readA(), 2) + " -> " + hex(val, 2)
+                    );
+                    registers.writeA(val);
+                }
+
+                public int readC() {
+                    return registers.readC();
+                }
+
+                public void writeC(int val) {
+                    modifications.add(
+                            "C: " + hex(readC(), 2) + " -> " + hex(val, 2)
+                    );
+                    registers.writeC(val);
+                }
+
+                public int readB() {
+                    return registers.readB();
+                }
+
+                public void writeB(int val) {
+                    modifications.add(
+                            "B: " + hex(readB(), 2) + " -> " + hex(val, 2)
+                    );
+                    registers.writeB(val);
+                }
+
+                public int readBC() {
+                    return registers.readBC();
+                }
+
+                public void writeBC(int val) {
+                    modifications.add(
+                            "BC: " + hex(readBC(), 4) + " -> " + hex(val, 4)
+                    );
+                    registers.writeBC(val);
+                }
+
+                public int readD() {
+                    return registers.readD();
+                }
+
+                public void writeD(int val) {
+                    modifications.add(
+                            "D: " + hex(readD(), 2) + " -> " + hex(val, 2)
+                    );
+                    registers.writeD(val);
+                }
+
+                public int readE() {
+                    return registers.readE();
+                }
+
+                public void writeE(int val) {
+                    modifications.add(
+                            "E: " + hex(readE(), 2) + " -> " + hex(val, 2)
+                    );
+                    registers.writeE(val);
+                }
+
+                public int readF() {
+                    return registers.readF();
+                }
+
+                public void writeF(int val) {
+                    modifications.add(
+                            "F: " + hex(readF(), 2) + " -> " + hex(val, 2)
+                    );
+                    registers.writeF(val);
+                }
+
+                public int readAF() {
+                    return registers.readAF();
+                }
+
+                public void writeAF(int val) {
+                    modifications.add(
+                            "AF: " + hex(readAF(), 4) + " -> " + hex(val, 4)
+                    );
+                    registers.writeAF(val);
+                }
+            };
+        }
+
+        public Flags record(Flags flags) {
+            return new Flags() {
+                public boolean isSet(Flag flag) {
+                    return flags.isSet(flag);
+                }
+
+                public void set(Flag flag, boolean set) {
+                    if (isSet(flag) != set) {
+                        modifications.add(
+                                "Flag " + flag + ": " + !set + " -> " + set
+                        );
+                    }
+                    flags.set(flag, set);
+                }
+
+                public void setInterruptsDisabled(boolean disabled) {
+                    flags.setInterruptsDisabled(disabled);
+                }
+            };
+        }
+
+        public ProgramCounter record(ProgramCounter programCounter) {
+            return new ProgramCounter() {
+                public int read() {
+                    return programCounter.read();
+                }
+
+                public void write(int data) {
+                    modifications.add(
+                            "PC: " + hex(read(), 4) + " -> " + hex(data, 4)
+                    );
+                    programCounter.write(data);
+                }
+            };
+        }
+
+        public StackPointer record(StackPointer stackPointer) {
+            return new StackPointer() {
+                public void write(int value) {
+                    modifications.add(
+                            "SP: " + hex(read(), 4) + " -> " + hex(value, 4)
+                    );
+                    stackPointer.write(value);
+                }
+
+                public int read() {
+                    return stackPointer.read();
+                }
+            };
         }
 
         @Override

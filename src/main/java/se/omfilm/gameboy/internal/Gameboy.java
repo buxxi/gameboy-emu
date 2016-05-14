@@ -23,7 +23,7 @@ public class Gameboy {
     }
 
     public Gameboy(Screen screen, Controller controller, SerialConnection serial, byte[] bootData, byte[] romData, int frequency) throws IOException {
-        this.cpu = new CPU();
+        this.cpu = new CPU(true);
         Interrupts interrupts = this.cpu.interrupts();
         this.gpu = new GPU(screen, interrupts);
         this.timer = new Timer(interrupts);

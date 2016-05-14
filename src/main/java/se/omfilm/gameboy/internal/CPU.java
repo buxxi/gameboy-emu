@@ -9,30 +9,27 @@ import se.omfilm.gameboy.util.DebugPrinter;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static se.omfilm.gameboy.util.DebugPrinter.record;
-
 public class CPU {
     private static final Logger log = LoggerFactory.getLogger(CPU.class);
 
     static int FREQUENCY = 4 * 1024 * 1024;
 
-    private Flags flags = new FlagsImpl();
-    private Interrupts interrupts = new InterruptsImpl();
-    private ProgramCounter programCounter = new ProgramCounterImpl();
-    private StackPointer stackPointer = new StackPointerImpl();
-    private Registers registers = new RegistersImpl();
+    private final InstructionProvider instructionProvider;
+    private final Flags flags = new FlagsImpl();
+    private final Interrupts interrupts = new InterruptsImpl();
+    private final ProgramCounter programCounter = new ProgramCounterImpl();
+    private final StackPointer stackPointer = new StackPointerImpl();
+    private final Registers registers = new RegistersImpl();
 
     private boolean halted = false;
 
-    private final Map<Instruction.InstructionType, Instruction> instructionMap;
-
-    public CPU() {
-        instructionMap = new EnumMap<>(Instruction.InstructionType.class);
+    public CPU(boolean debug) {
+        this.instructionProvider = debug ? new DebugPrinter.DebuggableInstructionProvider() : new InstructionProvider();
         for (Instruction.InstructionType type : Instruction.InstructionType.values()) {
-            instructionMap.put(type, type.instruction().get());
+            instructionProvider.add(type, type.instruction().get());
         }
-        instructionMap.put(Instruction.InstructionType.STOP, this::stop);
-        instructionMap.put(Instruction.InstructionType.HALT, this::halt);
+        instructionProvider.add(Instruction.InstructionType.STOP, this::stop);
+        instructionProvider.add(Instruction.InstructionType.HALT, this::halt);
     }
 
     private int stop(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
@@ -55,27 +52,13 @@ public class CPU {
         if (programCounter.read() == 0x100) {
             memory.bootSuccess();
         }
-        int sourceProgramCounter = programCounter.read();
-        Instruction.InstructionType instructionType = Instruction.InstructionType.fromOpCode(programCounter.byteOperand(memory));
-        if (instructionType == Instruction.InstructionType.CB) {
-            instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), programCounter.byteOperand(memory));
-        }
 
-        Instruction instruction = instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
-        record(instructionType, sourceProgramCounter);
-
-        //TODO: extract the recording so it can be used only when debugging
-        return instruction.execute(record(memory), record(this.registers), record(this.flags), record(this.programCounter), record(this.stackPointer));
+        Instruction instruction = instructionProvider.read(programCounter, memory);
+        return instruction.execute(memory, this.registers, this.flags, this.programCounter, this.stackPointer);
     }
 
     public Interrupts interrupts() {
         return this.interrupts;
-    }
-
-    private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
-        return (memory, registers, flags, programCounter, stackPointer) -> {
-            throw new UnsupportedOperationException(instructionType + " not implemented");
-        };
     }
 
     private static class ProgramCounterImpl implements ProgramCounter {
@@ -331,6 +314,36 @@ public class CPU {
                 default:
                     throw new UnsupportedOperationException("Interrupt " + interrupt + " not implemented");
             }
+        }
+    }
+
+    public static class InstructionProvider {
+        private final Map<Instruction.InstructionType, Instruction> instructionMap = new EnumMap<>(Instruction.InstructionType.class);
+
+        public Instruction read(ProgramCounter programCounter, Memory memory) {
+            return resolveImpl(resolveType(programCounter, memory));
+        }
+
+        public void add(Instruction.InstructionType type, Instruction impl) {
+            instructionMap.put(type, impl);
+        }
+
+        protected Instruction.InstructionType resolveType(ProgramCounter programCounter, Memory memory) {
+            Instruction.InstructionType instructionType = Instruction.InstructionType.fromOpCode(programCounter.byteOperand(memory));
+            if (instructionType == Instruction.InstructionType.CB) {
+                instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), programCounter.byteOperand(memory));
+            }
+            return instructionType;
+        }
+
+        protected Instruction resolveImpl(Instruction.InstructionType instructionType) {
+            return instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
+        }
+
+        private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
+            return (memory, registers, flags, programCounter, stackPointer) -> {
+                throw new UnsupportedOperationException(instructionType + " not implemented");
+            };
         }
     }
 }
