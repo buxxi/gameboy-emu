@@ -11,6 +11,7 @@ import java.awt.*;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Depends on having the test roms from Blargg. Won't run otherwise.
@@ -84,7 +85,7 @@ public class BlarggTestRoms {
     @Test
     public void itShouldHandleCallsInstructions() throws IOException, InterruptedException {
         loadROM("07-calls.gb");
-        serial.setExpected("07-calls\n\n\nPassed\n");
+        serial.setExpected("07-jr,jp,call,ret,rst\n\n\nPassed\n");
 
         target.run();
 
@@ -145,7 +146,7 @@ public class BlarggTestRoms {
         byte[] boot = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("boot.bin"));
         byte[] rom  = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream(romName));
         serial = new StringSerialConnection();
-        target = new Gameboy(new NullScreen(), new NullController(), serial, boot, rom);
+        target = new Gameboy(new NullScreen(), new NullController(), serial, boot, rom, Integer.MAX_VALUE);
     }
 
     private class StringSerialConnection implements SerialConnection {
@@ -157,8 +158,7 @@ public class BlarggTestRoms {
             if (expected.charAt(index) != (char) data) {
                 String text = escape(expected.substring(0, index));
                 target.stop();
-                throw new IllegalArgumentException(
-                        "Expected char at " + index + " to be '" + escape("" + expected.charAt(index)) + "'\nwas: '" + (escape("" + (char) data)) + "'\nAll before: '" + text + "'");
+                fail("Expected char at " + index + " to be '" + escape("" + expected.charAt(index)) + "'\nwas: '" + (escape("" + (char) data)) + "'\nAll before: '" + text + "'");
             }
             result = result + ((char) data);
             index++;

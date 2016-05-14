@@ -15,14 +15,20 @@ public class Gameboy {
     private final GPU gpu;
     private final Timer timer;
 
+    private final int frequency;
     private boolean running = false;
 
     public Gameboy(Screen screen, Controller controller, SerialConnection serial, byte[] bootData, byte[] romData) throws IOException {
+        this(screen, controller, serial, bootData, romData, Screen.FREQUENCY);
+    }
+
+    public Gameboy(Screen screen, Controller controller, SerialConnection serial, byte[] bootData, byte[] romData, int frequency) throws IOException {
         this.cpu = new CPU();
         Interrupts interrupts = this.cpu.interrupts();
         this.gpu = new GPU(screen, interrupts);
         this.timer = new Timer(interrupts);
         this.memory = new MMU(bootData, romData, gpu, interrupts, timer, serial, controller);
+        this.frequency = frequency;
     }
 
     public void run() throws InterruptedException {
@@ -31,7 +37,7 @@ public class Gameboy {
             Runner.atFrequency(() -> {
                 Runner.times(this::step, CPU.FREQUENCY / Screen.FREQUENCY);
                 return running;
-            }, Screen.FREQUENCY);
+            }, frequency);
         } catch (Exception e) {
             DebugPrinter.debugException(e);
         }
