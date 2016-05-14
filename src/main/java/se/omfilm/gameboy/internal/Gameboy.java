@@ -18,12 +18,12 @@ public class Gameboy {
     private final int frequency;
     private boolean running = false;
 
-    public Gameboy(Screen screen, Controller controller, SerialConnection serial, byte[] bootData, byte[] romData) throws IOException {
-        this(screen, controller, serial, bootData, romData, Screen.FREQUENCY);
+    public Gameboy(Screen screen, Controller controller, SerialConnection serial, byte[] bootData, byte[] romData, boolean debug) throws IOException {
+        this(screen, controller, serial, bootData, romData, Screen.FREQUENCY, debug);
     }
 
-    public Gameboy(Screen screen, Controller controller, SerialConnection serial, byte[] bootData, byte[] romData, int frequency) throws IOException {
-        this.cpu = new CPU(true);
+    public Gameboy(Screen screen, Controller controller, SerialConnection serial, byte[] bootData, byte[] romData, int frequency, boolean debug) throws IOException {
+        this.cpu = new CPU(debug);
         Interrupts interrupts = this.cpu.interrupts();
         this.gpu = new GPU(screen, interrupts);
         this.timer = new Timer(interrupts);

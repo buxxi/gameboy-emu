@@ -24,6 +24,6 @@ public class Main {
 
         byte[] bootData = Files.readAllBytes(Paths.get(args[0]));
         byte[] romData = Files.readAllBytes(Paths.get(args[1]));
-        new Gameboy(screen, controller, new ConsoleSerialConnection(), bootData, romData).run();
+        new Gameboy(screen, controller, new ConsoleSerialConnection(), bootData, romData, true).run();
     }
 }

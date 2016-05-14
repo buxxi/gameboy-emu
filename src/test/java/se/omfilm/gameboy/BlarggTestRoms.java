@@ -146,7 +146,7 @@ public class BlarggTestRoms {
         byte[] boot = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("boot.bin"));
         byte[] rom  = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream(romName));
         serial = new StringSerialConnection();
-        target = new Gameboy(new NullScreen(), new NullController(), serial, boot, rom, Integer.MAX_VALUE);
+        target = new Gameboy(new NullScreen(), new NullController(), serial, boot, rom, Integer.MAX_VALUE, false);
     }
 
     private class StringSerialConnection implements SerialConnection {
