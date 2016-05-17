@@ -9,6 +9,9 @@ import se.omfilm.gameboy.io.serial.SerialConnection;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -16,7 +19,6 @@ import static org.junit.Assert.fail;
 /**
  * Depends on having the test roms from Blargg. Won't run otherwise.
  * It's kinda slow since it runs a normal speed and always boots with the normal boot screen.
- * //TODO: make this not limited to 60fps
  */
 public class BlarggTestRoms {
     private Gameboy target;
@@ -24,7 +26,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleSpecialInstructions() throws IOException, InterruptedException {
-        loadROM("01-special.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/01-special.gb");
         serial.setExpected("01-special\n\n\nPassed\n");
 
         target.run();
@@ -34,7 +36,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleInterruptInstructions() throws IOException, InterruptedException {
-        loadROM("02-interrupts.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/02-interrupts.gb");
         serial.setExpected("02-interrupts\n\n\nPassed\n");
 
         target.run();
@@ -44,7 +46,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleSPHLInstructions() throws IOException, InterruptedException {
-        loadROM("03-sphl.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/03-op sp,hl.gb");
         serial.setExpected("03-op sp,hl\n\n\nPassed\n");
 
         target.run();
@@ -54,7 +56,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleRIMMInstructions() throws IOException, InterruptedException {
-        loadROM("04-rimm.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/04-op r,imm.gb");
         serial.setExpected("04-op r,imm\n\n\nPassed\n");
 
         target.run();
@@ -64,7 +66,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleRPInstructions() throws IOException, InterruptedException {
-        loadROM("05-rp.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/05-op rp.gb");
         serial.setExpected("05-op rp\n\n\nPassed\n");
 
         target.run();
@@ -74,7 +76,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleLDRRInstructions() throws IOException, InterruptedException {
-        loadROM("06-ld_rr.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/06-ld r,r.gb");
         serial.setExpected("06-ld r,r\n\n\nPassed\n");
 
         target.run();
@@ -84,7 +86,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleCallsInstructions() throws IOException, InterruptedException {
-        loadROM("07-calls.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/07-jr,jp,call,ret,rst.gb");
         serial.setExpected("07-jr,jp,call,ret,rst\n\n\nPassed\n");
 
         target.run();
@@ -94,7 +96,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleMiscInstructions() throws IOException, InterruptedException {
-        loadROM("08-misc_instrs.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/08-misc instrs.gb");
         serial.setExpected("08-misc instrs\n\n\nPassed\n");
 
         target.run();
@@ -104,7 +106,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleRRInstructions() throws IOException, InterruptedException {
-        loadROM("09-op_rr.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/09-op r,r.gb");
         serial.setExpected("09-op r,r\n\n\nPassed\n");
 
         target.run();
@@ -114,7 +116,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleBitInstructions() throws IOException, InterruptedException {
-        loadROM("10-bit_ops.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/10-bit ops.gb");
         serial.setExpected("10-bit ops\n\n\nPassed\n");
 
         target.run();
@@ -124,7 +126,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldHandleAHLInstructions() throws IOException, InterruptedException {
-        loadROM("11-op_ahl.gb");
+        loadROM("cpu_instrs.zip", "cpu_instrs/individual/11-op a,(hl).gb");
         serial.setExpected("11-op a,(hl)\n\n\nPassed\n");
 
         target.run();
@@ -134,7 +136,7 @@ public class BlarggTestRoms {
 
     @Test
     public void itShouldTestInstructionTimings() throws IOException, InterruptedException {
-        loadROM("instr_timing.gb");
+        loadROM("instr_timing.zip", "instr_timing/instr_timing.gb");
         serial.setExpected("instr_timing\n\n\nPassed\n");
 
         target.run();
@@ -142,9 +144,51 @@ public class BlarggTestRoms {
         assertEquals(serial.expected, serial.result);
     }
 
-    private void loadROM(String romName) throws IOException {
+    @Test
+    public void itShouldTestMemoryReadTimings() throws IOException, InterruptedException {
+        loadROM("mem_timing.zip", "mem_timing/individual/01-read_timing.gb");
+        serial.setExpected("01-read_timing\n\n\nPassed\n");
+
+        target.run();
+
+        assertEquals(serial.expected, serial.result);
+    }
+
+    @Test
+    public void itShouldTestMemoryWriteTimings() throws IOException, InterruptedException {
+        loadROM("mem_timing.zip", "mem_timing/individual/02-write_timing.gb");
+        serial.setExpected("02-write_timing\n\n\nPassed\n");
+
+        target.run();
+
+        assertEquals(serial.expected, serial.result);
+    }
+
+    @Test
+    public void itShouldTestMemoryModifyTimings() throws IOException, InterruptedException {
+        loadROM("mem_timing.zip", "mem_timing/individual/03-modify_timing.gb");
+        serial.setExpected("03-modify_timing\n\n\nPassed\n");
+
+        target.run();
+
+        assertEquals(serial.expected, serial.result);
+    }
+
+    private void loadROM(String zipName, String romName) throws IOException {
+        ZipInputStream zipFile = new ZipInputStream(getClass().getClassLoader().getResourceAsStream(zipName));
+        ZipEntry entry;
+        do {
+            entry = zipFile.getNextEntry();
+            if (entry != null && romName.equals(entry.getName())) {
+                loadROM(IOUtils.toByteArray(zipFile));
+                return;
+            }
+        } while (entry != null);
+        throw new IllegalArgumentException(romName + " not found in " + zipName);
+    }
+
+    private void loadROM(byte[] rom) throws IOException {
         byte[] boot = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("boot.bin"));
-        byte[] rom  = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream(romName));
         serial = new StringSerialConnection();
         target = new Gameboy(new NullScreen(), new NullController(), serial, boot, rom, Integer.MAX_VALUE, false);
     }
