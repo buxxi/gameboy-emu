@@ -128,7 +128,7 @@ public class GPU implements Memory {
         Color[] scanlineBuffer = new Color[Screen.WIDTH];
         if (backgroundDisplay) {
             for (int x = 0; x < Screen.WIDTH; x++) {
-                if (windowDisplay && windowY <= scanline) {
+                if (windowDisplay && windowY <= scanline && windowX >= 7) {
                     drawBackgroundWindowPixel(scanlineBuffer, x);
                 } else {
                     drawBackgroundPixel(scanlineBuffer, x);
@@ -145,9 +145,10 @@ public class GPU implements Memory {
     }
 
     private void drawBackgroundWindowPixel(Color[] scanlineBuffer, int x) {
-        int y = scanline;
-        Tile tile = tileAt(x, y, windowTileMap);
-        scanlineBuffer[x] = tile.colorAt(x, y, backgroundPaletteData);
+        int y = scanline + windowY;
+        int adjustedX = x + windowX - 7;
+        Tile tile = tileAt(adjustedX, y, windowTileMap);
+        scanlineBuffer[x] = tile.colorAt(adjustedX, y, backgroundPaletteData);
     }
 
     private void drawBackgroundPixel(Color[] scanlineBuffer, int x) {
