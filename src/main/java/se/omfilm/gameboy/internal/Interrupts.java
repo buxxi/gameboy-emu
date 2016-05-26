@@ -1,13 +1,14 @@
 package se.omfilm.gameboy.internal;
 
-import se.omfilm.gameboy.internal.memory.MMU;
+import se.omfilm.gameboy.internal.memory.Memory;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public interface Interrupts {
-    int step(MMU memory);
+    int step(Memory memory);
 
     void enable(Interrupt... interrupts);
 
@@ -16,6 +17,14 @@ public interface Interrupts {
     boolean enabled(Interrupt interrupt);
 
     boolean requested(Interrupt interrupt);
+
+    default int enabledAsByte() {
+        return Interrupt.matchAgainstAllAsByte(this::enabled);
+    }
+
+    default int requestedAsByte() {
+        return Interrupt.matchAgainstAllAsByte(this::requested);
+    }
 
     enum Interrupt {
         VBLANK( 0b0000_0001),
@@ -37,20 +46,10 @@ public interface Interrupts {
             return result.toArray(new Interrupt[result.size()]);
         }
 
-        public static int enabledToValue(Interrupts interrupts) {
+        public static int matchAgainstAllAsByte(Predicate<Interrupt> predicate) {
             int result = 0;
             for (Interrupt interrupt : Interrupt.values()) {
-                if (interrupts.enabled(interrupt)) {
-                    result = result | interrupt.mask;
-                }
-            }
-            return result;
-        }
-
-        public static int requestedToValue(Interrupts interrupts) {
-            int result = 0;
-            for (Interrupt interrupt : Interrupt.values()) {
-                if (interrupts.requested(interrupt)) {
+                if (predicate.test(interrupt)) {
                     result = result | interrupt.mask;
                 }
             }

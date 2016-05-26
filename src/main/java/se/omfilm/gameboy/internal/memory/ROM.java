@@ -4,18 +4,49 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-public class ROMLoader {
-    private static final Logger log = LoggerFactory.getLogger(ROMLoader.class);
+public class ROM {
+    private static final Logger log = LoggerFactory.getLogger(ROM.class);
 
-    public static BankableRAM createRAMBanks(byte[] data) {
-        RAM_SIZE ramSize = RAM_SIZE.values()[data[0x149]];
+    private final byte[] data;
+    private final ROMType romType;
+    private final ROMSize romSize;
+    private final RAMSize ramSize;
+    private final String name;
+    private final Model model;
+    private final Region region;
+
+    private ROM(byte[] data) {
+        this.data = data;
+        this.romType = ROMType.fromValue(data[0x147]);
+        this.romSize = ROMSize.values()[data[0x148]];
+        this.ramSize = RAMSize.values()[data[0x149]];
+        this.name = readGameName(data);
+        this.model = Model.fromValue(data[0x143] & 0xFF);
+        this.region = Region.fromValue(data[0x14A]);
+    }
+
+    public static ROM load(byte[] data) {
+        ROM rom = new ROM(data);
+        if (data[0x146] != 0) {
+            throw new IllegalArgumentException("Can only handle the original GameBoy");
+        }
+        if (rom.romType.value > 3) {
+            throw new IllegalArgumentException("Can't handle rom of type " + rom.romType);
+        }
+
+        if (rom.romSize.expectedSize != data.length) {
+            throw new IllegalArgumentException("Roms actual size doesn't match the expected " + rom.romSize.expectedSize + "!=" + data.length);
+        }
+        return rom;
+    }
+
+    public BankableRAM createRAMBanks() {
         return new BankableRAM(ramSize.banks, Memory.MemoryType.RAM_BANKS.size());
     }
 
-    public static Memory createROMBanks(byte[] data, BankableRAM ramBanks) {
+    public Memory createROMBanks(BankableRAM ramBanks) {
         ByteArrayMemory rom = new ByteArrayMemory(data);
-        ROM_TYPE type = ROM_TYPE.fromValue(data[0x147]);
-        switch (type) {
+        switch (romType) {
             case ROM_ONLY:
                 return new ReadOnlyMemory(rom);
             case ROM_MBC1:
@@ -23,33 +54,17 @@ public class ROMLoader {
             case ROM_MBC1_RAM_BATTERY:
                 return new MBC1(rom, ramBanks);
             default:
-                throw new IllegalArgumentException("Can't create ROM from type: " + type);
+                throw new IllegalArgumentException("Can't create ROM from type: " + romType);
         }
     }
 
-    public static byte[] verifyRom(byte[] rom) {
-        if (rom[0x146] != 0) {
-            throw new IllegalArgumentException("Can only handle the original GameBoy");
-        }
-        ROM_TYPE type = ROM_TYPE.fromValue(rom[0x147]);
-        if (type.value > 3) {
-            throw new IllegalArgumentException("Can't handle rom of type " + type);
-        }
-        ROM_SIZE romSize = ROM_SIZE.values()[rom[0x148]];
-        if (romSize.expectedSize != rom.length) {
-            throw new IllegalArgumentException("Roms actual size doesn't match the expected " + romSize.expectedSize + "!=" + rom.length);
-        }
-
-        RAM_SIZE ramSize = RAM_SIZE.values()[rom[0x149]];
-        log.info("Game: " + readGameName(rom));
-        log.info("Model: " + ((rom[0x143] & 0xFF) == 0x80 ? "GameBoy Color" : "GameBoy"));
-        log.info("ROM Type: " + type);
+    public void print() {
+        log.info("Game: " + name);
+        log.info("Model: " + model);
+        log.info("ROM Type: " + romType);
         log.info("ROM Size: " + romSize + " (" + DebugPrinter.hex(romSize.expectedSize, 4) + ")");
         log.info("RAM Size: " + ramSize + " (" + DebugPrinter.hex(ramSize.expectedSize, 4) + ")");
-        log.info("Region: " + (rom[0x14A] == 0 ? "Japan" : "International"));
-        log.info("C-check: " + (rom[0x14D]));
-        log.info("Checksum: " + DebugPrinter.hex((rom[0x14E] << 8) + rom[0x14F], 4));
-        return rom;
+        log.info("Region: " + region);
     }
 
     private static String readGameName(byte[] rom) {
@@ -58,7 +73,25 @@ public class ROMLoader {
         return new String(name);
     }
 
-    private enum ROM_SIZE {
+    private enum Model {
+        GAMEBOY,
+        GAMEBOY_COLOR;
+
+        public static Model fromValue(int value) {
+            return value == 0x80 ? GAMEBOY_COLOR : GAMEBOY;
+        }
+    }
+
+    private enum Region {
+        JAPAN,
+        INTERNATIONAL;
+
+        public static Region fromValue(int value) {
+            return value == 0 ? JAPAN : INTERNATIONAL;
+        }
+    }
+
+    private enum ROMSize {
         _32KB(32 * 1024),
         _64KB(64 * 1024),
         _128KB(128 * 1024),
@@ -69,7 +102,7 @@ public class ROMLoader {
 
         private final int expectedSize;
 
-        ROM_SIZE(int expectedSize) {
+        ROMSize(int expectedSize) {
             this.expectedSize = expectedSize;
         }
 
@@ -78,7 +111,7 @@ public class ROMLoader {
         }
     }
 
-    private enum RAM_SIZE {
+    private enum RAMSize {
         _2KB(2 * 1024, 1),
         _8KB(8 * 1024, 1),
         _32KB(32 * 1024, 4),
@@ -87,7 +120,7 @@ public class ROMLoader {
         private final int expectedSize;
         private final int banks;
 
-        RAM_SIZE(int expectedSize, int banks) {
+        RAMSize(int expectedSize, int banks) {
             this.expectedSize = expectedSize;
             this.banks = banks;
         }
@@ -97,7 +130,7 @@ public class ROMLoader {
         }
     }
 
-    private enum ROM_TYPE {
+    private enum ROMType {
         ROM_ONLY(                       0x00),
         ROM_MBC1(                       0x01),
         ROM_MBC1_RAM(                   0x02),
@@ -127,17 +160,17 @@ public class ROMLoader {
 
         private final int value;
 
-        ROM_TYPE(int value) {
+        ROMType(int value) {
             this.value = value;
         }
 
-        public static ROM_TYPE fromValue(int value) {
-            for (ROM_TYPE v : values()) {
+        public static ROMType fromValue(int value) {
+            for (ROMType v : values()) {
                 if (v.value == value) {
                     return v;
                 }
             }
-            throw new IllegalArgumentException("No " + ROM_TYPE.class.getSimpleName() + " with value " + DebugPrinter.hex(value, 2));
+            throw new IllegalArgumentException("No " + ROMType.class.getSimpleName() + " with value " + DebugPrinter.hex(value, 2));
         }
     }
 }

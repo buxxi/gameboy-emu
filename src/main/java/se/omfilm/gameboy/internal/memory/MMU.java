@@ -4,32 +4,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.GPU;
 import se.omfilm.gameboy.internal.Interrupts;
+import se.omfilm.gameboy.internal.Timer;
 import se.omfilm.gameboy.io.controller.Controller;
 import se.omfilm.gameboy.io.serial.SerialConnection;
-import se.omfilm.gameboy.internal.Timer;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 public class MMU implements Memory {
     private static final Logger log = LoggerFactory.getLogger(MMU.class);
 
-    private final Memory boot;
-    private final Memory rom;
+    private Memory rom;
     private final Memory zeroPage;
-    private final IOController ioController;
+    private final ControllerMapping controllerMapping;
+    private final IOMapping ioMapping;
     private final GPU gpu;
     private final SerialConnection serial;
     private final Memory ram;
     private final BankableRAM switchableRam;
 
-    private boolean isBooting = true;
-
-    public MMU(byte[] boot, byte[] rom, GPU gpu, Interrupts interrupts, Timer timer, SerialConnection serial, Controller controller) {
-        ROMLoader.verifyRom(rom);
-        this.boot = new ByteArrayMemory(boot);
-        this.switchableRam = ROMLoader.createRAMBanks(rom);
-        this.rom = ROMLoader.createROMBanks(rom, switchableRam);
+    public MMU(ROM rom, GPU gpu, Interrupts interrupts, Timer timer, SerialConnection serial, Controller controller) {
+        this.switchableRam = rom.createRAMBanks();
+        this.rom = rom.createROMBanks(switchableRam);
         this.serial = serial;
-        this.ioController = new IOController(interrupts, timer, controller);
+        this.controllerMapping = new ControllerMapping(interrupts, controller);
+        this.ioMapping = new IOMapping(interrupts, timer, controllerMapping);
         this.gpu = gpu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
         this.ram = new ByteArrayMemory(MemoryType.RAM.allocate());
@@ -40,10 +37,6 @@ public class MMU implements Memory {
         int virtualAddress = address - type.from;
         switch (type) {
             case ROM_BANK0:
-                if (isBooting && virtualAddress <= 0xFF) {
-                    return boot.readByte(virtualAddress);
-                }
-                return rom.readByte(address);
             case ROM_SWITCHABLE_BANKS:
                 return rom.readByte(address);
             case RAM:
@@ -54,11 +47,12 @@ public class MMU implements Memory {
             case ZERO_PAGE:
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:
+                return gpu.videoRAM().readByte(address);
             case OBJECT_ATTRIBUTE_MEMORY:
-                return gpu.readByte(address);
+                return gpu.objectAttributeMemory().readByte(address);
             case INTERRUPT_ENABLE:
             case IO_REGISTERS:
-                return ioController.readByte(address);
+                return ioMapping.readByte(address);
             case UNUSABLE_MEMORY:
                 log.warn("Reading from " + MemoryType.UNUSABLE_MEMORY + " at address " + DebugPrinter.hex(address, 4));
                 return 0;
@@ -76,15 +70,17 @@ public class MMU implements Memory {
                 rom.writeByte(address, data);
                 return;
             case VIDEO_RAM:
+                gpu.videoRAM().writeByte(address, data);
+                return;
             case OBJECT_ATTRIBUTE_MEMORY:
-                gpu.writeByte(address, data);
+                gpu.objectAttributeMemory().writeByte(address, data);
                 return;
             case ZERO_PAGE:
                 zeroPage.writeByte(virtualAddress, data);
                 return;
             case IO_REGISTERS:
             case INTERRUPT_ENABLE:
-                ioController.writeByte(address, data);
+                ioMapping.writeByte(address, data);
                 return;
             case RAM_BANKS:
                 switchableRam.writeByte(virtualAddress, data);
@@ -101,27 +97,24 @@ public class MMU implements Memory {
         }
     }
 
-    public void bootSuccess() {
-        isBooting = false;
-    }
-
     public void step(int cycles) {
-        ioController.step(cycles);
+        controllerMapping.step(cycles);
     }
 
-    private class IOController implements Memory {
+    public void withBootData(byte[] boot) {
+        rom = new BootMemory(boot, rom);
+    }
+
+    private class ControllerMapping {
         private final Interrupts interrupts;
-        private final Timer timer;
         private final Controller controller;
 
         private boolean checkDirections = false;
         private boolean checkButtons = false;
         private int controllerState = 0b0000_1111;
-        private int speedSwitch = 0; //gbc only
 
-        private IOController(Interrupts interrupts, Timer timer, Controller controller) {
+        public ControllerMapping(Interrupts interrupts, Controller controller) {
             this.interrupts = interrupts;
-            this.timer = timer;
             this.controller = controller;
         }
 
@@ -139,6 +132,46 @@ public class MMU implements Memory {
             }
         }
 
+        public int readState() {
+            return controllerState;
+        }
+
+        public void writeState(int data) {
+            checkButtons =      (data & 0b0010_0000) == 0;
+            checkDirections =   (data & 0b0001_0000) == 0;
+            if (checkButtons && checkDirections) {
+                log.warn("Both buttons and direction is being checked, should not happen");
+            }
+        }
+
+        private int directionsState() {
+            return 0b0000_1111
+                    & (controller.isPressed(Controller.Button.DOWN) ? 0b0000_0111 : 0b0000_1111)
+                    & (controller.isPressed(Controller.Button.UP) ? 0b0000_1011 : 0b0000_1111)
+                    & (controller.isPressed(Controller.Button.LEFT) ? 0b0000_1101 : 0b0000_1111)
+                    & (controller.isPressed(Controller.Button.RIGHT) ? 0b0000_1110 : 0b0000_1111);
+        }
+
+        private int buttonsState() {
+            return 0b0000_1111
+                    & (controller.isPressed(Controller.Button.START) ? 0b0000_0111 : 0b0000_1111)
+                    & (controller.isPressed(Controller.Button.SELECT) ? 0b0000_1011 : 0b0000_1111)
+                    & (controller.isPressed(Controller.Button.B) ? 0b0000_1101 : 0b0000_1111)
+                    & (controller.isPressed(Controller.Button.A) ? 0b0000_1110 : 0b0000_1111);
+        }
+    }
+
+    private class IOMapping implements Memory {
+        private final Interrupts interrupts;
+        private final Timer timer;
+        private final ControllerMapping controllerMapping;
+
+        private IOMapping(Interrupts interrupts, Timer timer, ControllerMapping controllerMapping) {
+            this.interrupts = interrupts;
+            this.timer = timer;
+            this.controllerMapping = controllerMapping;
+        }
+
         public int readByte(int address) {
             IORegister register = IORegister.fromAddress(address);
             switch (register) {
@@ -149,11 +182,11 @@ public class MMU implements Memory {
                 case LCD_SCANLINE_COMPARE:
                     return gpu.scanlineCompare();
                 case JOYPAD:
-                    return controllerState;
+                    return controllerMapping.readState();
                 case INTERRUPT_ENABLE:
-                    return Interrupts.Interrupt.enabledToValue(interrupts);
+                    return interrupts.enabledAsByte();
                 case INTERRUPT_REQUEST:
-                    return Interrupts.Interrupt.requestedToValue(interrupts);
+                    return interrupts.requestedAsByte();
                 case LCD_CONTROL:
                     return gpu.getLCDControl();
                 case LCD_STATUS:
@@ -163,7 +196,7 @@ public class MMU implements Memory {
                 case SERIAL_TRANSFER_DATA:
                     return serial.getData();
                 case PREPARE_SPEED_SWITCH:
-                    return speedSwitch;
+                    return 0;
                 case TIMER_COUNTER:
                     return timer.counter();
                 case TIMER_DIVIDER:
@@ -216,11 +249,7 @@ public class MMU implements Memory {
                     interrupts.enable(Interrupts.Interrupt.fromValue(data));
                     return;
                 case JOYPAD:
-                    checkButtons =      (data & 0b0010_0000) == 0;
-                    checkDirections =   (data & 0b0001_0000) == 0;
-                    if (checkButtons && checkDirections) {
-                        log.warn("Both buttons and direction is being checked, should not happen");
-                    }
+                    controllerMapping.writeState(data);
                     return;
                 case TIMER_MODULO:
                     timer.modulo(data);
@@ -251,7 +280,6 @@ public class MMU implements Memory {
                     return;
 
                 case PREPARE_SPEED_SWITCH:
-                    speedSwitch = data;
                 case COLOR_BACKGROUND_PALETTE_INDEX:
                 case COLOR_BACKGROUND_PALETTE_DATA:
                 case VRAM_BANK:
@@ -303,28 +331,12 @@ public class MMU implements Memory {
             }
         }
 
-        private int directionsState() {
-            return 0b0000_1111
-                    & (controller.isPressed(Controller.Button.DOWN) ? 0b0000_0111 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.UP) ? 0b0000_1011 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.LEFT) ? 0b0000_1101 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.RIGHT) ? 0b0000_1110 : 0b0000_1111);
-        }
-
-        private int buttonsState() {
-            return 0b0000_1111
-                    & (controller.isPressed(Controller.Button.START) ? 0b0000_0111 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.SELECT) ? 0b0000_1011 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.B) ? 0b0000_1101 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.A) ? 0b0000_1110 : 0b0000_1111);
-        }
-
         private String unhandledWriteMessage(int data, IORegister register) {
-            return "Unhandled write for " + IOController.class.getSimpleName() + " of type " + register + " with value " + DebugPrinter.hex(data, 4);
+            return "Unhandled write for " + IOMapping.class.getSimpleName() + " of type " + register + " with value " + DebugPrinter.hex(data, 4);
         }
 
         private String unhandledReadMessage(IORegister register) {
-            return "Unhandled read for " + IOController.class.getSimpleName() + " of type " + register;
+            return "Unhandled read for " + IOMapping.class.getSimpleName() + " of type " + register;
         }
     }
 
@@ -408,6 +420,30 @@ public class MMU implements Memory {
                 }
             }
             throw new IllegalArgumentException("No " + IORegister.class.getSimpleName() + " for address " + DebugPrinter.hex(address, 4));
+        }
+    }
+
+    private class BootMemory implements Memory {
+        private final ByteArrayMemory boot;
+        private final Memory delegate;
+
+        public BootMemory(byte[] boot, Memory delegate) {
+            this.boot = new ByteArrayMemory(boot);
+            this.delegate = delegate;
+        }
+
+        public int readByte(int address) {
+            if (address <= 0xFF) {
+                return boot.readByte(address);
+            } else if (address == 0x100) {
+                rom = delegate;
+            }
+            return delegate.readByte(address);
+
+        }
+
+        public void writeByte(int address, int data) {
+            delegate.writeByte(address, data);
         }
     }
 }

@@ -1,6 +1,7 @@
 package se.omfilm.gameboy;
 
 import se.omfilm.gameboy.internal.Gameboy;
+import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.controller.Controller;
 import se.omfilm.gameboy.io.controller.SwingController;
 import se.omfilm.gameboy.io.screen.Screen;
@@ -24,6 +25,8 @@ public class Main {
 
         byte[] bootData = Files.readAllBytes(Paths.get(args[0]));
         byte[] romData = Files.readAllBytes(Paths.get(args[1]));
-        new Gameboy(screen, controller, new ConsoleSerialConnection(), bootData, romData, true).run();
+        ROM rom = ROM.load(romData);
+        rom.print();
+        new Gameboy(screen, controller, new ConsoleSerialConnection(), rom, true).withBootData(bootData).run();
     }
 }

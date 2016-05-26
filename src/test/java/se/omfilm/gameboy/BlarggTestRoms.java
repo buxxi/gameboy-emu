@@ -3,6 +3,7 @@ package se.omfilm.gameboy;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import se.omfilm.gameboy.internal.Gameboy;
+import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.controller.Controller;
 import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.io.serial.SerialConnection;
@@ -10,7 +11,6 @@ import se.omfilm.gameboy.io.serial.SerialConnection;
 import java.awt.*;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import static org.junit.Assert.assertEquals;
@@ -190,7 +190,7 @@ public class BlarggTestRoms {
     private void loadROM(byte[] rom) throws IOException {
         byte[] boot = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("boot.bin"));
         serial = new StringSerialConnection();
-        target = new Gameboy(new NullScreen(), new NullController(), serial, boot, rom, Integer.MAX_VALUE, false);
+        target = new Gameboy(new NullScreen(), new NullController(), serial, ROM.load(rom), Integer.MAX_VALUE, false).withBootData(boot);
     }
 
     private class StringSerialConnection implements SerialConnection {

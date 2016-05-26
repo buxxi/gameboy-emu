@@ -2,7 +2,6 @@ package se.omfilm.gameboy.internal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.omfilm.gameboy.internal.memory.MMU;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
@@ -44,13 +43,9 @@ public class CPU {
         return 4;
     }
 
-    public int step(MMU memory) {
+    public int step(Memory memory) {
         if (halted) {
             return 4;
-        }
-
-        if (programCounter.read() == 0x100) {
-            memory.bootSuccess();
         }
 
         Instruction instruction = instructionProvider.read(programCounter, memory);
@@ -239,7 +234,7 @@ public class CPU {
         private int enabledInterrupts = 0;
         private int requestedInterrupts = 0;
 
-        public int step(MMU memory) {
+        public int step(Memory memory) {
             switch (enableDelay) {
                 case 2:
                     enableDelay--;
@@ -292,7 +287,7 @@ public class CPU {
             return (requestedInterrupts & interrupt.mask) != 0;
         }
 
-        private int execute(Interrupt interrupt, MMU memory) {
+        private int execute(Interrupt interrupt, Memory memory) {
             requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask);
             interruptMasterEnable = false;
             halted = false;
