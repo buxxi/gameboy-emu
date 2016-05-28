@@ -11,7 +11,7 @@ import java.util.Map;
 public class CPU {
     private static final Logger log = LoggerFactory.getLogger(CPU.class);
 
-    static int FREQUENCY = 4 * 1024 * 1024;
+    public static int FREQUENCY = 4 * 1024 * 1024;
 
     private final InstructionProvider instructionProvider;
     private final Flags flags = new FlagsImpl();

@@ -2,13 +2,11 @@ package se.omfilm.gameboy;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
-import se.omfilm.gameboy.internal.Gameboy;
 import se.omfilm.gameboy.internal.memory.ROM;
-import se.omfilm.gameboy.io.controller.Controller;
-import se.omfilm.gameboy.io.screen.Screen;
+import se.omfilm.gameboy.io.controller.NullController;
+import se.omfilm.gameboy.io.screen.NullScreen;
 import se.omfilm.gameboy.io.serial.SerialConnection;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -232,31 +230,4 @@ public class BlarggTestRoms {
         }
     }
 
-    private class NullScreen implements Screen {
-        public void turnOn() {
-
-        }
-
-        public void turnOff() {
-
-        }
-
-        public void setPixel(int x, int y, Color color) {
-
-        }
-
-        public void draw() {
-
-        }
-
-        public boolean isOn() {
-            return true;
-        }
-    }
-
-    private class NullController implements Controller {
-        public boolean isPressed(Button button) {
-            return false;
-        }
-    }
 }

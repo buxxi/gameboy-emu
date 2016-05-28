@@ -1,5 +1,9 @@
-package se.omfilm.gameboy.internal;
+package se.omfilm.gameboy;
 
+import se.omfilm.gameboy.internal.CPU;
+import se.omfilm.gameboy.internal.GPU;
+import se.omfilm.gameboy.internal.Interrupts;
+import se.omfilm.gameboy.internal.Timer;
 import se.omfilm.gameboy.internal.memory.MMU;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.controller.Controller;

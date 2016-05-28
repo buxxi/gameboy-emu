@@ -1,5 +1,9 @@
 package se.omfilm.gameboy.io.serial;
 
+/**
+ * Prints the data written to the serial connection to the console.
+ * Made for Blargg's test roms.
+ */
 public class ConsoleSerialConnection implements SerialConnection {
     private int data;
     private int control;

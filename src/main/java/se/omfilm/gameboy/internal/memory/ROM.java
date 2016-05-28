@@ -67,10 +67,14 @@ public class ROM {
         log.info("Region: " + region);
     }
 
+    public String name() {
+        return name;
+    }
+
     private static String readGameName(byte[] rom) {
         byte[] name = new byte[16];
         System.arraycopy(rom, 0x0134, name, 0, 16);
-        return new String(name);
+        return new String(name).trim();
     }
 
     private enum Model {
