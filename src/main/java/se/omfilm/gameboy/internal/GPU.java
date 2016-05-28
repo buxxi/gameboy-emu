@@ -2,6 +2,7 @@ package se.omfilm.gameboy.internal;
 
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.internal.memory.Memory.MemoryType;
+import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.screen.Screen;
 
 import java.awt.*;
@@ -27,6 +28,7 @@ public class GPU {
     private static final int SPRITE_WIDTH = 8;
 
     private final Screen screen;
+    private final ColorPalette colorPalette;
     private final Interrupts interrupts;
     private final Memory videoRAM;
     private final Memory objectAttributeMemory;
@@ -64,7 +66,8 @@ public class GPU {
     private boolean vblankInterrupt = false;
     private boolean hblankInterrupt = false;
 
-    public GPU(Screen screen, Interrupts interrupts) {
+    public GPU(Screen screen, ColorPalette colorPalette, Interrupts interrupts) {
+        this.colorPalette = colorPalette;
         this.interrupts = interrupts;
         this.screen = screen;
         this.videoRAM = new VideoRAM();
@@ -145,7 +148,7 @@ public class GPU {
             drawSprites(scanlineBuffer);
         }
         for (int x = 0; x < Screen.WIDTH; x++) {
-            Color color = scanlineBuffer[x] != null ? scanlineBuffer[x] : Color.WHITE;
+            Color color = scanlineBuffer[x] != null ? scanlineBuffer[x] : colorPalette.background(Shade.LIGHTEST);
             screen.setPixel(x, scanline - 1, color);
         }
     }
@@ -154,14 +157,14 @@ public class GPU {
         int y = scanline + windowY;
         int adjustedX = ((x + windowX - 7) + Screen.WIDTH) % Screen.WIDTH;
         Tile tile = tileAt(adjustedX, y, windowTileMap);
-        scanlineBuffer[x] = tile.colorAt(adjustedX, y, backgroundPaletteData);
+        scanlineBuffer[x] = colorPalette.background(tile.shadeAt(adjustedX, y, backgroundPaletteData));
     }
 
     private void drawBackgroundPixel(Color[] scanlineBuffer, int x) {
         int y = scanline + scrollY;
         int adjustedX = x + scrollX;
         Tile tile = tileAt(adjustedX, y, backgroundTileMap);
-        scanlineBuffer[x] = tile.colorAt(adjustedX, y, backgroundPaletteData);
+        scanlineBuffer[x] = colorPalette.background(tile.shadeAt(adjustedX, y, backgroundPaletteData));
     }
 
     private void drawSprites(Color[] scanlineBuffer) {
@@ -417,8 +420,8 @@ public class GPU {
             this.tileNumber = tileNumber;
         }
 
-        private Color colorAt(int x, int y, Palette palette) {
-            return palette.color(graphics[y % TILE_HEIGHT][x % TILE_WIDTH]);
+        private Shade shadeAt(int x, int y, Palette palette) {
+            return palette.shade(graphics[y % TILE_HEIGHT][x % TILE_WIDTH]);
         }
 
         @Override
@@ -462,7 +465,7 @@ public class GPU {
                     continue;
                 }
 
-                if (!prioritizeSprite && scanlineBuffer[this.x + i] != Color.WHITE) {
+                if (!prioritizeSprite && scanlineBuffer[this.x + i] != colorPalette.background(Shade.LIGHTEST)) {
                     continue;
                 }
 
@@ -473,8 +476,12 @@ public class GPU {
                     continue;
                 }
 
-                scanlineBuffer[this.x + i] = tile.colorAt(x, y, palette);
+                scanlineBuffer[this.x + i] = colorPalette.sprite(tile.shadeAt(x, y, palette), spritePaletteIndex());
             }
+        }
+
+        private int spritePaletteIndex() {
+            return palette == objectPalette0Data ? 0 : 1;
         }
 
         private int height() {
@@ -487,6 +494,13 @@ public class GPU {
         }
     }
 
+    public enum Shade {
+        DARKEST,
+        DARK,
+        LIGHT,
+        LIGHTEST
+    }
+
     private class Palette {
         private int palette;
 
@@ -494,7 +508,7 @@ public class GPU {
             this.palette = palette;
         }
 
-        private Color color(int input) {
+        private Shade shade(int input) {
             int offset = input * 2;
             int mask = (0b0000_0011 << offset);
             int result = (palette & mask) >> offset;
@@ -502,13 +516,13 @@ public class GPU {
             switch (result) {
                 case 0:
                 default:
-                    return Color.WHITE;
+                    return Shade.LIGHTEST;
                 case 1:
-                    return Color.LIGHT_GRAY;
+                    return Shade.LIGHT;
                 case 2:
-                    return Color.DARK_GRAY;
+                    return Shade.DARK;
                 case 3:
-                    return Color.BLACK;
+                    return Shade.DARKEST;
             }
         }
     }

@@ -7,7 +7,6 @@ public class GLFWKeyboardController implements Controller, WindowChangeListener 
     private long window;
 
     public void windowChanged(long window) {
-
         this.window = window;
     }
 

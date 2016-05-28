@@ -3,6 +3,7 @@ package se.omfilm.gameboy;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import se.omfilm.gameboy.internal.memory.ROM;
+import se.omfilm.gameboy.io.color.FixedColorPalette;
 import se.omfilm.gameboy.io.controller.NullController;
 import se.omfilm.gameboy.io.screen.NullScreen;
 import se.omfilm.gameboy.io.serial.SerialConnection;
@@ -188,7 +189,7 @@ public class BlarggTestRoms {
     private void loadROM(byte[] rom) throws IOException {
         byte[] boot = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("boot.bin"));
         serial = new StringSerialConnection();
-        target = new Gameboy(new NullScreen(), new NullController(), serial, ROM.load(rom), Integer.MAX_VALUE, false).withBootData(boot);
+        target = new Gameboy(new NullScreen(), FixedColorPalette.monochrome(), new NullController(), serial, ROM.load(rom), Integer.MAX_VALUE, false).withBootData(boot);
     }
 
     private class StringSerialConnection implements SerialConnection {
