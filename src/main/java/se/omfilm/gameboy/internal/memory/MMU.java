@@ -2,6 +2,7 @@ package se.omfilm.gameboy.internal.memory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.omfilm.gameboy.internal.APU;
 import se.omfilm.gameboy.internal.PPU;
 import se.omfilm.gameboy.internal.Interrupts;
 import se.omfilm.gameboy.internal.Timer;
@@ -17,13 +18,15 @@ public class MMU implements Memory {
     private final ControllerMapping controllerMapping;
     private final IOMapping ioMapping;
     private final PPU ppu;
+    private final APU apu;
     private final SerialConnection serial;
     private final Memory ram;
     private final BankableRAM switchableRam;
 
-    public MMU(ROM rom, PPU ppu, Interrupts interrupts, Timer timer, SerialConnection serial, Controller controller) {
+    public MMU(ROM rom, PPU ppu, APU apu, Interrupts interrupts, Timer timer, SerialConnection serial, Controller controller) {
         this.switchableRam = rom.createRAMBanks();
         this.rom = rom.createROMBanks(switchableRam);
+        this.apu = apu;
         this.serial = serial;
         this.controllerMapping = new ControllerMapping(interrupts, controller);
         this.ioMapping = new IOMapping(interrupts, timer, controllerMapping);
@@ -204,12 +207,33 @@ public class MMU implements Memory {
                 case TIMER_MODULO:
                     return timer.modulo();
                 case SOUND_ON_OFF:
+                    return apu.soundEnabled();
                 case SOUND_CHANNEL_CONTROL:
+                    return apu.channelControl();
+                case SOUND_OUTPUT_TERMINAL:
+                    return apu.outputTerminal();
                 case SOUND_1_FREQUENCY_HIGH:
                 case SOUND_2_FREQUENCY_HIGH:
                 case SOUND_3_FREQUENCY_HIGH:
                 case SOUND_4_COUNTER_CONSECUTIVE:
                     return 0;
+                case SOUND_WAVE_PATTERN_RAM0:
+                case SOUND_WAVE_PATTERN_RAM1:
+                case SOUND_WAVE_PATTERN_RAM2:
+                case SOUND_WAVE_PATTERN_RAM3:
+                case SOUND_WAVE_PATTERN_RAM4:
+                case SOUND_WAVE_PATTERN_RAM5:
+                case SOUND_WAVE_PATTERN_RAM6:
+                case SOUND_WAVE_PATTERN_RAM7:
+                case SOUND_WAVE_PATTERN_RAM8:
+                case SOUND_WAVE_PATTERN_RAM9:
+                case SOUND_WAVE_PATTERN_RAMA:
+                case SOUND_WAVE_PATTERN_RAMB:
+                case SOUND_WAVE_PATTERN_RAMC:
+                case SOUND_WAVE_PATTERN_RAMD:
+                case SOUND_WAVE_PATTERN_RAME:
+                case SOUND_WAVE_PATTERN_RAMF:
+                    return apu.wavePatternRAM().readByte(address);
                 default:
                     throw new UnsupportedOperationException(unhandledReadMessage(register));
             }
@@ -287,6 +311,15 @@ public class MMU implements Memory {
                     log.debug(unhandledWriteMessage(data, register)); //Only GameBoy Color
                     return;
 
+                case SOUND_ON_OFF:
+                    apu.soundEnabled(data);
+                    return;
+                case SOUND_CHANNEL_CONTROL:
+                    apu.channelControl(data);
+                    return;
+                case SOUND_OUTPUT_TERMINAL:
+                    apu.outputTerminal(data);
+                    return;
                 case SOUND_1_SWEEP:
                 case SOUND_1_LENGTH_PATTERN_DUTY:
                 case SOUND_1_ENVELOPE:
@@ -305,10 +338,8 @@ public class MMU implements Memory {
                 case SOUND_4_ENVELOPE:
                 case SOUND_4_LENGTH:
                 case SOUND_4_POLYNOMIAL_COUNTER:
-                case SOUND_CHANNEL_CONTROL:
-                case SOUND_ON_OFF:
-                case SOUND_OUTPUT_TERMINAL:
                 case SOUND_SWEEP:
+                    return;
                 case SOUND_WAVE_PATTERN_RAM0:
                 case SOUND_WAVE_PATTERN_RAM1:
                 case SOUND_WAVE_PATTERN_RAM2:
@@ -325,7 +356,8 @@ public class MMU implements Memory {
                 case SOUND_WAVE_PATTERN_RAMD:
                 case SOUND_WAVE_PATTERN_RAME:
                 case SOUND_WAVE_PATTERN_RAMF:
-                    return; //TODO: this is only here to get somewhere without having to implement sound
+                    apu.wavePatternRAM().writeByte(address, data);
+                    return;
                 default:
                     throw new UnsupportedOperationException(unhandledWriteMessage(data, register));
             }

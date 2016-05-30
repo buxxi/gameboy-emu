@@ -1,9 +1,6 @@
 package se.omfilm.gameboy;
 
-import se.omfilm.gameboy.internal.CPU;
-import se.omfilm.gameboy.internal.PPU;
-import se.omfilm.gameboy.internal.Interrupts;
-import se.omfilm.gameboy.internal.Timer;
+import se.omfilm.gameboy.internal.*;
 import se.omfilm.gameboy.internal.memory.MMU;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.ColorPalette;
@@ -19,6 +16,7 @@ public class Gameboy {
     private final MMU memory;
     private final CPU cpu;
     private final PPU ppu;
+    private final APU apu;
     private final Timer timer;
 
     private final int frequency;
@@ -32,8 +30,9 @@ public class Gameboy {
         this.cpu = new CPU(debug);
         Interrupts interrupts = this.cpu.interrupts();
         this.ppu = new PPU(screen, colorPalette, interrupts);
+        this.apu = new APU();
         this.timer = new Timer(interrupts);
-        this.memory = new MMU(rom, ppu, interrupts, timer, serial, controller);
+        this.memory = new MMU(rom, ppu, apu, interrupts, timer, serial, controller);
         this.frequency = frequency;
     }
 
@@ -63,6 +62,7 @@ public class Gameboy {
         memory.step(cycles);
         timer.step(cycles);
         ppu.step(cycles);
+        apu.step(cycles);
         cycles += cpu.interrupts().step(memory);
         return cycles;
     }
