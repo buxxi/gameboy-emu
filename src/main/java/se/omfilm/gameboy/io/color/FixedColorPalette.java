@@ -45,4 +45,16 @@ public class FixedColorPalette implements ColorPalette {
     public static ColorPalette green() {
         return new FixedColorPalette(new Color(4, 27, 35), new Color(53, 102, 81), new Color(135, 192, 123), new Color(224, 251, 210));
     }
+
+    public static ColorPalette red() {
+        return new FixedColorPalette(new Color(11, 33, 3), new Color(98, 102, 53), new Color(191, 145, 124), new Color(249, 215, 209));
+    }
+
+    public static ColorPalette purple() {
+        return new FixedColorPalette(new Color(33, 11, 3), new Color(102, 53, 74), new Color(178, 124, 191), new Color(235, 209, 249));
+    }
+
+    public static ColorPalette blue() {
+        return new FixedColorPalette(new Color(25, 3, 33), new Color(56, 53, 102), new Color(124, 170, 191), new Color(209, 243, 249));
+    }
 }

@@ -4,6 +4,7 @@ import se.omfilm.gameboy.Gameboy;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.color.FixedColorPalette;
+import se.omfilm.gameboy.io.color.MultiColorPalette;
 import se.omfilm.gameboy.io.controller.GLFWCompositeController;
 import se.omfilm.gameboy.io.screen.GLFWScreen;
 import se.omfilm.gameboy.io.serial.ConsoleSerialConnection;
@@ -24,8 +25,19 @@ public class Main {
 
         GLFWCompositeController controller = new GLFWCompositeController();
         GLFWScreen screen = new GLFWScreen(rom.name(), controller);
-        ColorPalette palette = (ColorPalette) FixedColorPalette.class.getMethod(args[2]).invoke(null);
+        ColorPalette palette = parsePalette(args[2]);
 
         new Gameboy(screen, palette, controller, new ConsoleSerialConnection(), rom, false).withBootData(Files.readAllBytes(bootPath)).run();
+    }
+
+    private static ColorPalette parsePalette(String arg) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        String[] parts = arg.split(",");
+        if (parts.length == 1) {
+            return (ColorPalette) FixedColorPalette.class.getMethod(parts[0]).invoke(null);
+        } else if (parts.length == 3) {
+            return new MultiColorPalette(parsePalette(parts[0]), parsePalette(parts[1]), parsePalette(parts[2]));
+        } else {
+            throw new IllegalArgumentException("Can't handle " + arg + " as palette");
+        }
     }
 }
