@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 
 import static se.omfilm.gameboy.internal.memory.Memory.MemoryType.OBJECT_ATTRIBUTE_MEMORY;
 
-public class GPU {
+public class PPU {
     private static final int TILE_MAP_ADDRESS_0 = 0x9800;
     private static final int TILE_MAP_ADDRESS_1 = 0x9C00;
     private static final int TILE_MAP_WIDTH = 32;
@@ -66,7 +66,7 @@ public class GPU {
     private boolean vblankInterrupt = false;
     private boolean hblankInterrupt = false;
 
-    public GPU(Screen screen, ColorPalette colorPalette, Interrupts interrupts) {
+    public PPU(Screen screen, ColorPalette colorPalette, Interrupts interrupts) {
         this.colorPalette = colorPalette;
         this.interrupts = interrupts;
         this.screen = screen;

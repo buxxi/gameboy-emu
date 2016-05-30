@@ -1,6 +1,6 @@
 package se.omfilm.gameboy.io.color;
 
-import se.omfilm.gameboy.internal.GPU;
+import se.omfilm.gameboy.internal.PPU;
 
 import java.awt.*;
 
@@ -15,11 +15,11 @@ public class MultiColorPalette implements ColorPalette {
         this.sprite1Palette = sprite1Palette;
     }
 
-    public Color background(GPU.Shade shade) {
+    public Color background(PPU.Shade shade) {
         return tilePalette.background(shade);
     }
 
-    public Color sprite(GPU.Shade shade, int index) {
+    public Color sprite(PPU.Shade shade, int index) {
         if (index == 0) {
             return sprite0Palette.sprite(shade, index);
         }

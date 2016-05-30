@@ -1,7 +1,7 @@
 package se.omfilm.gameboy;
 
 import se.omfilm.gameboy.internal.CPU;
-import se.omfilm.gameboy.internal.GPU;
+import se.omfilm.gameboy.internal.PPU;
 import se.omfilm.gameboy.internal.Interrupts;
 import se.omfilm.gameboy.internal.Timer;
 import se.omfilm.gameboy.internal.memory.MMU;
@@ -18,7 +18,7 @@ import java.io.IOException;
 public class Gameboy {
     private final MMU memory;
     private final CPU cpu;
-    private final GPU gpu;
+    private final PPU ppu;
     private final Timer timer;
 
     private final int frequency;
@@ -31,9 +31,9 @@ public class Gameboy {
     public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, ROM rom, int frequency, boolean debug) throws IOException {
         this.cpu = new CPU(debug);
         Interrupts interrupts = this.cpu.interrupts();
-        this.gpu = new GPU(screen, colorPalette, interrupts);
+        this.ppu = new PPU(screen, colorPalette, interrupts);
         this.timer = new Timer(interrupts);
-        this.memory = new MMU(rom, gpu, interrupts, timer, serial, controller);
+        this.memory = new MMU(rom, ppu, interrupts, timer, serial, controller);
         this.frequency = frequency;
     }
 
@@ -62,7 +62,7 @@ public class Gameboy {
         int cycles = cpu.step(memory);
         memory.step(cycles);
         timer.step(cycles);
-        gpu.step(cycles);
+        ppu.step(cycles);
         cycles += cpu.interrupts().step(memory);
         return cycles;
     }

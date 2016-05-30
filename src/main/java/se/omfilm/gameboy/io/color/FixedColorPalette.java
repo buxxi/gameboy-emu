@@ -1,6 +1,6 @@
 package se.omfilm.gameboy.io.color;
 
-import se.omfilm.gameboy.internal.GPU.Shade;
+import se.omfilm.gameboy.internal.PPU.Shade;
 
 import java.awt.*;
 

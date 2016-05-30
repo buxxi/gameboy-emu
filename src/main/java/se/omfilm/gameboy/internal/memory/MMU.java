@@ -2,7 +2,7 @@ package se.omfilm.gameboy.internal.memory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.omfilm.gameboy.internal.GPU;
+import se.omfilm.gameboy.internal.PPU;
 import se.omfilm.gameboy.internal.Interrupts;
 import se.omfilm.gameboy.internal.Timer;
 import se.omfilm.gameboy.io.controller.Controller;
@@ -16,18 +16,18 @@ public class MMU implements Memory {
     private final Memory zeroPage;
     private final ControllerMapping controllerMapping;
     private final IOMapping ioMapping;
-    private final GPU gpu;
+    private final PPU ppu;
     private final SerialConnection serial;
     private final Memory ram;
     private final BankableRAM switchableRam;
 
-    public MMU(ROM rom, GPU gpu, Interrupts interrupts, Timer timer, SerialConnection serial, Controller controller) {
+    public MMU(ROM rom, PPU ppu, Interrupts interrupts, Timer timer, SerialConnection serial, Controller controller) {
         this.switchableRam = rom.createRAMBanks();
         this.rom = rom.createROMBanks(switchableRam);
         this.serial = serial;
         this.controllerMapping = new ControllerMapping(interrupts, controller);
         this.ioMapping = new IOMapping(interrupts, timer, controllerMapping);
-        this.gpu = gpu;
+        this.ppu = ppu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
         this.ram = new ByteArrayMemory(MemoryType.RAM.allocate());
     }
@@ -47,9 +47,9 @@ public class MMU implements Memory {
             case ZERO_PAGE:
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:
-                return gpu.videoRAM().readByte(address);
+                return ppu.videoRAM().readByte(address);
             case OBJECT_ATTRIBUTE_MEMORY:
-                return gpu.objectAttributeMemory().readByte(address);
+                return ppu.objectAttributeMemory().readByte(address);
             case INTERRUPT_ENABLE:
             case IO_REGISTERS:
                 return ioMapping.readByte(address);
@@ -70,10 +70,10 @@ public class MMU implements Memory {
                 rom.writeByte(address, data);
                 return;
             case VIDEO_RAM:
-                gpu.videoRAM().writeByte(address, data);
+                ppu.videoRAM().writeByte(address, data);
                 return;
             case OBJECT_ATTRIBUTE_MEMORY:
-                gpu.objectAttributeMemory().writeByte(address, data);
+                ppu.objectAttributeMemory().writeByte(address, data);
                 return;
             case ZERO_PAGE:
                 zeroPage.writeByte(virtualAddress, data);
@@ -176,11 +176,11 @@ public class MMU implements Memory {
             IORegister register = IORegister.fromAddress(address);
             switch (register) {
                 case SCROLL_Y:
-                    return gpu.scrollY();
+                    return ppu.scrollY();
                 case LCD_SCANLINE:
-                    return gpu.scanline();
+                    return ppu.scanline();
                 case LCD_SCANLINE_COMPARE:
-                    return gpu.scanlineCompare();
+                    return ppu.scanlineCompare();
                 case JOYPAD:
                     return controllerMapping.readState();
                 case INTERRUPT_ENABLE:
@@ -188,9 +188,9 @@ public class MMU implements Memory {
                 case INTERRUPT_REQUEST:
                     return interrupts.requestedAsByte();
                 case LCD_CONTROL:
-                    return gpu.getLCDControl();
+                    return ppu.getLCDControl();
                 case LCD_STATUS:
-                    return gpu.getLCDStatus();
+                    return ppu.getLCDStatus();
                 case SERIAL_TRANSFER_CONTROL:
                     return serial.getControl();
                 case SERIAL_TRANSFER_DATA:
@@ -219,28 +219,28 @@ public class MMU implements Memory {
             IORegister register = IORegister.fromAddress(address);
             switch (register) {
                 case BACKGROUND_PALETTE_DATA:
-                    gpu.setBackgroundPaletteData(data);
+                    ppu.setBackgroundPaletteData(data);
                     return;
                 case OBJECT_PALETTE_0_DATA:
-                    gpu.setObjectPalette0Data(data);
+                    ppu.setObjectPalette0Data(data);
                     return;
                 case OBJECT_PALETTE_1_DATA:
-                    gpu.setObjectPalette1Data(data);
+                    ppu.setObjectPalette1Data(data);
                     return;
                 case SCROLL_Y:
-                    gpu.scrollY(data);
+                    ppu.scrollY(data);
                     return;
                 case SCROLL_X:
-                    gpu.scrollX(data);
+                    ppu.scrollX(data);
                     return;
                 case WINDOW_Y:
-                    gpu.windowY(data);
+                    ppu.windowY(data);
                     return;
                 case WINDOW_X:
-                    gpu.windowX(data);
+                    ppu.windowX(data);
                     return;
                 case LCD_CONTROL:
-                    gpu.setLCDControl(data);
+                    ppu.setLCDControl(data);
                     return;
                 case INTERRUPT_REQUEST:
                     interrupts.request(Interrupts.Interrupt.fromValue(data));
@@ -264,13 +264,13 @@ public class MMU implements Memory {
                     timer.resetDivider();
                     return;
                 case LCD_STATUS:
-                    gpu.setInterruptEnables(data);
+                    ppu.setInterruptEnables(data);
                     return;
                 case LCD_SCANLINE_COMPARE:
-                    gpu.scanlineCompare(data);
+                    ppu.scanlineCompare(data);
                     return;
                 case DMA_TRANSFER:
-                    gpu.transferDMA((data * 0x100) - MemoryType.RAM.from, ram);
+                    ppu.transferDMA((data * 0x100) - MemoryType.RAM.from, ram);
                     return;
                 case SERIAL_TRANSFER_DATA:
                     serial.setData(data);
