@@ -1,7 +1,7 @@
 package se.omfilm.gameboy;
 
 import se.omfilm.gameboy.internal.*;
-import se.omfilm.gameboy.internal.memory.MMU;
+import se.omfilm.gameboy.internal.MMU;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.controller.Controller;

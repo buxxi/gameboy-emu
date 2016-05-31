@@ -1,11 +1,11 @@
-package se.omfilm.gameboy.internal.memory;
+package se.omfilm.gameboy.internal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.omfilm.gameboy.internal.APU;
-import se.omfilm.gameboy.internal.PPU;
-import se.omfilm.gameboy.internal.Interrupts;
-import se.omfilm.gameboy.internal.Timer;
+import se.omfilm.gameboy.internal.memory.BankableRAM;
+import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
+import se.omfilm.gameboy.internal.memory.Memory;
+import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.controller.Controller;
 import se.omfilm.gameboy.io.serial.SerialConnection;
 import se.omfilm.gameboy.util.DebugPrinter;
@@ -213,10 +213,35 @@ public class MMU implements Memory {
                 case SOUND_OUTPUT_TERMINAL:
                     return apu.outputTerminal();
                 case SOUND_1_FREQUENCY_HIGH:
+                    return apu.highFrequency(1);
                 case SOUND_2_FREQUENCY_HIGH:
+                    return apu.highFrequency(2);
                 case SOUND_3_FREQUENCY_HIGH:
+                    return apu.highFrequency(3);
+                case SOUND_1_ENVELOPE:
+                    return apu.envelope(1);
+                case SOUND_2_ENVELOPE:
+                    return apu.envelope(2);
+                case SOUND_4_ENVELOPE:
+                    return apu.envelope(4);
+                case SOUND_1_LENGTH_PATTERN_DUTY:
+                    return apu.length(1);
+                case SOUND_2_LENGTH_PATTERN_DUTY:
+                    return apu.length(2);
+                case SOUND_3_LENGTH:
+                    return apu.length(3);
+                case SOUND_4_LENGTH:
+                    return apu.length(4);
+                case SOUND_1_SWEEP:
+                    return apu.sweep(1);
+                case SOUND_3_ON_OFF:
+                    return apu.soundControl(3);
+                case SOUND_3_SELECT_OUTPUT_LEVEL:
+                    return apu.outputLevel(3);
                 case SOUND_4_COUNTER_CONSECUTIVE:
-                    return 0;
+                    return apu.soundMode(4);
+                case SOUND_4_POLYNOMIAL_COUNTER:
+                    return apu.polynomialCounter(4);
                 case SOUND_WAVE_PATTERN_RAM0:
                 case SOUND_WAVE_PATTERN_RAM1:
                 case SOUND_WAVE_PATTERN_RAM2:
@@ -303,6 +328,7 @@ public class MMU implements Memory {
                     serial.setControl(data);
                     return;
 
+                case BOOT_SUCCESS:
                 case PREPARE_SPEED_SWITCH:
                 case COLOR_BACKGROUND_PALETTE_INDEX:
                 case COLOR_BACKGROUND_PALETTE_DATA:
@@ -320,25 +346,59 @@ public class MMU implements Memory {
                 case SOUND_OUTPUT_TERMINAL:
                     apu.outputTerminal(data);
                     return;
-                case SOUND_1_SWEEP:
-                case SOUND_1_LENGTH_PATTERN_DUTY:
-                case SOUND_1_ENVELOPE:
-                case SOUND_1_FREQUENCY_HIGH:
                 case SOUND_1_FREQUENCY_LOW:
-                case SOUND_2_LENGTH_PATTERN_DUTY:
-                case SOUND_2_ENVELOPE:
+                    apu.lowFrequency(1, data);
+                    return;
+                case SOUND_1_FREQUENCY_HIGH:
+                    apu.highFrequency(1, data);
+                    return;
                 case SOUND_2_FREQUENCY_LOW:
+                    apu.lowFrequency(2, data);
+                    return;
                 case SOUND_2_FREQUENCY_HIGH:
-                case SOUND_3_ON_OFF:
-                case SOUND_3_LENGTH:
-                case SOUND_3_SELECT_OUTPUT:
+                    apu.highFrequency(2, data);
+                    return;
                 case SOUND_3_FREQUENCY_LOW:
+                    apu.lowFrequency(3, data);
+                    return;
                 case SOUND_3_FREQUENCY_HIGH:
-                case SOUND_4_COUNTER_CONSECUTIVE:
+                    apu.highFrequency(3, data);
+                    return;
+                case SOUND_1_ENVELOPE:
+                    apu.envelope(1, data);
+                    return;
+                case SOUND_2_ENVELOPE:
+                    apu.envelope(2, data);
+                    return;
                 case SOUND_4_ENVELOPE:
+                    apu.envelope(4, data);
+                    return;
+                case SOUND_1_LENGTH_PATTERN_DUTY:
+                    apu.length(1, data);
+                    return;
+                case SOUND_2_LENGTH_PATTERN_DUTY:
+                    apu.length(2, data);
+                    return;
+                case SOUND_3_LENGTH:
+                    apu.length(3, data);
+                    return;
                 case SOUND_4_LENGTH:
+                    apu.length(4, data);
+                    return;
+                case SOUND_1_SWEEP:
+                    apu.sweep(1, data);
+                    return;
+                case SOUND_3_ON_OFF:
+                    apu.soundControl(3, data);
+                    return;
+                case SOUND_3_SELECT_OUTPUT_LEVEL:
+                    apu.outputLevel(3, data);
+                    return;
+                case SOUND_4_COUNTER_CONSECUTIVE:
+                    apu.soundMode(4, data);
+                    return;
                 case SOUND_4_POLYNOMIAL_COUNTER:
-                case SOUND_SWEEP:
+                    apu.polynomialCounter(4, data);
                     return;
                 case SOUND_WAVE_PATTERN_RAM0:
                 case SOUND_WAVE_PATTERN_RAM1:
@@ -392,7 +452,7 @@ public class MMU implements Memory {
         SOUND_2_FREQUENCY_HIGH(0xFF19),
         SOUND_3_ON_OFF(0xFF1A),
         SOUND_3_LENGTH(0xFF1B),
-        SOUND_3_SELECT_OUTPUT(0xFF1C),
+        SOUND_3_SELECT_OUTPUT_LEVEL(0xFF1C),
         SOUND_3_FREQUENCY_LOW(0xFF1D),
         SOUND_3_FREQUENCY_HIGH(0xFF1E),
         SOUND_4_LENGTH(0xFF20),
@@ -432,7 +492,7 @@ public class MMU implements Memory {
         WINDOW_X(0xFF4B),
         PREPARE_SPEED_SWITCH(0xFF4D), //Only GBC
         VRAM_BANK(0xFF4F), //Only GBC
-        SOUND_SWEEP(0xFF50),
+        BOOT_SUCCESS(0xFF50),
         COLOR_BACKGROUND_PALETTE_INDEX(0xFF68), //Only GBC
         COLOR_BACKGROUND_PALETTE_DATA(0xFF69), //Only GBC
         UNKNOWN_CALLED_BY_TETRIS(0xFF7F),
