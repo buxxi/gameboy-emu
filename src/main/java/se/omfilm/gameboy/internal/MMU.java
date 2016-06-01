@@ -309,6 +309,7 @@ public class MMU implements Memory {
                 (mmu, reg, data) -> mmu.interrupts.enable(Interrupts.Interrupt.fromValue(data))
         );
 
+        private final static IORegister[] valuesCache = IORegister.values(); //TODO: do this more generic and maybe not loop through all of the always
         private final int address;
         private final IOReader reader;
         private final IOWriter writer;
@@ -333,7 +334,7 @@ public class MMU implements Memory {
         }
 
         public static Optional<IORegister> fromAddress(int address) {
-            for (IORegister register : IORegister.values()) {
+            for (IORegister register : valuesCache) {
                 if (register.address == address) {
                     return Optional.of(register);
                 }

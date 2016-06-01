@@ -1,5 +1,6 @@
 package se.omfilm.gameboy.internal.memory;
 
+import se.omfilm.gameboy.internal.Instruction;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 public interface Memory {
@@ -29,6 +30,8 @@ public interface Memory {
         ZERO_PAGE(              0xFF80, 0xFFFE),
         INTERRUPT_ENABLE(       0xFFFF, 0xFFFF);
 
+        private final static MemoryType[] valuesCache = MemoryType.values(); //TODO: do this more generic and maybe not loop through all of the always
+
         public final int from;
         public final int to;
 
@@ -38,7 +41,7 @@ public interface Memory {
         }
 
         public static MemoryType fromAddress(int address) {
-            for (MemoryType type : MemoryType.values()) {
+            for (MemoryType type : valuesCache) {
                 if (address >= type.from && address <= type.to) {
                     return type;
                 }

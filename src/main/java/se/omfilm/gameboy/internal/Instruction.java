@@ -563,6 +563,7 @@ public interface Instruction {
         SET_7_HL(   0xCBFE, SetBitAddressOfHL::bit7), //Page 109
         SET_A7(     0xCBFF, SetBitInRegister::bit7ofA); //Page 109
 
+        private final static InstructionType[] valuesCache = InstructionType.values(); //TODO: do this more generic and maybe not loop through all of the always
         private final int opcode;
         private final Supplier<Instruction> instructionSupplier;
 
@@ -577,7 +578,7 @@ public interface Instruction {
         }
 
         public static InstructionType fromOpCode(int opcode) {
-            for (InstructionType instructionType : InstructionType.values()) {
+            for (InstructionType instructionType : valuesCache) {
                 if (instructionType.opcode == opcode) {
                     return instructionType;
                 }
