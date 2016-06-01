@@ -7,6 +7,8 @@ import se.omfilm.gameboy.io.screen.Screen;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static se.omfilm.gameboy.internal.memory.Memory.MemoryType.OBJECT_ATTRIBUTE_MEMORY;
@@ -53,6 +55,7 @@ public class PPU {
     private int cycleCounter = 0;
     private int scanline = 0;
     private int compareWithScanline = 0;
+    private BitSet backgroundMask = new BitSet(Screen.WIDTH);
 
     private boolean lcdDisplay = false;
     private boolean windowDisplay = false;
@@ -132,41 +135,43 @@ public class PPU {
     }
 
     private void drawScanline() {
-        Color[] scanlineBuffer = new Color[Screen.WIDTH];
         if (backgroundDisplay) {
             for (int x = 0; x < Screen.WIDTH; x++) {
                 if (windowDisplay && windowY <= scanline) {
-                    drawBackgroundWindowPixel(scanlineBuffer, x);
+                    drawBackgroundWindowPixel(x);
                 } else {
-                    drawBackgroundPixel(scanlineBuffer, x);
+                    drawBackgroundPixel(x);
                 }
             }
         }
         if (spriteDisplay) {
-            drawSprites(scanlineBuffer);
-        }
-        for (int x = 0; x < Screen.WIDTH; x++) {
-            Color color = scanlineBuffer[x] != null ? scanlineBuffer[x] : colorPalette.background(Shade.LIGHTEST);
-            screen.setPixel(x, scanline - 1, color);
+            drawSprites();
         }
     }
 
-    private void drawBackgroundWindowPixel(Color[] scanlineBuffer, int x) {
+    private void drawBackgroundWindowPixel(int x) {
         int y = scanline + windowY;
         int adjustedX = ((x + windowX - 7) + Screen.WIDTH) % Screen.WIDTH;
         Tile tile = tileAt(adjustedX, y, windowTileMap);
-        scanlineBuffer[x] = colorPalette.background(tile.shadeAt(adjustedX, y, backgroundPalette));
+        Shade shade = tile.shadeAt(adjustedX, y, backgroundPalette);
+        drawPixel(x, shade, colorPalette::background);
     }
 
-    private void drawBackgroundPixel(Color[] scanlineBuffer, int x) {
+    private void drawBackgroundPixel(int x) {
         int y = scanline + scrollY;
         int adjustedX = x + scrollX;
         Tile tile = tileAt(adjustedX, y, backgroundTileMap);
-        scanlineBuffer[x] = colorPalette.background(tile.shadeAt(adjustedX, y, backgroundPalette));
+        Shade shade = tile.shadeAt(adjustedX, y, backgroundPalette);
+        drawPixel(x, shade, colorPalette::background);
     }
 
-    private void drawSprites(Color[] scanlineBuffer) {
-        Arrays.stream(sprites).filter(Sprite::isOnScanline).forEach(s -> s.renderOn(scanlineBuffer));
+    private void drawPixel(int x, Shade shade, Function<Shade, Color> tranform) {
+        backgroundMask.set(x, shade != Shade.LIGHTEST);
+        screen.setPixel(x, scanline - 1, tranform.apply(shade));
+    }
+
+    private void drawSprites() {
+        Arrays.stream(sprites).filter(Sprite::isOnScanline).forEach(Sprite::render);
     }
 
     private Tile tileAt(int x, int y, int[][] tileMap) {
@@ -472,7 +477,7 @@ public class PPU {
             return scanline >= y && scanline < (y + height());
         }
 
-        private void renderOn(Color[] scanlineBuffer) {
+        private void render() {
             for (int i = 0; i < SPRITE_WIDTH; i++) {
                 int x = i;
                 int y = (scanline - this.y);
@@ -487,7 +492,7 @@ public class PPU {
                     continue;
                 }
 
-                if (!prioritizeSprite && scanlineBuffer[this.x + i] != colorPalette.background(Shade.LIGHTEST)) {
+                if (!prioritizeSprite && backgroundMask.get(this.x + i)) {
                     continue;
                 }
 
@@ -498,7 +503,8 @@ public class PPU {
                     continue;
                 }
 
-                scanlineBuffer[this.x + i] = colorPalette.sprite(tile.shadeAt(x, y, palette), spritePaletteIndex());
+                Shade shade = tile.shadeAt(x, y, palette);
+                drawPixel(this.x + i, shade, s -> colorPalette.sprite(shade, spritePaletteIndex()));
             }
         }
 
