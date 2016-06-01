@@ -29,13 +29,12 @@ public class PPU {
 
     private final Screen screen;
     private final ColorPalette colorPalette;
-    private final Interrupts interrupts;
     private final Memory videoRAM;
     private final Memory objectAttributeMemory;
 
-    private Palette backgroundPaletteData = new Palette(0);
-    private Palette objectPalette0Data = new Palette(0);
-    private Palette objectPalette1Data = new Palette(0);
+    private Palette backgroundPalette = new Palette(0);
+    private Palette objectPalette0 = new Palette(0);
+    private Palette objectPalette1 = new Palette(0);
 
     private final Tile[] tiles = IntStream.range(0, TILE_COUNT).mapToObj(Tile::new).toArray(Tile[]::new);
     private final Sprite[] sprites = IntStream.range(0, SPRITE_COUNT).mapToObj(Sprite::new).toArray(Sprite[]::new);
@@ -66,16 +65,15 @@ public class PPU {
     private boolean vblankInterrupt = false;
     private boolean hblankInterrupt = false;
 
-    public PPU(Screen screen, ColorPalette colorPalette, Interrupts interrupts) {
+    public PPU(Screen screen, ColorPalette colorPalette) {
         this.colorPalette = colorPalette;
-        this.interrupts = interrupts;
         this.screen = screen;
         this.videoRAM = new VideoRAM();
         this.objectAttributeMemory = new ObjectAttributeMemory();
     }
 
-    public void step(int cycles) {
-        if (!updateCurrentMode()) {
+    public void step(int cycles, Interrupts interrupts) {
+        if (!updateCurrentMode(interrupts)) {
             return;
         }
 
@@ -97,7 +95,7 @@ public class PPU {
         }
     }
 
-    private boolean updateCurrentMode() {
+    private boolean updateCurrentMode(Interrupts interrupts) {
         if (!lcdDisplay) {
             cycleCounter = GPUMode.VBLANK.minimumCycles;
             mode = GPUMode.VBLANK;
@@ -106,13 +104,13 @@ public class PPU {
         }
 
         if (scanline >= Screen.HEIGHT) {
-            updateCurrentMode(GPUMode.VBLANK, vblankInterrupt);
+            updateCurrentMode(interrupts, GPUMode.VBLANK, vblankInterrupt);
         } else if (cycleCounter >= GPUMode.VBLANK.minimumCycles - GPUMode.OAM.minimumCycles) {
-            updateCurrentMode(GPUMode.OAM, oamInterrupt);
+            updateCurrentMode(interrupts, GPUMode.OAM, oamInterrupt);
         } else if (cycleCounter >= GPUMode.VBLANK.minimumCycles - GPUMode.OAM.minimumCycles - GPUMode.VRAM.minimumCycles) {
-            updateCurrentMode(GPUMode.VRAM, false);
+            updateCurrentMode(interrupts, GPUMode.VRAM, false);
         } else {
-            updateCurrentMode(GPUMode.HBLANK, hblankInterrupt);
+            updateCurrentMode(interrupts, GPUMode.HBLANK, hblankInterrupt);
         }
 
         if (coincidence && scanline == compareWithScanline) {
@@ -122,7 +120,7 @@ public class PPU {
         return true;
     }
 
-    private void updateCurrentMode(GPUMode newMode, boolean requestInterrupt) {
+    private void updateCurrentMode(Interrupts interrupts, GPUMode newMode, boolean requestInterrupt) {
         if (requestInterrupt && newMode != mode) {
             interrupts.request(Interrupts.Interrupt.LCD);
         }
@@ -157,14 +155,14 @@ public class PPU {
         int y = scanline + windowY;
         int adjustedX = ((x + windowX - 7) + Screen.WIDTH) % Screen.WIDTH;
         Tile tile = tileAt(adjustedX, y, windowTileMap);
-        scanlineBuffer[x] = colorPalette.background(tile.shadeAt(adjustedX, y, backgroundPaletteData));
+        scanlineBuffer[x] = colorPalette.background(tile.shadeAt(adjustedX, y, backgroundPalette));
     }
 
     private void drawBackgroundPixel(Color[] scanlineBuffer, int x) {
         int y = scanline + scrollY;
         int adjustedX = x + scrollX;
         Tile tile = tileAt(adjustedX, y, backgroundTileMap);
-        scanlineBuffer[x] = colorPalette.background(tile.shadeAt(adjustedX, y, backgroundPaletteData));
+        scanlineBuffer[x] = colorPalette.background(tile.shadeAt(adjustedX, y, backgroundPalette));
     }
 
     private void drawSprites(Color[] scanlineBuffer) {
@@ -189,6 +187,10 @@ public class PPU {
         this.scrollX = data;
     }
 
+    public int scrollX() {
+        return scrollX;
+    }
+
     public int scrollY() {
         return scrollY;
     }
@@ -197,23 +199,43 @@ public class PPU {
         this.windowY = data;
     }
 
+    public int windowY() {
+        return windowY;
+    }
+
     public void windowX(int data) {
         this.windowX = data;
     }
 
-    public void setBackgroundPaletteData(int backgroundPaletteData) {
-        this.backgroundPaletteData = new Palette(backgroundPaletteData);
+    public int windowX() {
+        return windowX;
     }
 
-    public void setObjectPalette0Data(int data) {
-        this.objectPalette0Data = new Palette(data);
+    public void backgroundPalette(int backgroundPaletteData) {
+        this.backgroundPalette = new Palette(backgroundPaletteData);
     }
 
-    public void setObjectPalette1Data(int data) {
-        this.objectPalette1Data = new Palette(data);
+    public int backgroundPalette() {
+        return backgroundPalette.palette;
     }
 
-    public void setLCDControl(int data) {
+    public void objectPalette0(int data) {
+        this.objectPalette0 = new Palette(data);
+    }
+
+    public int objectPalette0() {
+        return objectPalette0.palette;
+    }
+
+    public void objectPalette1(int data) {
+        this.objectPalette1 = new Palette(data);
+    }
+
+    public int objectPalette1() {
+        return objectPalette1.palette;
+    }
+
+    public void control(int data) {
         lcdDisplay =        (data & 0b1000_0000) != 0;
         windowTileMap =     (data & 0b0100_0000) != 0 ? tileMap1 : tileMap0;
         windowDisplay =     (data & 0b0010_0000) != 0;
@@ -228,7 +250,7 @@ public class PPU {
         }
     }
 
-    public int getLCDControl() {
+    public int control() {
         return  (lcdDisplay ?                       0b1000_0000 : 0) |
                 (windowTileMap == tileMap1 ?        0b0100_0000 : 0) |
                 (windowDisplay ?                    0b0010_0000 : 0) |
@@ -240,14 +262,14 @@ public class PPU {
 
     }
 
-    public void setInterruptEnables(int data) {
+    public void interruptEnables(int data) {
         coincidence =       (data & 0b0100_0000) != 0;
         oamInterrupt =      (data & 0b0010_0000) != 0;
         vblankInterrupt =   (data & 0b0001_0000) != 0;
         hblankInterrupt =   (data & 0b0000_1000) != 0;
     }
 
-    public int getLCDStatus() {
+    public int status() {
         return  (coincidence ?                      0b0100_0000 : 0) |
                 (oamInterrupt ?                     0b0010_0000 : 0) |
                 (vblankInterrupt ?                  0b0001_0000 : 0) |
@@ -380,7 +402,7 @@ public class PPU {
                     return  (!sprite.prioritizeSprite ?                     0b1000_0000 : 0) |
                             (sprite.flipY ?                                 0b0100_0000 : 0) |
                             (sprite.flipX ?                                 0b0010_0000 : 0) |
-                            (sprite.palette == objectPalette1Data ?         0b0001_0000 : 0);
+                            (sprite.palette == objectPalette1 ?         0b0001_0000 : 0);
             }
             throw new IllegalArgumentException("Unreachable code");
         }
@@ -406,7 +428,7 @@ public class PPU {
                     sprite.prioritizeSprite =   (data & 0b1000_0000) == 0;
                     sprite.flipY =              (data & 0b0100_0000) != 0;
                     sprite.flipX =              (data & 0b0010_0000) != 0;
-                    sprite.palette =            (data & 0b0001_0000) == 0 ? objectPalette0Data : objectPalette1Data;
+                    sprite.palette =            (data & 0b0001_0000) == 0 ? objectPalette0 : objectPalette1;
             }
         }
     }
@@ -439,7 +461,7 @@ public class PPU {
         private boolean prioritizeSprite = true;
         private boolean flipY = false;
         private boolean flipX = false;
-        private Palette palette = objectPalette0Data;
+        private Palette palette = objectPalette0;
 
         private Sprite(int spriteNum) {
             this.spriteNum = spriteNum;
@@ -481,7 +503,7 @@ public class PPU {
         }
 
         private int spritePaletteIndex() {
-            return palette == objectPalette0Data ? 0 : 1;
+            return palette == objectPalette0 ? 0 : 1;
         }
 
         private int height() {

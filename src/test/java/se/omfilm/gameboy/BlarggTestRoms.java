@@ -197,7 +197,7 @@ public class BlarggTestRoms {
         private String result = "";
         private int index = 0;
 
-        public void setData(int data) {
+        public void data(int data) {
             if (expected.charAt(index) != (char) data) {
                 String text = escape(expected.substring(0, index));
                 target.stop();
@@ -210,15 +210,15 @@ public class BlarggTestRoms {
             }
         }
 
-        public void setControl(int control) {
+        public void control(int control) {
 
         }
 
-        public int getData() {
+        public int data() {
             return 0;
         }
 
-        public int getControl() {
+        public int control() {
             return 0;
         }
 

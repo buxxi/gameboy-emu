@@ -8,22 +8,22 @@ public class ConsoleSerialConnection implements SerialConnection {
     private int data;
     private int control;
 
-    public void setData(int data) {
+    public void data(int data) {
         this.data = data;
     }
 
-    public void setControl(int control) {
+    public void control(int control) {
         this.control = control;
         if ((control & 0b1000_0000) != 0) {
             System.out.print((char) this.data);
         }
     }
 
-    public int getData() {
+    public int data() {
         return data;
     }
 
-    public int getControl() {
+    public int control() {
         return control;
     }
 }

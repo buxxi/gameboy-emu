@@ -1,13 +1,8 @@
 package se.omfilm.gameboy.internal;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 public class Timer {
-    private static final Logger log = LoggerFactory.getLogger(Timer.class);
-    private final Interrupts interrupts;
-
     private boolean enabled = false;
     private FREQUENCY frequency = FREQUENCY._4096;
 
@@ -18,14 +13,10 @@ public class Timer {
     private int timerCounter;
     private int timerModulo;
 
-    public Timer(Interrupts interrupts) {
-        this.interrupts = interrupts;
-    }
-
-    public void step(int cycles) {
+    public void step(int cycles, Interrupts interrupts) {
         stepDivider(cycles);
         if (enabled) {
-            stepTimer(cycles);
+            stepTimer(cycles, interrupts);
         }
     }
 
@@ -38,7 +29,7 @@ public class Timer {
         }
     }
 
-    private void stepTimer(int cycles) {
+    private void stepTimer(int cycles, Interrupts interrupts) {
         timerCycles -= cycles;
 
         while (timerCycles <= 0) {
@@ -63,16 +54,18 @@ public class Timer {
 
     public void control(int data) {
         enabled = (data & 0b0000_0100) != 0;
-        FREQUENCY newFrequency = FREQUENCY.fromCode(data & 0b0000_0011);
-        log.debug("Changing timer frequency from " + this.frequency + " to " + newFrequency);
+        FREQUENCY newFrequency = FREQUENCY.fromBits(data & 0b0000_0011);
         if (newFrequency != this.frequency) {
             this.frequency = newFrequency;
             timerCycles = this.frequency.counterInitialValue();
         }
     }
 
+    public int control() {
+        return (enabled ? 0b0000_0100 : 0) | frequency.code;
+    }
+
     public void counter(int data) {
-        log.debug("Writing timer counter: " + DebugPrinter.hex(data, 2));
         timerCounter = data;
     }
 
@@ -106,13 +99,13 @@ public class Timer {
             return CPU.FREQUENCY / freq;
         }
 
-        public static FREQUENCY fromCode(int code) {
+        public static FREQUENCY fromBits(int bits) {
             for (FREQUENCY frequency : values()) {
-                if (frequency.code == code) {
+                if (frequency.code == bits) {
                     return frequency;
                 }
             }
-            throw new IllegalArgumentException("No " + FREQUENCY.class.getSimpleName() + " for code " + DebugPrinter.hex(code, 4));
+            throw new IllegalArgumentException("No " + FREQUENCY.class.getSimpleName() + " for bits " + DebugPrinter.hex(bits, 4));
         }
 
         @Override

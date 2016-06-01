@@ -6,30 +6,33 @@ import se.omfilm.gameboy.internal.memory.BankableRAM;
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.internal.memory.ROM;
-import se.omfilm.gameboy.io.controller.Controller;
 import se.omfilm.gameboy.io.serial.SerialConnection;
 import se.omfilm.gameboy.util.DebugPrinter;
+
+import java.util.Optional;
 
 public class MMU implements Memory {
     private static final Logger log = LoggerFactory.getLogger(MMU.class);
 
     private Memory rom;
     private final Memory zeroPage;
-    private final ControllerMapping controllerMapping;
-    private final IOMapping ioMapping;
+    private final Input input;
     private final PPU ppu;
     private final APU apu;
+    private final Interrupts interrupts;
+    private final Timer timer;
     private final SerialConnection serial;
     private final Memory ram;
     private final BankableRAM switchableRam;
 
-    public MMU(ROM rom, PPU ppu, APU apu, Interrupts interrupts, Timer timer, SerialConnection serial, Controller controller) {
+    public MMU(ROM rom, PPU ppu, APU apu, Interrupts interrupts, Timer timer, SerialConnection serial, Input input) {
         this.switchableRam = rom.createRAMBanks();
         this.rom = rom.createROMBanks(switchableRam);
         this.apu = apu;
+        this.interrupts = interrupts;
+        this.timer = timer;
         this.serial = serial;
-        this.controllerMapping = new ControllerMapping(interrupts, controller);
-        this.ioMapping = new IOMapping(interrupts, timer, controllerMapping);
+        this.input = input;
         this.ppu = ppu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
         this.ram = new ByteArrayMemory(MemoryType.RAM.allocate());
@@ -55,12 +58,10 @@ public class MMU implements Memory {
                 return ppu.objectAttributeMemory().readByte(address);
             case INTERRUPT_ENABLE:
             case IO_REGISTERS:
-                return ioMapping.readByte(address);
-            case UNUSABLE_MEMORY:
-                log.warn("Reading from " + MemoryType.UNUSABLE_MEMORY + " at address " + DebugPrinter.hex(address, 4));
-                return 0;
+                return IORegister.fromAddress(address).map((reg) -> reg.read(MMU.this)).orElse(0);
             default:
-                throw new UnsupportedOperationException("Can't read from " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4));
+                log.warn("Reading from " + type + " at address " + DebugPrinter.hex(address, 4));
+                return 0;
         }
     }
 
@@ -83,7 +84,7 @@ public class MMU implements Memory {
                 return;
             case IO_REGISTERS:
             case INTERRUPT_ENABLE:
-                ioMapping.writeByte(address, data);
+                IORegister.fromAddress(address).ifPresent((reg) -> reg.write(MMU.this, data));
                 return;
             case RAM_BANKS:
                 switchableRam.writeByte(virtualAddress, data);
@@ -92,426 +93,261 @@ public class MMU implements Memory {
             case ECHO_RAM:
                 ram.writeByte(virtualAddress, data);
                 return;
-            case UNUSABLE_MEMORY:
-                log.warn("Writing " + DebugPrinter.hex(data, 2) + " to " + MemoryType.UNUSABLE_MEMORY + " at " + DebugPrinter.hex(address, 4));
-                return;
             default:
-                throw new UnsupportedOperationException("Can't write to " + type + " for virtual address " + DebugPrinter.hex(virtualAddress, 4) + " with value " + DebugPrinter.hex(data, 4));
+                log.warn("Writing " + DebugPrinter.hex(data, 2) + " to " + MemoryType.UNUSABLE_MEMORY + " at " + DebugPrinter.hex(address, 4));
         }
-    }
-
-    public void step(int cycles) {
-        controllerMapping.step(cycles);
     }
 
     public void withBootData(byte[] boot) {
         rom = new BootMemory(boot, rom);
     }
 
-    private class ControllerMapping {
-        private final Interrupts interrupts;
-        private final Controller controller;
-
-        private boolean checkDirections = false;
-        private boolean checkButtons = false;
-        private int controllerState = 0b0000_1111;
-
-        public ControllerMapping(Interrupts interrupts, Controller controller) {
-            this.interrupts = interrupts;
-            this.controller = controller;
-        }
-
-        public void step(int cycles) {
-            int controllerState = this.controllerState;
-            if (checkButtons) {
-                controllerState = buttonsState();
-            } else if (checkDirections) {
-                controllerState = directionsState();
-            }
-
-            if (this.controllerState != controllerState) {
-                this.controllerState = controllerState;
-                interrupts.request(Interrupts.Interrupt.JOYPAD);
-            }
-        }
-
-        public int readState() {
-            return controllerState;
-        }
-
-        public void writeState(int data) {
-            checkButtons =      (data & 0b0010_0000) == 0;
-            checkDirections =   (data & 0b0001_0000) == 0;
-            if (checkButtons && checkDirections) {
-                log.warn("Both buttons and direction is being checked, should not happen");
-            }
-        }
-
-        private int directionsState() {
-            return 0b0000_1111
-                    & (controller.isPressed(Controller.Button.DOWN) ? 0b0000_0111 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.UP) ? 0b0000_1011 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.LEFT) ? 0b0000_1101 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.RIGHT) ? 0b0000_1110 : 0b0000_1111);
-        }
-
-        private int buttonsState() {
-            return 0b0000_1111
-                    & (controller.isPressed(Controller.Button.START) ? 0b0000_0111 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.SELECT) ? 0b0000_1011 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.B) ? 0b0000_1101 : 0b0000_1111)
-                    & (controller.isPressed(Controller.Button.A) ? 0b0000_1110 : 0b0000_1111);
-        }
+    private int readWaveRAM(IORegister register) {
+        return apu.wavePatternRAM().readByte(register.address);
     }
 
-    private class IOMapping implements Memory {
-        private final Interrupts interrupts;
-        private final Timer timer;
-        private final ControllerMapping controllerMapping;
+    private void writeWaveRAM(IORegister register, int data) {
+        apu.wavePatternRAM().writeByte(register.address, data);
+    }
 
-        private IOMapping(Interrupts interrupts, Timer timer, ControllerMapping controllerMapping) {
-            this.interrupts = interrupts;
-            this.timer = timer;
-            this.controllerMapping = controllerMapping;
-        }
+    private int invalidRead(IORegister reg) {
+        log.warn("Reading from " + reg + " is not supported");
+        return 0;
+    }
 
-        public int readByte(int address) {
-            IORegister register = IORegister.fromAddress(address);
-            switch (register) {
-                case SCROLL_Y:
-                    return ppu.scrollY();
-                case LCD_SCANLINE:
-                    return ppu.scanline();
-                case LCD_SCANLINE_COMPARE:
-                    return ppu.scanlineCompare();
-                case JOYPAD:
-                    return controllerMapping.readState();
-                case INTERRUPT_ENABLE:
-                    return interrupts.enabledAsByte();
-                case INTERRUPT_REQUEST:
-                    return interrupts.requestedAsByte();
-                case LCD_CONTROL:
-                    return ppu.getLCDControl();
-                case LCD_STATUS:
-                    return ppu.getLCDStatus();
-                case SERIAL_TRANSFER_CONTROL:
-                    return serial.getControl();
-                case SERIAL_TRANSFER_DATA:
-                    return serial.getData();
-                case PREPARE_SPEED_SWITCH:
-                    return 0;
-                case TIMER_COUNTER:
-                    return timer.counter();
-                case TIMER_DIVIDER:
-                    return timer.divider();
-                case TIMER_MODULO:
-                    return timer.modulo();
-                case SOUND_ON_OFF:
-                    return apu.soundEnabled();
-                case SOUND_CHANNEL_CONTROL:
-                    return apu.channelControl();
-                case SOUND_OUTPUT_TERMINAL:
-                    return apu.outputTerminal();
-                case SOUND_1_FREQUENCY_HIGH:
-                    return apu.highFrequency(1);
-                case SOUND_2_FREQUENCY_HIGH:
-                    return apu.highFrequency(2);
-                case SOUND_3_FREQUENCY_HIGH:
-                    return apu.highFrequency(3);
-                case SOUND_1_ENVELOPE:
-                    return apu.envelope(1);
-                case SOUND_2_ENVELOPE:
-                    return apu.envelope(2);
-                case SOUND_4_ENVELOPE:
-                    return apu.envelope(4);
-                case SOUND_1_LENGTH_PATTERN_DUTY:
-                    return apu.length(1);
-                case SOUND_2_LENGTH_PATTERN_DUTY:
-                    return apu.length(2);
-                case SOUND_3_LENGTH:
-                    return apu.length(3);
-                case SOUND_4_LENGTH:
-                    return apu.length(4);
-                case SOUND_1_SWEEP:
-                    return apu.sweep(1);
-                case SOUND_3_ON_OFF:
-                    return apu.soundControl(3);
-                case SOUND_3_SELECT_OUTPUT_LEVEL:
-                    return apu.outputLevel(3);
-                case SOUND_4_COUNTER_CONSECUTIVE:
-                    return apu.soundMode(4);
-                case SOUND_4_POLYNOMIAL_COUNTER:
-                    return apu.polynomialCounter(4);
-                case SOUND_WAVE_PATTERN_RAM0:
-                case SOUND_WAVE_PATTERN_RAM1:
-                case SOUND_WAVE_PATTERN_RAM2:
-                case SOUND_WAVE_PATTERN_RAM3:
-                case SOUND_WAVE_PATTERN_RAM4:
-                case SOUND_WAVE_PATTERN_RAM5:
-                case SOUND_WAVE_PATTERN_RAM6:
-                case SOUND_WAVE_PATTERN_RAM7:
-                case SOUND_WAVE_PATTERN_RAM8:
-                case SOUND_WAVE_PATTERN_RAM9:
-                case SOUND_WAVE_PATTERN_RAMA:
-                case SOUND_WAVE_PATTERN_RAMB:
-                case SOUND_WAVE_PATTERN_RAMC:
-                case SOUND_WAVE_PATTERN_RAMD:
-                case SOUND_WAVE_PATTERN_RAME:
-                case SOUND_WAVE_PATTERN_RAMF:
-                    return apu.wavePatternRAM().readByte(address);
-                default:
-                    throw new UnsupportedOperationException(unhandledReadMessage(register));
-            }
-        }
-
-        public void writeByte(int address, int data) {
-            IORegister register = IORegister.fromAddress(address);
-            switch (register) {
-                case BACKGROUND_PALETTE_DATA:
-                    ppu.setBackgroundPaletteData(data);
-                    return;
-                case OBJECT_PALETTE_0_DATA:
-                    ppu.setObjectPalette0Data(data);
-                    return;
-                case OBJECT_PALETTE_1_DATA:
-                    ppu.setObjectPalette1Data(data);
-                    return;
-                case SCROLL_Y:
-                    ppu.scrollY(data);
-                    return;
-                case SCROLL_X:
-                    ppu.scrollX(data);
-                    return;
-                case WINDOW_Y:
-                    ppu.windowY(data);
-                    return;
-                case WINDOW_X:
-                    ppu.windowX(data);
-                    return;
-                case LCD_CONTROL:
-                    ppu.setLCDControl(data);
-                    return;
-                case INTERRUPT_REQUEST:
-                    interrupts.request(Interrupts.Interrupt.fromValue(data));
-                    return;
-                case INTERRUPT_ENABLE:
-                    interrupts.enable(Interrupts.Interrupt.fromValue(data));
-                    return;
-                case JOYPAD:
-                    controllerMapping.writeState(data);
-                    return;
-                case TIMER_MODULO:
-                    timer.modulo(data);
-                    return;
-                case TIMER_CONTROL:
-                    timer.control(data);
-                    return;
-                case TIMER_COUNTER:
-                    timer.counter(data);
-                    return;
-                case TIMER_DIVIDER:
-                    timer.resetDivider();
-                    return;
-                case LCD_STATUS:
-                    ppu.setInterruptEnables(data);
-                    return;
-                case LCD_SCANLINE_COMPARE:
-                    ppu.scanlineCompare(data);
-                    return;
-                case DMA_TRANSFER:
-                    ppu.transferDMA((data * 0x100) - MemoryType.RAM.from, ram);
-                    return;
-                case SERIAL_TRANSFER_DATA:
-                    serial.setData(data);
-                    return;
-                case SERIAL_TRANSFER_CONTROL:
-                    serial.setControl(data);
-                    return;
-
-                case BOOT_SUCCESS:
-                case PREPARE_SPEED_SWITCH:
-                case COLOR_BACKGROUND_PALETTE_INDEX:
-                case COLOR_BACKGROUND_PALETTE_DATA:
-                case VRAM_BANK:
-                case UNKNOWN_CALLED_BY_TETRIS:
-                    log.debug(unhandledWriteMessage(data, register)); //Only GameBoy Color
-                    return;
-
-                case SOUND_ON_OFF:
-                    apu.soundEnabled(data);
-                    return;
-                case SOUND_CHANNEL_CONTROL:
-                    apu.channelControl(data);
-                    return;
-                case SOUND_OUTPUT_TERMINAL:
-                    apu.outputTerminal(data);
-                    return;
-                case SOUND_1_FREQUENCY_LOW:
-                    apu.lowFrequency(1, data);
-                    return;
-                case SOUND_1_FREQUENCY_HIGH:
-                    apu.highFrequency(1, data);
-                    return;
-                case SOUND_2_FREQUENCY_LOW:
-                    apu.lowFrequency(2, data);
-                    return;
-                case SOUND_2_FREQUENCY_HIGH:
-                    apu.highFrequency(2, data);
-                    return;
-                case SOUND_3_FREQUENCY_LOW:
-                    apu.lowFrequency(3, data);
-                    return;
-                case SOUND_3_FREQUENCY_HIGH:
-                    apu.highFrequency(3, data);
-                    return;
-                case SOUND_1_ENVELOPE:
-                    apu.envelope(1, data);
-                    return;
-                case SOUND_2_ENVELOPE:
-                    apu.envelope(2, data);
-                    return;
-                case SOUND_4_ENVELOPE:
-                    apu.envelope(4, data);
-                    return;
-                case SOUND_1_LENGTH_PATTERN_DUTY:
-                    apu.length(1, data);
-                    return;
-                case SOUND_2_LENGTH_PATTERN_DUTY:
-                    apu.length(2, data);
-                    return;
-                case SOUND_3_LENGTH:
-                    apu.length(3, data);
-                    return;
-                case SOUND_4_LENGTH:
-                    apu.length(4, data);
-                    return;
-                case SOUND_1_SWEEP:
-                    apu.sweep(1, data);
-                    return;
-                case SOUND_3_ON_OFF:
-                    apu.soundControl(3, data);
-                    return;
-                case SOUND_3_SELECT_OUTPUT_LEVEL:
-                    apu.outputLevel(3, data);
-                    return;
-                case SOUND_4_COUNTER_CONSECUTIVE:
-                    apu.soundMode(4, data);
-                    return;
-                case SOUND_4_POLYNOMIAL_COUNTER:
-                    apu.polynomialCounter(4, data);
-                    return;
-                case SOUND_WAVE_PATTERN_RAM0:
-                case SOUND_WAVE_PATTERN_RAM1:
-                case SOUND_WAVE_PATTERN_RAM2:
-                case SOUND_WAVE_PATTERN_RAM3:
-                case SOUND_WAVE_PATTERN_RAM4:
-                case SOUND_WAVE_PATTERN_RAM5:
-                case SOUND_WAVE_PATTERN_RAM6:
-                case SOUND_WAVE_PATTERN_RAM7:
-                case SOUND_WAVE_PATTERN_RAM8:
-                case SOUND_WAVE_PATTERN_RAM9:
-                case SOUND_WAVE_PATTERN_RAMA:
-                case SOUND_WAVE_PATTERN_RAMB:
-                case SOUND_WAVE_PATTERN_RAMC:
-                case SOUND_WAVE_PATTERN_RAMD:
-                case SOUND_WAVE_PATTERN_RAME:
-                case SOUND_WAVE_PATTERN_RAMF:
-                    apu.wavePatternRAM().writeByte(address, data);
-                    return;
-                default:
-                    throw new UnsupportedOperationException(unhandledWriteMessage(data, register));
-            }
-        }
-
-        private String unhandledWriteMessage(int data, IORegister register) {
-            return "Unhandled write for " + IOMapping.class.getSimpleName() + " of type " + register + " with value " + DebugPrinter.hex(data, 4);
-        }
-
-        private String unhandledReadMessage(IORegister register) {
-            return "Unhandled read for " + IOMapping.class.getSimpleName() + " of type " + register;
-        }
+    private void invalidWrite(IORegister reg, int data) {
+        log.warn("Writing " + DebugPrinter.hex(data, 2) + " to " + reg + " is not supported");
     }
 
     private enum IORegister {
-        JOYPAD(0xFF00),
-        SERIAL_TRANSFER_DATA(0xFF01),
-        SERIAL_TRANSFER_CONTROL(0xFF02),
-        TIMER_DIVIDER(0xFF04),
-        TIMER_COUNTER(0xFF05),
-        TIMER_MODULO(0xFF06),
-        TIMER_CONTROL(0xFF07),
-        INTERRUPT_REQUEST(0xFF0F),
-        SOUND_1_SWEEP(0xFF10),
-        SOUND_1_LENGTH_PATTERN_DUTY(0xFF11),
-        SOUND_1_ENVELOPE(0xFF12),
-        SOUND_1_FREQUENCY_LOW(0xFF13),
-        SOUND_1_FREQUENCY_HIGH(0xFF14),
-        SOUND_2_LENGTH_PATTERN_DUTY(0xFF16),
-        SOUND_2_ENVELOPE(0xFF17),
-        SOUND_2_FREQUENCY_LOW(0xFF18),
-        SOUND_2_FREQUENCY_HIGH(0xFF19),
-        SOUND_3_ON_OFF(0xFF1A),
-        SOUND_3_LENGTH(0xFF1B),
-        SOUND_3_SELECT_OUTPUT_LEVEL(0xFF1C),
-        SOUND_3_FREQUENCY_LOW(0xFF1D),
-        SOUND_3_FREQUENCY_HIGH(0xFF1E),
-        SOUND_4_LENGTH(0xFF20),
-        SOUND_4_ENVELOPE(0xFF21),
-        SOUND_4_POLYNOMIAL_COUNTER(0xFF22),
-        SOUND_4_COUNTER_CONSECUTIVE(0xFF23),
-        SOUND_CHANNEL_CONTROL(0xFF24),
-        SOUND_OUTPUT_TERMINAL(0xFF25),
-        SOUND_ON_OFF(0xFF26),
-        SOUND_WAVE_PATTERN_RAM0(0xFF30),
-        SOUND_WAVE_PATTERN_RAM1(0xFF31),
-        SOUND_WAVE_PATTERN_RAM2(0xFF32),
-        SOUND_WAVE_PATTERN_RAM3(0xFF33),
-        SOUND_WAVE_PATTERN_RAM4(0xFF34),
-        SOUND_WAVE_PATTERN_RAM5(0xFF35),
-        SOUND_WAVE_PATTERN_RAM6(0xFF36),
-        SOUND_WAVE_PATTERN_RAM7(0xFF37),
-        SOUND_WAVE_PATTERN_RAM8(0xFF38),
-        SOUND_WAVE_PATTERN_RAM9(0xFF39),
-        SOUND_WAVE_PATTERN_RAMA(0xFF3A),
-        SOUND_WAVE_PATTERN_RAMB(0xFF3B),
-        SOUND_WAVE_PATTERN_RAMC(0xFF3C),
-        SOUND_WAVE_PATTERN_RAMD(0xFF3D),
-        SOUND_WAVE_PATTERN_RAME(0xFF3E),
-        SOUND_WAVE_PATTERN_RAMF(0xFF3F),
-        LCD_CONTROL(0xFF40),
-        LCD_STATUS(0xFF41),
-        SCROLL_Y(0xFF42),
-        SCROLL_X(0xFF43),
-        LCD_SCANLINE(0xFF44),
-        LCD_SCANLINE_COMPARE(0xFF45),
-        DMA_TRANSFER(0xFF46),
-        BACKGROUND_PALETTE_DATA(0xFF47),
-        OBJECT_PALETTE_0_DATA(0xFF48),
-        OBJECT_PALETTE_1_DATA(0xFF49),
-        WINDOW_Y(0xFF4A),
-        WINDOW_X(0xFF4B),
-        PREPARE_SPEED_SWITCH(0xFF4D), //Only GBC
-        VRAM_BANK(0xFF4F), //Only GBC
-        BOOT_SUCCESS(0xFF50),
-        COLOR_BACKGROUND_PALETTE_INDEX(0xFF68), //Only GBC
-        COLOR_BACKGROUND_PALETTE_DATA(0xFF69), //Only GBC
-        UNKNOWN_CALLED_BY_TETRIS(0xFF7F),
-
-        INTERRUPT_ENABLE(0xFFFF);
+        JOYPAD(0xFF00,
+                (mmu, reg) -> mmu.input.readState(),
+                (mmu, reg, data) -> mmu.input.writeState(data)
+        ),
+        SERIAL_TRANSFER_DATA(0xFF01,
+                (mmu, reg) -> mmu.serial.data(),
+                (mmu, reg, data) -> mmu.serial.data(data)
+        ),
+        SERIAL_TRANSFER_CONTROL(0xFF02,
+                (mmu, reg) -> mmu.serial.control(),
+                (mmu, reg, data) -> mmu.serial.control(data)
+        ),
+        TIMER_DIVIDER(0xFF04,
+                (mmu, reg) -> mmu.timer.divider(),
+                (mmu, reg, data) -> mmu.timer.resetDivider()
+        ),
+        TIMER_COUNTER(0xFF05,
+                (mmu, reg) -> mmu.timer.counter(),
+                (mmu, reg, data) -> mmu.timer.counter(data)
+        ),
+        TIMER_MODULO(0xFF06,
+                (mmu, reg) -> mmu.timer.modulo(),
+                (mmu, reg, data) -> mmu.timer.modulo(data)
+        ),
+        TIMER_CONTROL(0xFF07,
+                (mmu, reg) -> mmu.timer.control(),
+                (mmu, reg, data) -> mmu.timer.control(data)
+        ),
+        INTERRUPT_REQUEST(0xFF0F,
+                (mmu, reg) -> mmu.interrupts.requestedAsByte(),
+                (mmu, reg, data) -> mmu.interrupts.request(Interrupts.Interrupt.fromValue(data))
+        ),
+        SOUND_1_SWEEP(0xFF10,
+                (mmu, reg) -> mmu.apu.sweep(1),
+                (mmu, reg, data) -> mmu.apu.sweep(1, data)
+        ),
+        SOUND_1_LENGTH_PATTERN_DUTY(0xFF11,
+                (mmu, reg) -> mmu.apu.length(1),
+                (mmu, reg, data) -> mmu.apu.length(1, data)
+        ),
+        SOUND_1_ENVELOPE(0xFF12,
+                (mmu, reg) -> mmu.apu.envelope(1),
+                (mmu, reg, data) -> mmu.apu.envelope(1, data)
+        ),
+        SOUND_1_FREQUENCY_LOW(0xFF13,
+                MMU::invalidRead,
+                (mmu, reg, data) -> mmu.apu.lowFrequency(1, data)
+        ),
+        SOUND_1_FREQUENCY_HIGH(0xFF14,
+                (mmu, reg) -> mmu.apu.highFrequency(1),
+                (mmu, reg, data) -> mmu.apu.highFrequency(1, data)
+        ),
+        SOUND_2_LENGTH_PATTERN_DUTY(0xFF16,
+                (mmu, reg) -> mmu.apu.length(2),
+                (mmu, reg, data) -> mmu.apu.length(2, data)
+        ),
+        SOUND_2_ENVELOPE(0xFF17,
+                (mmu, reg) -> mmu.apu.envelope(2),
+                (mmu, reg, data) -> mmu.apu.envelope(2, data)
+        ),
+        SOUND_2_FREQUENCY_LOW(0xFF18,
+                MMU::invalidRead,
+                (mmu, reg, data) -> mmu.apu.lowFrequency(2, data)
+        ),
+        SOUND_2_FREQUENCY_HIGH(0xFF19,
+                (mmu, reg) -> mmu.apu.highFrequency(2),
+                (mmu, reg, data) -> mmu.apu.highFrequency(2, data)
+        ),
+        SOUND_3_ON_OFF(0xFF1A,
+                (mmu, reg) -> mmu.apu.soundControl(3),
+                (mmu, reg, data) -> mmu.apu.soundControl(3, data)
+        ),
+        SOUND_3_LENGTH(0xFF1B,
+                (mmu, reg) -> mmu.apu.length(3),
+                (mmu, reg, data) -> mmu.apu.length(3, data)
+        ),
+        SOUND_3_SELECT_OUTPUT_LEVEL(0xFF1C,
+                (mmu, reg) -> mmu.apu.outputLevel(3),
+                (mmu, reg, data) -> mmu.apu.outputLevel(3, data)
+        ),
+        SOUND_3_FREQUENCY_LOW(0xFF1D,
+                MMU::invalidRead,
+                (mmu, reg, data) -> mmu.apu.lowFrequency(3, data)
+        ),
+        SOUND_3_FREQUENCY_HIGH(0xFF1E,
+                (mmu, reg) -> mmu.apu.highFrequency(3),
+                (mmu, reg, data) -> mmu.apu.highFrequency(3, data)
+        ),
+        SOUND_4_LENGTH(0xFF20,
+                (mmu, reg) -> mmu.apu.length(4),
+                (mmu, reg, data) -> mmu.apu.length(4)
+        ),
+        SOUND_4_ENVELOPE(0xFF21,
+                (mmu, reg) -> mmu.apu.envelope(4),
+                (mmu, reg, data) -> mmu.apu.envelope(4, data)
+        ),
+        SOUND_4_POLYNOMIAL_COUNTER(0xFF22,
+                (mmu, reg) -> mmu.apu.polynomialCounter(4),
+                (mmu, reg, data) -> mmu.apu.polynomialCounter(4, data)
+        ),
+        SOUND_4_COUNTER_CONSECUTIVE(0xFF23,
+                (mmu, reg) -> mmu.apu.soundMode(4),
+                (mmu, reg, data) -> mmu.apu.soundMode(4, data)
+        ),
+        SOUND_CHANNEL_CONTROL(0xFF24,
+                (mmu, reg) -> mmu.apu.channelControl(),
+                (mmu, reg, data) -> mmu.apu.channelControl(data)
+        ),
+        SOUND_OUTPUT_TERMINAL(0xFF25,
+                (mmu, reg) -> mmu.apu.outputTerminal(),
+                (mmu, reg, data) -> mmu.apu.outputTerminal(data)
+        ),
+        SOUND_ON_OFF(0xFF26,
+                (mmu, reg) -> mmu.apu.soundEnabled(),
+                (mmu, reg, data) -> mmu.apu.soundEnabled(data)
+        ),
+        SOUND_WAVE_PATTERN_RAM_0(0xFF30, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_1(0xFF31, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_2(0xFF32, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_3(0xFF33, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_4(0xFF34, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_5(0xFF35, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_6(0xFF36, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_7(0xFF37, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_8(0xFF38, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_9(0xFF39, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_A(0xFF3A, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_B(0xFF3B, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_C(0xFF3C, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_D(0xFF3D, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_E(0xFF3E, MMU::readWaveRAM, MMU::writeWaveRAM),
+        SOUND_WAVE_PATTERN_RAM_F(0xFF3F, MMU::readWaveRAM, MMU::writeWaveRAM),
+        LCD_CONTROL(0xFF40,
+                (mmu, reg) -> mmu.ppu.control(),
+                (mmu, reg, data) -> mmu.ppu.control(data)
+        ),
+        LCD_STATUS(0xFF41,
+                (mmu, reg) -> mmu.ppu.status(),
+                (mmu, reg, data) -> mmu.ppu.interruptEnables(data)
+        ),
+        SCROLL_Y(0xFF42,
+                (mmu, reg) -> mmu.ppu.scrollY(),
+                (mmu, reg, data) -> mmu.ppu.scrollY(data)
+        ),
+        SCROLL_X(0xFF43,
+                (mmu, reg) -> mmu.ppu.scrollX(),
+                (mmu, reg, data) -> mmu.ppu.scrollX(data)
+        ),
+        LCD_SCANLINE(0xFF44,
+                (mmu, reg) -> mmu.ppu.scanline(),
+                MMU::invalidWrite
+        ),
+        LCD_SCANLINE_COMPARE(0xFF45,
+                (mmu, reg) -> mmu.ppu.scanlineCompare(),
+                (mmu, reg, data) -> mmu.ppu.scanlineCompare(data)
+        ),
+        DMA_TRANSFER(0xFF46,
+                MMU::invalidRead,
+                (mmu, reg, data) -> mmu.ppu.transferDMA((data * 0x100) - MemoryType.RAM.from, mmu.ram)
+        ),
+        BACKGROUND_PALETTE_DATA(0xFF47,
+                (mmu, reg) -> mmu.ppu.backgroundPalette(),
+                (mmu, reg, data) -> mmu.ppu.backgroundPalette(data)
+        ),
+        OBJECT_PALETTE_0_DATA(0xFF48,
+                (mmu, reg) -> mmu.ppu.objectPalette0(),
+                (mmu, reg, data) -> mmu.ppu.objectPalette0(data)
+        ),
+        OBJECT_PALETTE_1_DATA(0xFF49,
+                (mmu, reg) -> mmu.ppu.objectPalette1(),
+                (mmu, reg, data) -> mmu.ppu.objectPalette1(data)
+        ),
+        WINDOW_Y(0xFF4A,
+                (mmu, reg) -> mmu.ppu.windowY(),
+                (mmu, reg, data) -> mmu.ppu.windowY(data)
+        ),
+        WINDOW_X(0xFF4B,
+                (mmu, reg) -> mmu.ppu.windowX(),
+                (mmu, reg, data) -> mmu.ppu.windowX(data)
+        ),
+        BOOT_SUCCESS(0xFF50,
+                MMU::invalidRead,
+                MMU::invalidWrite //TODO: handle this instead of waiting for a specific memory address being written
+        ),
+        INTERRUPT_ENABLE(0xFFFF,
+                (mmu, reg) -> mmu.interrupts.enabledAsByte(),
+                (mmu, reg, data) -> mmu.interrupts.enable(Interrupts.Interrupt.fromValue(data))
+        );
 
         private final int address;
+        private final IOReader reader;
+        private final IOWriter writer;
 
-        IORegister(int address) {
+        IORegister(int address, IOReader reader, IOWriter writer) {
             this.address = address;
+            this.reader = reader;
+            this.writer = writer;
         }
 
-        private static IORegister fromAddress(int address) {
+        public int read(MMU mmu) {
+            return reader.read(mmu, this);
+        }
+
+        public void write(MMU mmu, int data) {
+            writer.write(mmu, this, data);
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() + " (" + DebugPrinter.hex(address, 4) + ")";
+        }
+
+        public static Optional<IORegister> fromAddress(int address) {
             for (IORegister register : IORegister.values()) {
                 if (register.address == address) {
-                    return register;
+                    return Optional.of(register);
                 }
             }
-            throw new IllegalArgumentException("No " + IORegister.class.getSimpleName() + " for address " + DebugPrinter.hex(address, 4));
+            log.warn("No " + IORegister.class.getSimpleName() + " for address " + DebugPrinter.hex(address, 4));
+            return Optional.empty();
+        }
+
+        private interface IOReader {
+            int read(MMU mmu, IORegister register);
+        }
+
+        private interface IOWriter {
+            void write(MMU mmu, IORegister register, int data);
         }
     }
 

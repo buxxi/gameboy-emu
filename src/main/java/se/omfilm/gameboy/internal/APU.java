@@ -14,7 +14,7 @@ public class APU {
 
     private Memory wavePatternRAM = new ByteArrayMemory(0xFF30, new byte[16]);
 
-    public void step(int cycles) {
+    public void step(int cycles, Interrupts interrupts) {
 
     }
 
@@ -237,7 +237,7 @@ public class APU {
             case 3:
                 return sound3.frequency;
             default:
-                throw new IllegalArgumentException("Sound " + soundId + " has no envelope");
+                throw new IllegalArgumentException("Sound " + soundId + " has no frequency");
         }
     }
 

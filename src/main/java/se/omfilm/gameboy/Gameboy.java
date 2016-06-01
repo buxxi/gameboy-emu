@@ -18,6 +18,7 @@ public class Gameboy {
     private final PPU ppu;
     private final APU apu;
     private final Timer timer;
+    private final Input input;
 
     private final int frequency;
     private boolean running = false;
@@ -28,11 +29,11 @@ public class Gameboy {
 
     public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, ROM rom, int frequency, boolean debug) throws IOException {
         this.cpu = new CPU(debug);
-        Interrupts interrupts = this.cpu.interrupts();
-        this.ppu = new PPU(screen, colorPalette, interrupts);
+        this.ppu = new PPU(screen, colorPalette);
         this.apu = new APU();
-        this.timer = new Timer(interrupts);
-        this.memory = new MMU(rom, ppu, apu, interrupts, timer, serial, controller);
+        this.timer = new Timer();
+        input = new Input(controller);
+        this.memory = new MMU(rom, ppu, apu, cpu.interrupts(), timer, serial, input);
         this.frequency = frequency;
     }
 
@@ -58,12 +59,13 @@ public class Gameboy {
     }
 
     private Integer step() {
+        Interrupts interrupts = cpu.interrupts();
         int cycles = cpu.step(memory);
-        memory.step(cycles);
-        timer.step(cycles);
-        ppu.step(cycles);
-        apu.step(cycles);
-        cycles += cpu.interrupts().step(memory);
+        input.step(cycles, interrupts);
+        timer.step(cycles, interrupts);
+        ppu.step(cycles, interrupts);
+        apu.step(cycles, interrupts);
+        cycles += interrupts.step(memory);
         return cycles;
     }
 }

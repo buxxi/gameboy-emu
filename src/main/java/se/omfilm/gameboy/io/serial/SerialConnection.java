@@ -1,11 +1,11 @@
 package se.omfilm.gameboy.io.serial;
 
 public interface SerialConnection {
-    void setData(int data);
+    void data(int data);
 
-    void setControl(int control);
+    void control(int control);
 
-    int getData();
+    int data();
 
-    int getControl();
+    int control();
 }
