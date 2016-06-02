@@ -19,15 +19,17 @@ public class Main {
     public static void main(String[] args) throws IOException, InterruptedException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Path bootPath = Paths.get(args[0]);
         Path romPath = Paths.get(args[1]);
+        ColorPalette palette = parsePalette(args[2]);
+        GLFWScreen.Mode mode = GLFWScreen.Mode.valueOf(args[3]);
+        Gameboy.Speed speed = Gameboy.Speed.valueOf(args[4]);
 
         ROM rom = ROM.load(Files.readAllBytes(romPath));
         rom.print();
 
         GLFWCompositeController controller = new GLFWCompositeController();
-        GLFWScreen screen = new GLFWScreen(rom.name(), controller);
-        ColorPalette palette = parsePalette(args[2]);
+        GLFWScreen screen = new GLFWScreen(rom.name(), controller, mode);
 
-        new Gameboy(screen, palette, controller, new ConsoleSerialConnection(), rom, false).withBootData(Files.readAllBytes(bootPath)).run();
+        new Gameboy(screen, palette, controller, new ConsoleSerialConnection(), rom, speed, false).withBootData(Files.readAllBytes(bootPath)).run();
     }
 
     private static ColorPalette parsePalette(String arg) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {

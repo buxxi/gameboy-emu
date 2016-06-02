@@ -23,18 +23,14 @@ public class Gameboy {
     private final int frequency;
     private boolean running = false;
 
-    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, ROM rom, boolean debug) throws IOException {
-        this(screen, colorPalette, controller, serial, rom, Screen.FREQUENCY, debug);
-    }
-
-    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, ROM rom, int frequency, boolean debug) throws IOException {
+    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, ROM rom, Speed speed, boolean debug) throws IOException {
         this.cpu = new CPU(debug);
         this.ppu = new PPU(screen, colorPalette);
         this.apu = new APU();
         this.timer = new Timer();
         input = new Input(controller);
         this.memory = new MMU(rom, ppu, apu, cpu.interrupts(), timer, serial, input);
-        this.frequency = frequency;
+        this.frequency = speed.frequency;
     }
 
     public Gameboy withBootData(byte[] boot) {
@@ -67,5 +63,17 @@ public class Gameboy {
         apu.step(cycles, interrupts);
         cycles += interrupts.step(memory);
         return cycles;
+    }
+
+    public enum Speed {
+        NORMAL(Screen.FREQUENCY),
+        DOUBLE(Screen.FREQUENCY * 2),
+        UNLIMITED(Integer.MAX_VALUE);
+
+        private final int frequency;
+
+        Speed(int frequency) {
+            this.frequency = frequency;
+        }
     }
 }
