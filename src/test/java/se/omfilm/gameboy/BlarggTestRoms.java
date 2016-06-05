@@ -189,7 +189,7 @@ public class BlarggTestRoms {
     private void loadROM(byte[] rom) throws IOException {
         byte[] boot = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("boot.bin"));
         serial = new StringSerialConnection();
-        target = new Gameboy(new NullScreen(), FixedColorPalette.monochrome(), new NullController(), serial, ROM.load(rom), Gameboy.Speed.UNLIMITED, false).withBootData(boot);
+        target = new Gameboy(new NullScreen(), FixedColorPalette.PRESET.MONOCHROME.getPalette(), new NullController(), serial, ROM.load(rom), Gameboy.Speed.UNLIMITED, false).withBootData(boot);
     }
 
     private class StringSerialConnection implements SerialConnection {
