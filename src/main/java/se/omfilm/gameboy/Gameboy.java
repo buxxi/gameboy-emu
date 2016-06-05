@@ -50,6 +50,13 @@ public class Gameboy {
         }
     }
 
+    public void reset() {
+        cpu.reset();
+        apu.reset();
+        ppu.reset();
+        timer.reset();
+    }
+
     public void stop() {
         running = false;
     }

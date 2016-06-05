@@ -18,6 +18,27 @@ public class APU {
 
     }
 
+    public void reset() {
+        sweep(1, 0x80);
+        length(1, 0xBF);
+        envelope(1, 0xF3);
+        highFrequency(1, 0xBF);
+        length(2, 0x3F);
+        envelope(2, 0x00);
+        highFrequency(2, 0xBF);
+        soundControl(3, 0x7F);
+        length(3, 0xFF);
+        outputLevel(3, 0x9F);
+        highFrequency(3, 0xBF);
+        length(4, 0xFF);
+        envelope(4, 0x00);
+        polynomialCounter(4, 0x00);
+        soundMode(4, 0xBF);
+        channelControl(0x77);
+        outputTerminal(0xF3);
+        soundEnabled(0xF1);
+    }
+
     public int soundEnabled() {
         return  (sound4.enabled ? 0b0000_1000 : 0) |
                 (sound3.enabled ? 0b0000_0100 : 0) |

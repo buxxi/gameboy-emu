@@ -81,6 +81,12 @@ public class Timer {
         dividerCounter = 0;
     }
 
+    public void reset() {
+        counter(0x00);
+        modulo(0x00);
+        control(0x00);
+    }
+
     private enum FREQUENCY {
         _4096(  0b0000_0000, 4096),
         _262144(0b0000_0001, 262144),

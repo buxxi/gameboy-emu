@@ -52,6 +52,17 @@ public class CPU {
         return instruction.execute(memory, this.registers, this.flags, this.programCounter, this.stackPointer);
     }
 
+    public void reset() {
+        programCounter.write(0x100);
+        stackPointer.write(0xFFFE);
+        registers.writeAF(0x01B0);
+        registers.writeBC(0x0013);
+        registers.writeDE(0x00D8);
+        registers.writeHL(0x014D);
+        interrupts.enable();
+        interrupts.request();
+    }
+
     public Interrupts interrupts() {
         return this.interrupts;
     }

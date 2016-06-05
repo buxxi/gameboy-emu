@@ -309,6 +309,18 @@ public class PPU {
         return objectAttributeMemory;
     }
 
+    public void reset() {
+        control(0x91);
+        scrollX(0x00);
+        scrollY(0x00);
+        scanlineCompare(0x00);
+        backgroundPalette(0xFC);
+        objectPalette0(0xFF);
+        objectPalette1(0xFF);
+        windowX(0x00);
+        windowY(0x00);
+    }
+
     private class VideoRAM implements Memory {
         public int readByte(int address) {
             if (address >= TILE_MAP_ADDRESS_0) {
