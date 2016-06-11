@@ -14,7 +14,8 @@ public class AddByteToStackPointer implements Instruction {
 
         stackPointer.write(result);
 
-        flags.reset(Flags.Flag.SUBTRACT, Flags.Flag.ZERO);
+        flags.set(Flags.Flag.SUBTRACT, false);
+        flags.set(Flags.Flag.ZERO, false);
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 

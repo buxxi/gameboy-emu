@@ -1,6 +1,12 @@
 package se.omfilm.gameboy.internal.memory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import se.omfilm.gameboy.internal.MMU;
+import se.omfilm.gameboy.util.DebugPrinter;
+
 public class MBC1 implements Memory {
+    private static final Logger log = LoggerFactory.getLogger(MBC1.class);
     private final Memory rom;
     private final BankableRAM ramBanks;
 
@@ -13,8 +19,8 @@ public class MBC1 implements Memory {
     }
 
     public int readByte(int address) {
-        if (address >= MemoryType.ROM_SWITCHABLE_BANKS.from) {
-            return rom.readByte(address + ((currentROMBank - 1) * MemoryType.ROM_SWITCHABLE_BANKS.size()));
+        if (address >= MMU.MemoryType.ROM_SWITCHABLE_BANKS.from) {
+            return rom.readByte(address + ((currentROMBank - 1) * MMU.MemoryType.ROM_SWITCHABLE_BANKS.size()));
         }
         return rom.readByte(address);
     }
@@ -41,14 +47,13 @@ public class MBC1 implements Memory {
             } else {
                 mode = MemoryMode._16MBIT_ROM_8KBYTE_RAM;
             }
-            throw new IllegalArgumentException("0x6000");
         } else {
-            throw new IllegalArgumentException("Can't write to " + getClass().getName());
+            log.warn("Can't write " + DebugPrinter.hex(data, 2) + " to " + getClass().getSimpleName() + "@" + DebugPrinter.hex(address, 4));
         }
     }
 
     private enum MemoryMode {
         _16MBIT_ROM_8KBYTE_RAM,
-        _4MBIT_ROM_32KBYTE_RAM;
+        _4MBIT_ROM_32KBYTE_RAM
     }
 }

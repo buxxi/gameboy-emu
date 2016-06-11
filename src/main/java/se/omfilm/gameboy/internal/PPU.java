@@ -1,17 +1,15 @@
 package se.omfilm.gameboy.internal;
 
 import se.omfilm.gameboy.internal.memory.Memory;
-import se.omfilm.gameboy.internal.memory.Memory.MemoryType;
 import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.screen.Screen;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static se.omfilm.gameboy.internal.memory.Memory.MemoryType.OBJECT_ATTRIBUTE_MEMORY;
+import static se.omfilm.gameboy.internal.MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY;
 
 public class PPU {
     private static final int TILE_MAP_ADDRESS_0 = 0x9800;
@@ -171,7 +169,9 @@ public class PPU {
     }
 
     private void drawSprites() {
-        Arrays.stream(sprites).filter(Sprite::isOnScanline).forEach(Sprite::render);
+        for (int i = 0; i < sprites.length; i++) {
+            sprites[i].render();
+        }
     }
 
     private Tile tileAt(int x, int y, int[][] tileMap) {
@@ -297,7 +297,7 @@ public class PPU {
 
     public void transferDMA(int offset, Memory ram) {
         for (int i = 0; i < OBJECT_ATTRIBUTE_MEMORY.size(); i++) {
-            objectAttributeMemory.writeByte(MemoryType.OBJECT_ATTRIBUTE_MEMORY.from + i, ram.readByte(offset + i));
+            objectAttributeMemory.writeByte(MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.from + i, ram.readByte(offset + i));
         }
     }
 
@@ -352,7 +352,7 @@ public class PPU {
         }
 
         private void writeTileByte(int address, int value) {
-            int virtualAddress = address - MemoryType.VIDEO_RAM.from;
+            int virtualAddress = address - MMU.MemoryType.VIDEO_RAM.from;
 
             Tile tile = tiles[virtualAddress / TILE_BYTE_SIZE]; //Each tile uses 16 bytes
             int rowData = virtualAddress % TILE_BYTE_SIZE;
@@ -381,7 +381,7 @@ public class PPU {
         }
 
         private int readTileByte(int address) {
-            int virtualAddress = address - MemoryType.VIDEO_RAM.from;
+            int virtualAddress = address - MMU.MemoryType.VIDEO_RAM.from;
             int result = 0;
 
             Tile tile = tiles[virtualAddress / TILE_BYTE_SIZE]; //Each tile uses 16 bytes
@@ -403,7 +403,7 @@ public class PPU {
 
     private class ObjectAttributeMemory implements Memory {
         public int readByte(int address) {
-            int virtualAddress = address - MemoryType.OBJECT_ATTRIBUTE_MEMORY.from;
+            int virtualAddress = address - MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.from;
             int spriteNumber = virtualAddress / SPRITE_BYTE_SIZE;
             int type = virtualAddress % SPRITE_BYTE_SIZE;
 
@@ -425,7 +425,7 @@ public class PPU {
         }
 
         public void writeByte(int address, int data) {
-            int virtualAddress = address - MemoryType.OBJECT_ATTRIBUTE_MEMORY.from;
+            int virtualAddress = address - MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.from;
 
             int spriteNumber = virtualAddress / SPRITE_BYTE_SIZE;
             int type = virtualAddress % SPRITE_BYTE_SIZE;
@@ -490,6 +490,10 @@ public class PPU {
         }
 
         private void render() {
+            if (!isOnScanline()) {
+                return;
+            }
+
             for (int i = 0; i < SPRITE_WIDTH; i++) {
                 int x = i;
                 int y = (scanline - this.y);
@@ -516,8 +520,12 @@ public class PPU {
                 }
 
                 Shade shade = tile.shadeAt(x, y, palette);
-                drawPixel(this.x + i, shade, s -> colorPalette.sprite(shade, spritePaletteIndex()));
+                drawPixel(this.x + i, shade, this::shadeToColor);
             }
+        }
+
+        private Color shadeToColor(Shade shade) {
+            return colorPalette.sprite(shade, spritePaletteIndex());
         }
 
         private int spritePaletteIndex() {

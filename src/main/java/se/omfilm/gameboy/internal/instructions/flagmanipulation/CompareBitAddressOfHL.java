@@ -16,7 +16,7 @@ public class CompareBitAddressOfHL implements Instruction {
         boolean isSet = (n & mask) != 0;
 
         flags.set(Flags.Flag.ZERO, !isSet);
-        flags.reset(Flags.Flag.SUBTRACT);
+        flags.set(Flags.Flag.SUBTRACT, false);
         flags.set(Flags.Flag.HALF_CARRY, true);
 
         return 12;

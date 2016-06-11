@@ -9,6 +9,7 @@ import se.omfilm.gameboy.internal.instructions.logic.*;
 import se.omfilm.gameboy.internal.instructions.stack.*;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.util.DebugPrinter;
+import se.omfilm.gameboy.util.EnumByValue;
 
 import java.util.function.Supplier;
 
@@ -29,7 +30,7 @@ public interface Instruction {
     /**
      * See this file for reference: http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
      */
-    enum InstructionType {
+    enum InstructionType implements EnumByValue.ComparableByInt {
         NOP(        0x00, NoOp::new), //Page 97
         LD_BC_nn(   0x01, LoadWordIntoRegister::toBC), //Page 76
         LD_BC_A(    0x02, LoadRegisterIntoAddressOfWordRegister::AtoBC), //Page 69
@@ -563,7 +564,7 @@ public interface Instruction {
         SET_7_HL(   0xCBFE, SetBitAddressOfHL::bit7), //Page 109
         SET_A7(     0xCBFF, SetBitInRegister::bit7ofA); //Page 109
 
-        private final static InstructionType[] valuesCache = InstructionType.values(); //TODO: do this more generic and maybe not loop through all of the always
+        private final static EnumByValue<InstructionType> valuesCache = new EnumByValue<>(values());
         private final int opcode;
         private final Supplier<Instruction> instructionSupplier;
 
@@ -578,10 +579,9 @@ public interface Instruction {
         }
 
         public static InstructionType fromOpCode(int opcode) {
-            for (InstructionType instructionType : valuesCache) {
-                if (instructionType.opcode == opcode) {
-                    return instructionType;
-                }
+            InstructionType type = valuesCache.fromValue(opcode);
+            if (type != null) {
+                return type;
             }
             throw new IllegalArgumentException("No such instruction " + DebugPrinter.hex(opcode, 4));
         }
@@ -597,6 +597,10 @@ public interface Instruction {
 
         public int opcode() {
             return opcode;
+        }
+
+        public int compareTo(int value) {
+            return value - opcode;
         }
     }
 }

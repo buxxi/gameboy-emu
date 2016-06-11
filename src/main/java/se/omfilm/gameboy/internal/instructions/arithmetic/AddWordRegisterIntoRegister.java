@@ -25,7 +25,7 @@ public class AddWordRegisterIntoRegister implements Instruction {
 
         targetWriter.write(registers, result);
 
-        flags.reset(Flags.Flag.SUBTRACT);
+        flags.set(Flags.Flag.SUBTRACT, false);
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 

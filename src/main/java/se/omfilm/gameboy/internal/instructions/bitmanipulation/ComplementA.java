@@ -9,7 +9,8 @@ public class ComplementA implements Instruction {
         a = ~ a & 0xFF;
         registers.writeA(a);
 
-        flags.set(Flags.Flag.SUBTRACT, Flags.Flag.HALF_CARRY);
+        flags.set(Flags.Flag.SUBTRACT, true);
+        flags.set(Flags.Flag.HALF_CARRY, true);
 
         return 4;
     }

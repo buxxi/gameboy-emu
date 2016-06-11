@@ -2,6 +2,7 @@ package se.omfilm.gameboy.internal.memory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.omfilm.gameboy.util.DebugPrinter;
 
 public class ReadOnlyMemory implements Memory {
     private static final Logger log = LoggerFactory.getLogger(ReadOnlyMemory.class);
@@ -17,6 +18,6 @@ public class ReadOnlyMemory implements Memory {
     }
 
     public void writeByte(int address, int data) {
-        log.warn("Can't write to " + ReadOnlyMemory.class.getName());
+        log.warn("Can't write " + DebugPrinter.hex(data, 2) + " to " + getClass().getSimpleName() + "@" + DebugPrinter.hex(address, 4));
     }
 }

@@ -27,7 +27,8 @@ public class RotateRegisterLeft implements Instruction {
 
         target.write(registers, result);
 
-        flags.reset(Flags.Flag.SUBTRACT, Flags.Flag.HALF_CARRY);
+        flags.set(Flags.Flag.SUBTRACT, false);
+        flags.set(Flags.Flag.HALF_CARRY, false);
         flags.set(Flags.Flag.ZERO, zero);
         flags.set(Flags.Flag.CARRY, carry);
 

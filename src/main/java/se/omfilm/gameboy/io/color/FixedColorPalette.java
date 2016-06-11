@@ -34,7 +34,7 @@ public class FixedColorPalette implements ColorPalette {
         return background(shade);
     }
 
-    public static enum PRESET {
+    public enum PRESET {
         MONOCHROME(Color.BLACK, Color.DARK_GRAY, Color.LIGHT_GRAY, Color.WHITE),
         ORIGINAL(new Color(24, 60, 21), new Color(54, 100, 50), new Color(138, 174, 0), new Color(153, 189, 0)),
         ORIGINAL_GREEN(new Color(4, 27, 35), new Color(53, 102, 81), new Color(135, 192, 123), new Color(224, 251, 210)),

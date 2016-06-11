@@ -5,18 +5,6 @@ public interface Flags {
 
     void set(Flag flag, boolean set);
 
-    default void set(Flag... flags) {
-        for (Flag flag : flags) {
-            set(flag, true);
-        }
-    }
-
-    default void reset(Flag... flags) {
-        for (Flag flag : flags) {
-            set(flag, false);
-        }
-    }
-
     void setInterruptsDisabled(boolean disabled);
 
     enum Flag {

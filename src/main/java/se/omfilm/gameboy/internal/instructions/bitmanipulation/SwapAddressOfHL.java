@@ -12,7 +12,9 @@ public class SwapAddressOfHL implements Instruction {
         memory.writeByte(address, result);
 
         flags.set(Flags.Flag.ZERO, result == 0);
-        flags.reset(Flags.Flag.SUBTRACT, Flags.Flag.HALF_CARRY, Flags.Flag.CARRY);
+        flags.set(Flags.Flag.SUBTRACT, false);
+        flags.set(Flags.Flag.HALF_CARRY, false);
+        flags.set(Flags.Flag.CARRY, false);
 
         return 16;
     }

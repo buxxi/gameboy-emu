@@ -2,6 +2,7 @@ package se.omfilm.gameboy.internal.memory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.omfilm.gameboy.internal.MMU;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 public class ROM {
@@ -41,7 +42,7 @@ public class ROM {
     }
 
     public BankableRAM createRAMBanks() {
-        return new BankableRAM(ramSize.banks, Memory.MemoryType.RAM_BANKS.size());
+        return new BankableRAM(ramSize.banks, MMU.MemoryType.RAM_BANKS.size());
     }
 
     public Memory createROMBanks(BankableRAM ramBanks) {

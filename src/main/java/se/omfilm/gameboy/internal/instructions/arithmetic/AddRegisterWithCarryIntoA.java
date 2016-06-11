@@ -23,7 +23,7 @@ public class AddRegisterWithCarryIntoA implements Instruction {
         registers.writeA(result);
 
         flags.set(Flags.Flag.ZERO, zero);
-        flags.reset(Flags.Flag.SUBTRACT);
+        flags.set(Flags.Flag.SUBTRACT, false);
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 
