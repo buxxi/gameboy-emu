@@ -3,7 +3,7 @@ This is my attempt at learning to write an emulator.
 Made in Java since that's my primary language and I just want to learn about the emulation and not a new language.
 ![Super Mario Land Screenshot][screenshot]
 
-###Goals
+### Goals
  - [x] Implement the engine separate so multiple implementations of screens, inputs etc can be made
  - [x] Support for switching out the color scheme
  - [x] Make an OpenGL implementation for the display
@@ -13,7 +13,8 @@ Made in Java since that's my primary language and I just want to learn about the
  - [ ] Sound support (maybe)
  - [ ] Simple GUI for loading ROMs and configure the emulator
  - [ ] Being able to play through a full game without any problems
-###Non-goals
+ 
+### Non goals
  - Gameboy Color support
  - Save states
  - Fancy GUI
