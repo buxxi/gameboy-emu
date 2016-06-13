@@ -9,8 +9,6 @@ import java.util.BitSet;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static se.omfilm.gameboy.internal.MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY;
-
 public class PPU {
     private static final int TILE_MAP_ADDRESS_0 = 0x9800;
     private static final int TILE_MAP_ADDRESS_1 = 0x9C00;
@@ -296,7 +294,7 @@ public class PPU {
     }
 
     public void transferDMA(int offset, Memory ram) {
-        for (int i = 0; i < OBJECT_ATTRIBUTE_MEMORY.size(); i++) {
+        for (int i = 0; i < MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.size(); i++) {
             objectAttributeMemory.writeByte(MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.from + i, ram.readByte(offset + i));
         }
     }
