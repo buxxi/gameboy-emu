@@ -127,6 +127,38 @@ public class MMU implements Memory {
         log.warn("Writing " + DebugPrinter.hex(data, 2) + " to " + reg + " is not supported");
     }
 
+    private int requestedInterrupts() {
+        int result = 0;
+        for (Interrupts.Interrupt i : Interrupts.Interrupt.cachedValues()) {
+            if (interrupts.requested(i)) {
+                result = result | i.mask();
+            }
+        }
+        return result;
+    }
+
+    private void requestedInterrupts(int data) {
+        for (Interrupts.Interrupt i : Interrupts.Interrupt.cachedValues()) {
+            interrupts.request(i, (data & i.mask()) != 0);
+        }
+    }
+
+    private int enabledInterrupts() {
+        int result = 0;
+        for (Interrupts.Interrupt i : Interrupts.Interrupt.cachedValues()) {
+            if (interrupts.enabled(i)) {
+                result = result | i.mask();
+            }
+        }
+        return result;
+    }
+
+    private void enabledInterrupts(int data) {
+        for (Interrupts.Interrupt i : Interrupts.Interrupt.cachedValues()) {
+            interrupts.enable(i, (data & i.mask()) != 0);
+        }
+    }
+
     private enum IORegister implements EnumByValue.ComparableByInt {
         JOYPAD(0xFF00,
                 (mmu, reg) -> mmu.input.readState(),
@@ -157,8 +189,8 @@ public class MMU implements Memory {
                 (mmu, reg, data) -> mmu.timer.control(data)
         ),
         INTERRUPT_REQUEST(0xFF0F,
-                (mmu, reg) -> mmu.interrupts.requestedAsByte(),
-                (mmu, reg, data) -> mmu.interrupts.request(Interrupts.Interrupt.fromValue(data))
+                (mmu, reg) -> mmu.requestedInterrupts(),
+                (mmu, reg, data) -> mmu.requestedInterrupts(data)
         ),
         SOUND_1_SWEEP(0xFF10,
                 (mmu, reg) -> mmu.apu.sweep(1),
@@ -313,11 +345,11 @@ public class MMU implements Memory {
                 (mmu, reg, data) -> mmu.rom.writeByte(0xFF50, data)
         ),
         INTERRUPT_ENABLE(0xFFFF,
-                (mmu, reg) -> mmu.interrupts.enabledAsByte(),
-                (mmu, reg, data) -> mmu.interrupts.enable(Interrupts.Interrupt.fromValue(data))
+                (mmu, reg) -> mmu.enabledInterrupts(),
+                (mmu, reg, data) -> mmu.enabledInterrupts(data)
         );
 
-        private final static EnumByValue<IORegister> valuesCache = new EnumByValue<>(values());
+        private final static EnumByValue<IORegister> valuesCache = new EnumByValue<>(values(), IORegister.class);
         private final int address;
         private final IOReader reader;
         private final IOWriter writer;
@@ -375,7 +407,7 @@ public class MMU implements Memory {
         ZERO_PAGE(              0xFF80, 0xFFFE),
         INTERRUPT_ENABLE(       0xFFFF, 0xFFFF);
 
-        private final static EnumByValue<MemoryType> valuesCache = new EnumByValue<>(MemoryType.values());
+        private final static EnumByValue<MemoryType> valuesCache = new EnumByValue<>(MemoryType.values(), MemoryType.class);
 
         public final int from;
         public final int to;

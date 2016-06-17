@@ -1,15 +1,17 @@
 package se.omfilm.gameboy.util;
 
-public class EnumByValue<T extends EnumByValue.ComparableByInt> {
-    private final Object[] values;
+import java.lang.reflect.Array;
 
-    public EnumByValue(T[] values) {
+public class EnumByValue<T extends EnumByValue.ComparableByInt> {
+    private final T[] values;
+
+    public EnumByValue(T[] values, Class<T> clazz) {
         int max = max(values); //Find the max value, so we know how big the array needs to be
-        this.values = fill(values, new Object[max]); //Populate the array so we just can lookup by the index
+        this.values = fill(values, createArray(clazz, max)); //Populate the array so we just can lookup by the index
     }
 
     public T fromValue(int value) {
-        return (T) values[value];
+        return values[value];
     }
 
     private int max(T[] values) {
@@ -20,7 +22,7 @@ public class EnumByValue<T extends EnumByValue.ComparableByInt> {
         return i;
     }
 
-    private Object[] fill(T[] input, Object[] result) {
+    private T[] fill(T[] input, T[] result) {
         for (T i : input) {
             for (int j = 0; j < result.length; j++) {
                 if (i.compareTo(j) == 0) {
@@ -38,6 +40,11 @@ public class EnumByValue<T extends EnumByValue.ComparableByInt> {
             }
         }
         return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private T[] createArray(Class<T> clazz, int max) {
+        return (T[]) Array.newInstance(clazz, max);
     }
 
     public interface ComparableByInt {

@@ -47,8 +47,8 @@ public class Main {
                 return randomPalette();
             }
             return FixedColorPalette.PRESET.valueOf(arg).getPalette();
-        } else if (parts.length == 3) {
-            return new MultiColorPalette(parsePalette(parts[0]), parsePalette(parts[1]), parsePalette(parts[2]));
+        } else if (parts.length == 4) {
+            return new MultiColorPalette(parsePalette(parts[0]), parsePalette(parts[1]), parsePalette(parts[2]), parsePalette(parts[3]));
         } else {
             throw new IllegalArgumentException("Can't handle " + arg + " as palette");
         }

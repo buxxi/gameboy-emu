@@ -5,8 +5,8 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
+import se.omfilm.gameboy.io.color.Color;
 
-import java.awt.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -36,6 +36,9 @@ public class GLFWScreen implements Screen {
     }
 
     public void turnOn() {
+        if (turnedOn) {
+            return;
+        }
         if (glfwInit() != GL11.GL_TRUE) {
             throw new IllegalStateException("Could not initialize GL");
         }
@@ -57,9 +60,9 @@ public class GLFWScreen implements Screen {
 
     public void setPixel(int x, int y, Color color) {
         int index = index(x, y);
-        offscreenBuffer[index] = (byte) color.getRed();
-        offscreenBuffer[index + 1] = (byte) color.getGreen();
-        offscreenBuffer[index + 2] = (byte) color.getBlue();
+        offscreenBuffer[index] = color.getRed();
+        offscreenBuffer[index + 1] = color.getGreen();
+        offscreenBuffer[index + 2] = color.getBlue();
     }
 
     public void draw() {
@@ -72,10 +75,6 @@ public class GLFWScreen implements Screen {
         } finally {
             bufferLock.writeLock().unlock();
         }
-    }
-
-    public boolean isOn() {
-        return turnedOn;
     }
 
     private void switchBuffer() {

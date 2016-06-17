@@ -1,10 +1,10 @@
 package se.omfilm.gameboy.internal;
 
 import se.omfilm.gameboy.internal.memory.Memory;
+import se.omfilm.gameboy.io.color.Color;
 import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.screen.Screen;
 
-import java.awt.*;
 import java.util.BitSet;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -84,7 +84,7 @@ public class PPU {
             cycleCounter = GPUMode.VBLANK.minimumCycles;
 
             if (scanline == Screen.HEIGHT) {
-                interrupts.request(Interrupts.Interrupt.VBLANK);
+                interrupts.request(Interrupts.Interrupt.VBLANK, true);
             } else if (scanline >= Screen.HEIGHT + 10) {
                 scanline = 0;
                 drawToScreen();
@@ -113,7 +113,7 @@ public class PPU {
         }
 
         if (coincidence && scanline == compareWithScanline) {
-            interrupts.request(Interrupts.Interrupt.LCD);
+            interrupts.request(Interrupts.Interrupt.LCD, true);
         }
 
         return true;
@@ -121,7 +121,7 @@ public class PPU {
 
     private void updateCurrentMode(Interrupts interrupts, GPUMode newMode, boolean requestInterrupt) {
         if (requestInterrupt && newMode != mode) {
-            interrupts.request(Interrupts.Interrupt.LCD);
+            interrupts.request(Interrupts.Interrupt.LCD, true);
         }
         mode = newMode;
     }
@@ -146,11 +146,11 @@ public class PPU {
     }
 
     private void drawBackgroundWindowPixel(int x) {
-        int y = scanline + windowY;
+        int y = scanline - windowY;
         int adjustedX = ((x + windowX - 7) + Screen.WIDTH) % Screen.WIDTH;
         Tile tile = tileAt(adjustedX, y, windowTileMap);
         Shade shade = tile.shadeAt(adjustedX, y, backgroundPalette);
-        drawPixel(x, shade, colorPalette::background);
+        drawPixel(x, shade, colorPalette::window);
     }
 
     private void drawBackgroundPixel(int x) {
@@ -248,7 +248,7 @@ public class PPU {
         spriteDisplay =     (data & 0b0000_0010) != 0;
         backgroundDisplay = (data & 0b0000_0001) != 0;
 
-        if (lcdDisplay && !screen.isOn()) {
+        if (lcdDisplay) {
             screen.turnOn();
         }
     }
@@ -518,7 +518,7 @@ public class PPU {
                 }
 
                 Shade shade = tile.shadeAt(x, y, palette);
-                drawPixel(this.x + i, shade, this::shadeToColor);
+                drawPixel(this.x + i, shade,  this::shadeToColor);
             }
         }
 

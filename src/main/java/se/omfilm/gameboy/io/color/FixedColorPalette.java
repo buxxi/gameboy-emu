@@ -2,8 +2,6 @@ package se.omfilm.gameboy.io.color;
 
 import se.omfilm.gameboy.internal.PPU.Shade;
 
-import java.awt.*;
-
 public class FixedColorPalette implements ColorPalette {
     private final Color darkest;
     private final Color dark;
@@ -34,8 +32,12 @@ public class FixedColorPalette implements ColorPalette {
         return background(shade);
     }
 
+    public Color window(Shade shade) {
+        return background(shade);
+    }
+
     public enum PRESET {
-        MONOCHROME(Color.BLACK, Color.DARK_GRAY, Color.LIGHT_GRAY, Color.WHITE),
+        MONOCHROME(new Color(0, 0, 0), new Color(64, 64, 64), new Color(192, 192, 192), new Color(255, 255, 255)),
         ORIGINAL(new Color(24, 60, 21), new Color(54, 100, 50), new Color(138, 174, 0), new Color(153, 189, 0)),
         ORIGINAL_GREEN(new Color(4, 27, 35), new Color(53, 102, 81), new Color(135, 192, 123), new Color(224, 251, 210)),
         RED(new Color(85, 0, 0), new Color(128, 21, 21), new Color(212, 106, 106), new Color(255, 170, 170)),

@@ -564,7 +564,7 @@ public interface Instruction {
         SET_7_HL(   0xCBFE, SetBitAddressOfHL::bit7), //Page 109
         SET_A7(     0xCBFF, SetBitInRegister::bit7ofA); //Page 109
 
-        private final static EnumByValue<InstructionType> valuesCache = new EnumByValue<>(values());
+        private final static EnumByValue<InstructionType> valuesCache = new EnumByValue<>(values(), InstructionType.class);
         private final int opcode;
         private final Supplier<Instruction> instructionSupplier;
 

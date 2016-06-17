@@ -1,6 +1,6 @@
 package se.omfilm.gameboy.io.screen;
 
-import java.awt.*;
+import se.omfilm.gameboy.io.color.Color;
 
 public interface Screen {
     int HEIGHT = 144;
@@ -14,6 +14,4 @@ public interface Screen {
     void setPixel(int x, int y, Color color);
 
     void draw();
-
-    boolean isOn();
 }

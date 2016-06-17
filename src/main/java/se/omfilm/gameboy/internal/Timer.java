@@ -37,7 +37,7 @@ public class Timer {
 
             if (timerCounter == 0xFF) {
                 timerCounter = timerModulo;
-                interrupts.request(Interrupts.Interrupt.TIMER);
+                interrupts.request(Interrupts.Interrupt.TIMER, true);
             } else {
                 timerCounter++;
             }

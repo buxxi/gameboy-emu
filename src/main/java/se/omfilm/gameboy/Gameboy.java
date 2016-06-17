@@ -1,7 +1,6 @@
 package se.omfilm.gameboy;
 
 import se.omfilm.gameboy.internal.*;
-import se.omfilm.gameboy.internal.MMU;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.controller.Controller;
@@ -41,10 +40,7 @@ public class Gameboy {
     public void run() throws InterruptedException {
         running = true;
         try {
-            Runner.atFrequency(() -> {
-                Runner.times(this::step, CPU.FREQUENCY / Screen.FREQUENCY);
-                return running;
-            }, frequency);
+            Runner.atFrequency(this::stepFrequency, frequency);
         } catch (Exception e) {
             DebugPrinter.debugException(e);
         }
@@ -59,6 +55,11 @@ public class Gameboy {
 
     public void stop() {
         running = false;
+    }
+
+    private boolean stepFrequency() throws Exception {
+        Runner.times(this::step, CPU.FREQUENCY / Screen.FREQUENCY);
+        return running;
     }
 
     private Integer step() {

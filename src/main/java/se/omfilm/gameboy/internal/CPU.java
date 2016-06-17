@@ -59,8 +59,10 @@ public class CPU {
         registers.writeBC(0x0013);
         registers.writeDE(0x00D8);
         registers.writeHL(0x014D);
-        interrupts.enable();
-        interrupts.request();
+        for (Interrupts.Interrupt interrupt : Interrupts.Interrupt.cachedValues()) {
+            interrupts.enable(interrupt, false);
+            interrupts.request(interrupt, false);
+        }
     }
 
     public Interrupts interrupts() {
@@ -93,15 +95,15 @@ public class CPU {
 
     private class FlagsImpl implements Flags {
         public boolean isSet(Flag flag) {
-            return (registers.readF() & flag.mask) != 0;
+            return (registers.readF() & flag.mask()) != 0;
         }
 
         public void set(Flag flag, boolean value) {
             int f = registers.readF();
             if (value) {
-                f = f | flag.mask;
+                f = f | flag.mask();
             } else {
-                f = f & (~flag.mask);
+                f = f & (~flag.mask());
             }
             registers.writeF(f);
         }
@@ -260,8 +262,8 @@ public class CPU {
                 return 0;
             }
 
-            for (Interrupt interrupt : Interrupt.values()) {
-                if ((interrupt.mask & requestedInterrupts & enabledInterrupts) != 0) {
+            for (Interrupt interrupt : Interrupt.cachedValues()) {
+                if ((interrupt.mask() & requestedInterrupts & enabledInterrupts) != 0) {
                     return execute(interrupt, memory);
                 }
             }
@@ -276,30 +278,32 @@ public class CPU {
             }
         }
 
-        public void enable(Interrupt... interrupts) {
-            enabledInterrupts = 0;
-            for (Interrupt i : interrupts) {
-                enabledInterrupts = enabledInterrupts | i.mask;
+        public void enable(Interrupt interrupt, boolean enabled) {
+            if (enabled) {
+                enabledInterrupts = enabledInterrupts | interrupt.mask();
+            } else {
+                enabledInterrupts = enabledInterrupts & (~interrupt.mask());
             }
         }
 
-        public void request(Interrupt... interrupts) {
-            requestedInterrupts = 0;
-            for (Interrupt i : interrupts) {
-                requestedInterrupts = requestedInterrupts | i.mask;
+        public void request(Interrupt interrupt, boolean requested) {
+            if (requested) {
+                requestedInterrupts = requestedInterrupts | interrupt.mask();
+            } else {
+                requestedInterrupts = requestedInterrupts & (~interrupt.mask());
             }
         }
 
         public boolean enabled(Interrupt interrupt) {
-            return (enabledInterrupts & interrupt.mask) != 0;
+            return (enabledInterrupts & interrupt.mask()) != 0;
         }
 
         public boolean requested(Interrupt interrupt) {
-            return (requestedInterrupts & interrupt.mask) != 0;
+            return (requestedInterrupts & interrupt.mask()) != 0;
         }
 
         private int execute(Interrupt interrupt, Memory memory) {
-            requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask);
+            requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask());
             interruptMasterEnable = false;
             halted = false;
             stackPointer.push(memory, programCounter.read());

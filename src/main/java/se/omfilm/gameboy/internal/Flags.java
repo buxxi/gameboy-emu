@@ -13,10 +13,14 @@ public interface Flags {
         HALF_CARRY( 0b0010_0000), //H
         CARRY(      0b0001_0000); //C
 
-        public final int mask;
+        private final int mask;
 
         Flag(int mask) {
             this.mask = mask;
+        }
+
+        public int mask() {
+            return mask;
         }
     }
 }

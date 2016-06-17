@@ -27,7 +27,7 @@ public class Input {
 
         if (this.controllerState != controllerState) {
             this.controllerState = controllerState;
-            interrupts.request(Interrupts.Interrupt.JOYPAD);
+            interrupts.request(Interrupts.Interrupt.JOYPAD, true);
         }
     }
 

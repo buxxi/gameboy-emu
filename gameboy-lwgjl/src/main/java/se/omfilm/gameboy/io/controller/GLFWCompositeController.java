@@ -3,14 +3,14 @@ package se.omfilm.gameboy.io.controller;
 import org.lwjgl.glfw.GLFW;
 import se.omfilm.gameboy.io.screen.WindowChangeListener;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class GLFWCompositeController implements Controller, WindowChangeListener {
     private final GLFWKeyboardController keyboard;
-    private Collection<Controller> joypads = Collections.emptyList();
+    private List<Controller> joypads = Collections.emptyList();
 
     public GLFWCompositeController() {
         keyboard = new GLFWKeyboardController();
@@ -21,8 +21,8 @@ public class GLFWCompositeController implements Controller, WindowChangeListener
     }
 
     private boolean anyJoypadPressed(Button button) {
-        for (Controller controller : joypads) {
-            if (controller.isPressed(button)) {
+        for (int i = 0; i < joypads.size(); i++) {
+            if (joypads.get(i).isPressed(button)) {
                 return true;
             }
         }
