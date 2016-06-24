@@ -125,7 +125,7 @@ public class GLFWScreen implements Screen {
         GL11.glClearColor(0f, 0f, 0f, 1f);
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glLoadIdentity();
-        GL11.glOrtho(0, Screen.WIDTH, Screen.HEIGHT, 0, 1, -1); //TODO: handle aspect ratio in fullscreen
+        GL11.glOrtho(-mode.borderSize(), Screen.WIDTH + mode.borderSize(), Screen.HEIGHT, 0, 1, -1);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
     }
 
@@ -143,7 +143,10 @@ public class GLFWScreen implements Screen {
             throw new IllegalStateException("Could not initialize GLFW Window");
         }
         windowChangeListener.windowChanged(window);
-        mode.center(window);
+        if (monitor == MemoryUtil.NULL) {
+            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            glfwSetWindowPos(window, (vidmode.width() - mode.width()) / 2, (vidmode.height() - mode.height()) / 2);
+        }
 
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
@@ -188,8 +191,22 @@ public class GLFWScreen implements Screen {
                 return glfwGetVideoMode(monitor()).width();
             }
 
-            protected void center(long window) {
-                //No need to center when full screen
+            protected int borderSize() {
+                float aspectRatioDiff = (((float) width() / height()) - ((float) Screen.WIDTH / Screen.HEIGHT));
+                return (int) (aspectRatioDiff * Screen.HEIGHT / 2);
+            }
+        },
+        FULLSCREEN_STRETCH(0) {
+            protected long monitor() {
+                return glfwGetPrimaryMonitor();
+            }
+
+            protected int height() {
+                return glfwGetVideoMode(monitor()).height();
+            }
+
+            protected int width() {
+                return glfwGetVideoMode(monitor()).width();
             }
         },
         SCALE_1X(1),
@@ -214,9 +231,8 @@ public class GLFWScreen implements Screen {
             return MemoryUtil.NULL;
         }
 
-        protected void center(long window) {
-            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-            glfwSetWindowPos(window, (vidmode.width() - width()) / 2, (vidmode.height()- height()) / 2);
+        protected int borderSize() {
+            return 0;
         }
     }
 }

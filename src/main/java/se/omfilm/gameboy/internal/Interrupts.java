@@ -28,17 +28,19 @@ public interface Interrupts {
      * Each interrupt has a bit that can be masked against an int to see if that interrupt should be enabled/requested.
      */
     enum Interrupt {
-        VBLANK( 0b0000_0001),
-        LCD(    0b0000_0010),
-        TIMER(  0b0000_0100),
-        SERIAL( 0b0000_1000),
-        JOYPAD( 0b0001_0000);
+        VBLANK( 0b0000_0001, 0x40),
+        LCD(    0b0000_0010, 0x48),
+        TIMER(  0b0000_0100, 0x50),
+        SERIAL( 0b0000_1000, 0x58),
+        JOYPAD( 0b0001_0000, 0x60);
 
         private static final Interrupt[] values = values();
         private final int mask;
+        private final int pc;
 
-        Interrupt(int mask) {
+        Interrupt(int mask, int pc) {
             this.mask = mask;
+            this.pc = pc;
         }
 
         public int mask() {
@@ -47,6 +49,11 @@ public interface Interrupts {
 
         public static Interrupt[] cachedValues() {
             return values;
+        }
+
+        public int jump(ProgramCounter programCounter) {
+            programCounter.write(pc);
+            return 20;
         }
     }
 }

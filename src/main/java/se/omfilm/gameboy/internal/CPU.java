@@ -131,23 +131,13 @@ public class CPU {
             return this.f;
         }
 
-        public int readAF() {
-            return this.a << 8 | this.f;
-        }
-
         public void writeA(int val) {
-            verify(val, 0xFF);
+            verify(val);
             this.a = val;
         }
 
         public void writeF(int val) {
             this.f = val & 0xF0;
-        }
-
-        public void writeAF(int val) {
-            verify(val, 0xFFFF);
-            writeA(val >> 8);
-            writeF(val & 0x00FF);
         }
 
         public int readB() {
@@ -158,24 +148,14 @@ public class CPU {
             return this.c;
         }
 
-        public int readBC() {
-            return this.b << 8 | this.c;
-        }
-
         public void writeB(int val) {
-            verify(val, 0xFF);
+            verify(val);
             this.b = val;
         }
 
         public void writeC(int val) {
-            verify(val, 0xFF);
+            verify(val);
             this.c = val;
-        }
-
-        public void writeBC(int val) {
-            verify(val, 0xFFFF);
-            writeB(val >> 8);
-            writeC(val & 0x00FF);
         }
 
         public int readD() {
@@ -186,24 +166,14 @@ public class CPU {
             return this.e;
         }
 
-        public int readDE() {
-            return this.d << 8 | this.e;
-        }
-
         public void writeD(int val) {
-            verify(val, 0xFF);
+            verify(val);
             this.d = val;
         }
 
         public void writeE(int val) {
-            verify(val, 0xFF);
+            verify(val);
             this.e = val;
-        }
-
-        public void writeDE(int val) {
-            verify(val, 0xFFFF);
-            writeD(val >> 8);
-            writeE(val & 0x00FF);
         }
 
         public int readH() {
@@ -214,29 +184,19 @@ public class CPU {
             return this.l;
         }
 
-        public int readHL() {
-            return this.h << 8 | this.l;
-        }
-
         public void writeH(int val) {
-            verify(val, 0xFF);
+            verify(val);
             this.h = val;
         }
 
         public void writeL(int val) {
-            verify(val, 0xFF);
+            verify(val);
             this.l = val;
         }
 
-        public void writeHL(int val) {
-            verify(val, 0xFFFF);
-            writeH(val >> 8);
-            writeL(val & 0x00FF);
-        }
-
-        private void verify(int val, int maxValue) {
-            if (val < 0 || val > maxValue) {
-                throw new IllegalStateException("Can't write value " + DebugPrinter.hex(val, 4) + ", not in range " + DebugPrinter.hex(0, 4) + "-" + DebugPrinter.hex(maxValue, 4));
+        private void verify(int val) {
+            if (val < 0 || val > 0xFF) {
+                throw new IllegalStateException("Can't write value " + DebugPrinter.hex(val, 4) + ", not in range " + DebugPrinter.hex(0, 2) + "-" + DebugPrinter.hex(0xFF, 2));
             }
         }
     }
@@ -308,23 +268,7 @@ public class CPU {
             halted = false;
             stackPointer.push(memory, programCounter.read());
 
-            //TODO: move these values to the enum
-            switch (interrupt) {
-                case VBLANK:
-                    programCounter.write(0x40);
-                    return 20;
-                case TIMER:
-                    programCounter.write(0x50);
-                    return 20;
-                case JOYPAD:
-                    programCounter.write(0x60);
-                    return 20;
-                case LCD:
-                    programCounter.write(0x48);
-                    return 20;
-                default:
-                    throw new UnsupportedOperationException("Interrupt " + interrupt + " not implemented");
-            }
+            return interrupt.jump(programCounter);
         }
     }
 
