@@ -8,8 +8,8 @@ Made in Java since that's my primary language and I just want to learn about the
  - [x] Support for switching out the color scheme
  - [x] Make an OpenGL implementation for the display
  - [x] Joypad support
+ - [x] Save game support
  - [ ] Pass all test roms (see below)
- - [ ] Save game support
  - [ ] Sound support (maybe)
  - [ ] Simple GUI for loading ROMs and configure the emulator
  - [ ] Being able to play through a full game without any problems

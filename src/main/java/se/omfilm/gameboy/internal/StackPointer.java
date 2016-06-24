@@ -2,6 +2,11 @@ package se.omfilm.gameboy.internal;
 
 import se.omfilm.gameboy.internal.memory.Memory;
 
+/**
+ * Represents the stack pointer for the CPU.
+ * This keeps track of where to return to after a method has been run, by pushing the program counter into the memory.
+ * The default value when booted should be 0xFFFE.
+ */
 public interface StackPointer {
     void write(int value);
 

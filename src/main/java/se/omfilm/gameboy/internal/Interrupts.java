@@ -2,6 +2,16 @@ package se.omfilm.gameboy.internal;
 
 import se.omfilm.gameboy.internal.memory.Memory;
 
+/**
+ * Represents the interrupt handling for the CPU.
+ * Requesting a interrupt when it is enabled makes the CPUs program counter jump to specific memory address for that interrupt.
+ * This needs to be stepped after the CPU has stepped for the interrupts to trigger.
+ *
+ * All interrupts can be disabled with Flags#setInterruptsDisabled, then no interrupts will be executed even if they are enabled and requested.
+ *
+ * The GPU requests some interrupts regarding the LCD-screen depending on timing, the same for TIMER, JOYPAD interrupt is requested when a button is pressed,
+ * otherwise it can be requested by the code by writing to the correct memory address (see MMU.IORegister).
+ */
 public interface Interrupts {
     int step(Memory memory);
 
@@ -13,6 +23,10 @@ public interface Interrupts {
 
     boolean requested(Interrupt interrupt);
 
+    /**
+     * The allowed interrupts.
+     * Each interrupt has a bit that can be masked against an int to see if that interrupt should be enabled/requested.
+     */
     enum Interrupt {
         VBLANK( 0b0000_0001),
         LCD(    0b0000_0010),

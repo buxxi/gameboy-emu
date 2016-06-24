@@ -308,6 +308,7 @@ public class CPU {
             halted = false;
             stackPointer.push(memory, programCounter.read());
 
+            //TODO: move these values to the enum
             switch (interrupt) {
                 case VBLANK:
                     programCounter.write(0x40);

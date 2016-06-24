@@ -2,8 +2,11 @@ package se.omfilm.gameboy.internal.memory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.omfilm.gameboy.internal.MMU;
 import se.omfilm.gameboy.util.DebugPrinter;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class ROM {
     private static final Logger log = LoggerFactory.getLogger(ROM.class);
@@ -16,6 +19,8 @@ public class ROM {
     private final Model model;
     private final Region region;
 
+    private Path ramPath;
+
     private ROM(byte[] data) {
         this.data = data;
         this.romType = ROMType.fromValue(data[0x147]);
@@ -26,7 +31,7 @@ public class ROM {
         this.region = Region.fromValue(data[0x14A]);
     }
 
-    public static ROM load(byte[] data) {
+    public static ROM load(byte[] data) throws IOException {
         ROM rom = new ROM(data);
         if (data[0x146] != 0) {
             throw new IllegalArgumentException("Can only handle the original GameBoy");
@@ -41,8 +46,22 @@ public class ROM {
         return rom;
     }
 
+    public ROM saveRAM(Path path) {
+        if (romType == ROMType.ROM_MBC1_RAM_BATTERY) {
+            ramPath = path;
+        }
+        return this;
+    }
+
     public BankableRAM createRAMBanks() {
-        return new BankableRAM(ramSize.banks, MMU.MemoryType.RAM_BANKS.size());
+        if (ramPath != null) {
+            try {
+                return BankableRAM.toFile(ramSize.banks, ramPath.toFile());
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return BankableRAM.inMemory(ramSize.banks);
     }
 
     public Memory createROMBanks(BankableRAM ramBanks) {

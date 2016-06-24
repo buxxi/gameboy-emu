@@ -20,11 +20,13 @@ public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
         Path bootPath = Paths.get(args[0]);
         Path romPath = Paths.get(args[1]);
+        Path savePath = romPath.resolveSibling(romPath.getFileName().toString() + ".sav");
+
         ColorPalette palette = parsePalette(args[2]);
         GLFWScreen.Mode mode = GLFWScreen.Mode.valueOf(args[3]);
         Gameboy.Speed speed = Gameboy.Speed.valueOf(args[4]);
 
-        ROM rom = ROM.load(Files.readAllBytes(romPath));
+        ROM rom = ROM.load(Files.readAllBytes(romPath)).saveRAM(savePath);
         rom.print();
 
         GLFWCompositeController controller = new GLFWCompositeController();

@@ -13,22 +13,48 @@ import se.omfilm.gameboy.util.EnumByValue;
 
 import java.util.function.Supplier;
 
+/**
+ * A common interface for all the instructions the CPU can execute.
+ * The CPU keeps a cache of these for each InstructionType so they should all be stateless.
+ *
+ * This is made as a functional interface so it can be used as a lambda for simple instructions.
+ */
+@FunctionalInterface
 public interface Instruction {
     /**
-     * Execute the instruction and return the number of cycles that instruction took
+     * Execute the instruction and return the number of cycles that instruction took.
+     * This should NEVER throw an Exception, so that needs to be handled in the the instruction.
+     *
+     * The lowest value that it can return is 4
      */
     int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer);
 
+    /**
+     * An interface that is mostly used to be able to use a single register as method reference.
+     * This is for instructions that does the same thing to different registers for different opcodes.
+     */
+    @FunctionalInterface
     interface RegisterWriter {
         void write(Registers registers, int value);
     }
 
+    /**
+     * An interface that is mostly used to be able to use a single register as method reference.
+     * This is for instructions that does the same thing to different registers for different opcodes.
+     */
+    @FunctionalInterface
     interface RegisterReader {
         int read(Registers registers);
     }
 
     /**
+     * A full list of all the instructions that the CPU can execute with a mapping between the opcode
+     * and a method reference that serves as a factory for the instruction.
+     *
+     * STOP and HALT needs to be overridden as they don't operate on the provided parameters
+     *
      * See this file for reference: http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
+     * (where the instructions can be found is commented on each enum value)
      */
     enum InstructionType implements EnumByValue.ComparableByInt {
         NOP(        0x00, NoOp::new), //Page 97
