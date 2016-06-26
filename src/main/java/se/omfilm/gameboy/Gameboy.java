@@ -6,6 +6,7 @@ import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.controller.Controller;
 import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.io.serial.SerialConnection;
+import se.omfilm.gameboy.io.sound.SoundPlayback;
 import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.util.Runner;
 
@@ -22,10 +23,10 @@ public class Gameboy {
     private final int frequency;
     private boolean running = false;
 
-    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, ROM rom, Speed speed, boolean debug) throws IOException {
+    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, SoundPlayback soundPlayback, ROM rom, Speed speed, boolean debug) throws IOException {
         this.cpu = new CPU(debug);
         this.ppu = new PPU(screen, colorPalette);
-        this.apu = new APU();
+        this.apu = new APU(soundPlayback);
         this.timer = new Timer();
         input = new Input(controller);
         this.memory = new MMU(rom, ppu, apu, cpu.interrupts(), timer, serial, input);

@@ -7,6 +7,7 @@ import se.omfilm.gameboy.io.color.FixedColorPalette;
 import se.omfilm.gameboy.io.controller.NullController;
 import se.omfilm.gameboy.io.screen.NullScreen;
 import se.omfilm.gameboy.io.serial.SerialConnection;
+import se.omfilm.gameboy.io.sound.NullSoundPlayback;
 
 import java.io.IOException;
 import java.util.zip.ZipEntry;
@@ -188,7 +189,7 @@ public class BlarggTestRoms {
 
     private void loadROM(byte[] rom) throws IOException {
         serial = new StringSerialConnection();
-        target = new Gameboy(new NullScreen(), FixedColorPalette.PRESET.MONOCHROME.getPalette(), new NullController(), serial, ROM.load(rom), Gameboy.Speed.UNLIMITED, false);
+        target = new Gameboy(new NullScreen(), FixedColorPalette.PRESET.MONOCHROME.getPalette(), new NullController(), serial, new NullSoundPlayback(), ROM.load(rom), Gameboy.Speed.UNLIMITED, false);
         target.reset();
     }
 

@@ -9,6 +9,7 @@ import se.omfilm.gameboy.io.color.MultiColorPalette;
 import se.omfilm.gameboy.io.controller.GLFWCompositeController;
 import se.omfilm.gameboy.io.screen.GLFWScreen;
 import se.omfilm.gameboy.io.serial.ConsoleSerialConnection;
+import se.omfilm.gameboy.io.sound.NullSoundPlayback;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,7 +33,7 @@ public class Main {
         GLFWCompositeController controller = new GLFWCompositeController();
         GLFWScreen screen = new GLFWScreen(rom.name(), controller, mode);
 
-        new Gameboy(screen, palette, controller, new ConsoleSerialConnection(), rom, speed, false).withBootData(Files.readAllBytes(bootPath)).run();
+        new Gameboy(screen, palette, controller, new ConsoleSerialConnection(), new NullSoundPlayback(), rom, speed, false).withBootData(Files.readAllBytes(bootPath)).run();
     }
 
     private static ColorPalette parsePalette(String arg) {

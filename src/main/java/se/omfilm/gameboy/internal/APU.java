@@ -2,8 +2,16 @@ package se.omfilm.gameboy.internal;
 
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
+import se.omfilm.gameboy.io.sound.SoundPlayback;
 
 public class APU {
+    private static final int BUFFER_SIZE = 2048;
+
+    private final SoundPlayback device;
+    private final byte[] buffer = new byte[BUFFER_SIZE];
+    private int cycleCounter = CPU.FREQUENCY / SoundPlayback.SAMPLING_RATE;
+    private int bufferOffset = 0;
+
     private Sound1 sound1 = new Sound1();
     private Sound2 sound2 = new Sound2();
     private Sound3 sound3 = new Sound3();
@@ -14,8 +22,24 @@ public class APU {
 
     private Memory wavePatternRAM = new ByteArrayMemory(0xFF30, new byte[16]);
 
-    public void step(int cycles, Interrupts interrupts) {
+    public APU(SoundPlayback device) {
+        this.device = device;
+        device.start(); //TODO
+    }
 
+    public void step(int cycles, Interrupts interrupts) {
+        cycleCounter -= cycles;
+        if (cycleCounter < 0) {
+            cycleCounter = CPU.FREQUENCY / SoundPlayback.SAMPLING_RATE;
+
+            buffer[bufferOffset++] = (byte) sound1.frequency.value; //TODO: just testdata
+            buffer[bufferOffset++] = (byte) sound1.frequency.value;
+
+            if (bufferOffset == buffer.length) {
+                device.write(buffer, buffer.length);
+                bufferOffset = 0;
+            }
+        }
     }
 
     public void reset() {
