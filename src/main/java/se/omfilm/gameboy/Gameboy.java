@@ -75,8 +75,10 @@ public class Gameboy {
     }
 
     public enum Speed {
+        HALF(Screen.FREQUENCY / 2),
         NORMAL(Screen.FREQUENCY),
         DOUBLE(Screen.FREQUENCY * 2),
+        TRIPLE(Screen.FREQUENCY * 3),
         UNLIMITED(Integer.MAX_VALUE);
 
         private final int frequency;

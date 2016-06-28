@@ -22,12 +22,12 @@ Made in Java since that's my primary language and I just want to learn about the
 
 ### Blargg test roms
 This is the current status of the unit tests that automatically runs [Blarggs test roms](http://blargg.8bitalley.com/parodius/gb-tests/). Haven't added all, only those that feels most relevant.
- - [ ] cpu_instrs:
+ - [x] cpu_instrs:
      - [x] 01-special
-     - [ ] 02-interrupts: (HALT broken again)
+     - [x] 02-interrupts
      - [x] 03-op sp,hl
      - [x] 04-op r,imm
-     - [x] 05-op rp:
+     - [x] 05-op rp
      - [x] 06-ld r,r
      - [x] 07-jr,jp,call,ret,rst
      - [x] 08-misc instrs

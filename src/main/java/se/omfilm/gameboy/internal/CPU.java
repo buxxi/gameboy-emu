@@ -20,7 +20,7 @@ public class CPU {
     private final StackPointer stackPointer = new StackPointerImpl();
     private final Registers registers = new RegistersImpl();
 
-    private boolean halted = false;
+    private State state = State.NORMAL;
 
     public CPU(boolean debug) {
         this.instructionProvider = debug ? new DebugPrinter.DebuggableInstructionProvider() : new InstructionProvider();
@@ -32,19 +32,19 @@ public class CPU {
     }
 
     private int stop(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        log.warn("stop() called but is not implemented yet");
-        //TODO: handle me, stop until button is pressed
+        state = State.STOPPED;
+        //TODO: make screen go blank during stopped state
         return 4;
     }
 
     private int halt(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        halted = true;
+        state = State.HALTED;
         ((InterruptsImpl) interrupts).interruptMasterEnable = true;
         return 4;
     }
 
     public int step(Memory memory) {
-        if (halted) {
+        if (state != State.NORMAL) {
             return 4;
         }
 
@@ -249,6 +249,9 @@ public class CPU {
         public void request(Interrupt interrupt, boolean requested) {
             if (requested) {
                 requestedInterrupts = requestedInterrupts | interrupt.mask();
+                if (state == State.STOPPED) {
+                    state = State.NORMAL;
+                }
             } else {
                 requestedInterrupts = requestedInterrupts & (~interrupt.mask());
             }
@@ -263,9 +266,13 @@ public class CPU {
         }
 
         private int execute(Interrupt interrupt, Memory memory) {
-            requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask());
+            if (state == State.HALTED) {
+                state = State.NORMAL;
+                return CPU.this.step(memory);
+            }
+
             interruptMasterEnable = false;
-            halted = false;
+            requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask());
             stackPointer.push(memory, programCounter.read());
 
             return interrupt.jump(programCounter);
@@ -300,5 +307,11 @@ public class CPU {
                 throw new UnsupportedOperationException(instructionType + " not implemented");
             };
         }
+    }
+
+    private enum State {
+        NORMAL,
+        STOPPED,
+        HALTED
     }
 }
