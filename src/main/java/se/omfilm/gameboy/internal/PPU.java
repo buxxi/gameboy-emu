@@ -76,6 +76,11 @@ public class PPU {
             return;
         }
 
+        if (cycles == 0) {
+            drawBlankScreen();
+            return;
+        }
+
         cycleCounter -= cycles;
 
         if (cycleCounter <= 0) {
@@ -170,6 +175,15 @@ public class PPU {
         for (int i = 0; i < sprites.length; i++) {
             sprites[i].render();
         }
+    }
+
+    private void drawBlankScreen() {
+        for (int y = 0; y < Screen.HEIGHT; y++) {
+            for (int x = 0; x < Screen.WIDTH; x++) {
+                screen.setPixel(x, y, colorPalette.background(Shade.LIGHTEST));
+            }
+        }
+        screen.draw();
     }
 
     private Tile tileAt(int x, int y, int[][] tileMap) {

@@ -2,6 +2,7 @@ package se.omfilm.gameboy.internal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.omfilm.gameboy.internal.Instruction.InstructionType;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
@@ -15,41 +16,41 @@ public class CPU {
 
     private final InstructionProvider instructionProvider;
     private final Flags flags = new FlagsImpl();
-    private final Interrupts interrupts = new InterruptsImpl();
+    private final InterruptsImpl interrupts = new InterruptsImpl();
     private final ProgramCounter programCounter = new ProgramCounterImpl();
     private final StackPointer stackPointer = new StackPointerImpl();
     private final Registers registers = new RegistersImpl();
 
-    private State state = State.NORMAL;
+    private State state = new NormalState();
 
     public CPU(boolean debug) {
         this.instructionProvider = debug ? new DebugPrinter.DebuggableInstructionProvider() : new InstructionProvider();
-        for (Instruction.InstructionType type : Instruction.InstructionType.values()) {
+        for (InstructionType type : InstructionType.values()) {
             instructionProvider.add(type, type.instruction().get());
         }
-        instructionProvider.add(Instruction.InstructionType.STOP, this::stop);
-        instructionProvider.add(Instruction.InstructionType.HALT, this::halt);
+        instructionProvider.add(InstructionType.STOP, this::stop);
+        instructionProvider.add(InstructionType.HALT, this::halt);
     }
 
     private int stop(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        state = State.STOPPED;
-        //TODO: make screen go blank during stopped state
+        state = new StoppedState();
+        log.info("Going into stopped state");
         return 4;
     }
 
     private int halt(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        state = State.HALTED;
-        ((InterruptsImpl) interrupts).interruptMasterEnable = true;
+        if ((interrupts.requestedInterrupts & interrupts.enabledInterrupts) != 0 && !interrupts.interruptMasterEnable) {
+            log.warn(InstructionType.HALT + " bug triggered, the program counter wont be incremented for the next instruction");
+            state = new HaltBugState();
+        } else {
+            state = new HaltedState();
+        }
+
         return 4;
     }
 
     public int step(Memory memory) {
-        if (state != State.NORMAL) {
-            return 4;
-        }
-
-        Instruction instruction = instructionProvider.read(programCounter, memory);
-        return instruction.execute(memory, this.registers, this.flags, this.programCounter, this.stackPointer);
+        return state.step(memory);
     }
 
     public void reset() {
@@ -109,7 +110,7 @@ public class CPU {
         }
 
         public void setInterruptsDisabled(boolean disabled) {
-            ((InterruptsImpl) interrupts).setInterruptsDisabled(disabled);
+            interrupts.setInterruptsDisabled(disabled);
         }
     }
 
@@ -218,24 +219,11 @@ public class CPU {
                     break;
             }
 
-            if ((!interruptMasterEnable) || (requestedInterrupts & enabledInterrupts) == 0) {
+            if ((requestedInterrupts & enabledInterrupts) == 0) {
                 return 0;
             }
 
-            for (Interrupt interrupt : Interrupt.cachedValues()) {
-                if ((interrupt.mask() & requestedInterrupts & enabledInterrupts) != 0) {
-                    return execute(interrupt, memory);
-                }
-            }
-            return 0;
-        }
-
-        private void setInterruptsDisabled(boolean disabled) {
-            if (!disabled) {
-                enableDelay = 2;
-            } else {
-                interruptMasterEnable = false;
-            }
+            return state.execute(memory);
         }
 
         public void enable(Interrupt interrupt, boolean enabled) {
@@ -249,9 +237,6 @@ public class CPU {
         public void request(Interrupt interrupt, boolean requested) {
             if (requested) {
                 requestedInterrupts = requestedInterrupts | interrupt.mask();
-                if (state == State.STOPPED) {
-                    state = State.NORMAL;
-                }
             } else {
                 requestedInterrupts = requestedInterrupts & (~interrupt.mask());
             }
@@ -265,12 +250,15 @@ public class CPU {
             return (requestedInterrupts & interrupt.mask()) != 0;
         }
 
-        private int execute(Interrupt interrupt, Memory memory) {
-            if (state == State.HALTED) {
-                state = State.NORMAL;
-                return CPU.this.step(memory);
+        private void setInterruptsDisabled(boolean disabled) {
+            if (!disabled) {
+                enableDelay = 2;
+            } else {
+                interruptMasterEnable = false;
             }
+        }
 
+        private int execute(Interrupt interrupt, Memory memory) {
             interruptMasterEnable = false;
             requestedInterrupts = (requestedInterrupts) & ~(interrupt.mask());
             stackPointer.push(memory, programCounter.read());
@@ -280,38 +268,118 @@ public class CPU {
     }
 
     public static class InstructionProvider {
-        private final Map<Instruction.InstructionType, Instruction> instructionMap = new EnumMap<>(Instruction.InstructionType.class);
+        private final Map<InstructionType, Instruction> instructionMap = new EnumMap<>(InstructionType.class);
 
         public Instruction read(ProgramCounter programCounter, Memory memory) {
             return resolveImpl(resolveType(programCounter, memory));
         }
 
-        public void add(Instruction.InstructionType type, Instruction impl) {
+        public void add(InstructionType type, Instruction impl) {
             instructionMap.put(type, impl);
         }
 
-        protected Instruction.InstructionType resolveType(ProgramCounter programCounter, Memory memory) {
-            Instruction.InstructionType instructionType = Instruction.InstructionType.fromOpCode(programCounter.byteOperand(memory));
-            if (instructionType == Instruction.InstructionType.CB) {
-                instructionType = Instruction.InstructionType.fromOpCode(instructionType.opcode(), programCounter.byteOperand(memory));
+        protected InstructionType resolveType(ProgramCounter programCounter, Memory memory) {
+            InstructionType instructionType = InstructionType.fromOpCode(programCounter.byteOperand(memory));
+            if (instructionType == InstructionType.CB) {
+                instructionType = InstructionType.fromOpCode(instructionType.opcode(), programCounter.byteOperand(memory));
             }
             return instructionType;
         }
 
-        protected Instruction resolveImpl(Instruction.InstructionType instructionType) {
+        protected Instruction resolveImpl(InstructionType instructionType) {
             return instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
         }
 
-        private Instruction unmappedInstruction(Instruction.InstructionType instructionType) {
+        private Instruction unmappedInstruction(InstructionType instructionType) {
             return (memory, registers, flags, programCounter, stackPointer) -> {
                 throw new UnsupportedOperationException(instructionType + " not implemented");
             };
         }
     }
 
-    private enum State {
-        NORMAL,
-        STOPPED,
-        HALTED
+    /**
+     * The CPU can have multiple states that affect the executing of instructions and/or interrupts.
+     */
+    private interface State {
+        int step(Memory memory);
+
+        int execute(Memory memory);
+    }
+
+    /**
+     * The normal state for the CPU.
+     * Execute instructions as normal and service requests only when IME is set.
+     */
+    private class NormalState implements State {
+        public int step(Memory memory) {
+            Instruction instruction = instructionProvider.read(programCounter, memory);
+            return instruction.execute(memory, registers, flags, programCounter, stackPointer);
+        }
+
+        public int execute(Memory memory) {
+            if (!interrupts.interruptMasterEnable) {
+                return 0;
+            }
+            for (Interrupts.Interrupt interrupt : Interrupts.Interrupt.cachedValues()) {
+                if ((interrupt.mask() & interrupts.requestedInterrupts & interrupts.enabledInterrupts) != 0) {
+                    return interrupts.execute(interrupt, memory);
+                }
+            }
+            return 0;
+        }
+    }
+
+    /**
+     * The state the CPU is in while waiting for input from the user.
+     * The screen should go to Shade.LIGHTEST while in this state.
+     * Service the interrupt and return to normal when a key has been pressed.
+     * It will get stuck in this state if neither buttons or keys has been set as requested.
+     */
+    private class StoppedState implements State {
+        public int step(Memory memory) {
+            return 0;
+        }
+
+        public int execute(Memory memory) {
+            if (interrupts.requested(Interrupts.Interrupt.JOYPAD)) {
+                state = new NormalState();
+                return state.execute(memory);
+            }
+            return 0;
+        }
+    }
+
+    /**
+     * The state the CPU is is while waiting for any interrupt to be serviced.
+     * Return to normal state when a interrupt is serviced.
+     */
+    private class HaltedState implements State {
+        public int step(Memory memory) {
+            return 4;
+        }
+
+        public int execute(Memory memory) {
+            state = new NormalState();
+            return state.execute(memory);
+        }
+    }
+
+    /**
+     * When trying to go into HALT and interrupts is disabled but a valid one is already queued the CPU goes to this state.
+     * It executes like normally but afterwards the program counter is restored to what is was before and the state is set to Normal again.
+     */
+    private class HaltBugState implements State {
+        public int step(Memory memory) {
+            State normalState = new NormalState();
+            int before = programCounter.read();
+            int cycles = normalState.step(memory);
+            programCounter.write(before);
+            state = normalState;
+            return cycles;
+        }
+
+        public int execute(Memory memory) {
+            return 0;
+        }
     }
 }

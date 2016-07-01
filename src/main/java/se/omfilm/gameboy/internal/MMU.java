@@ -61,11 +61,11 @@ public class MMU implements Memory {
                     return IORegister.fromAddress(address).read(MMU.this);
                 } catch (Exception e) {
                     log.warn(e.getMessage());
-                    return 0;
+                    return 0xFF;
                 }
             default:
                 log.warn("Reading from " + type + " at address " + DebugPrinter.hex(address, 4));
-                return 0;
+                return 0xFF;
         }
     }
 
