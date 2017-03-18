@@ -9,7 +9,7 @@ public class NullSoundPlayback implements SoundPlayback {
 
     }
 
-    public void write(byte[] buffer, int offset) {
+    public void output(int left, int right) {
 
     }
 }

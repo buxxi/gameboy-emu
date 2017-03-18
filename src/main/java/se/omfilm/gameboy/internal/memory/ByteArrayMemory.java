@@ -1,8 +1,8 @@
 package se.omfilm.gameboy.internal.memory;
 
 public class ByteArrayMemory implements Memory {
-    private final int offset;
-    private final byte[] data;
+    protected final int offset;
+    protected final byte[] data;
 
     public ByteArrayMemory(int offset, byte[] data) {
         this.data = data;
@@ -14,15 +14,19 @@ public class ByteArrayMemory implements Memory {
     }
 
     public int readByte(int address) {
-        return unsigned(this.data[address - offset]);
+        return unsigned(this.data[index(address)]);
     }
 
     public void writeByte(int address, int data) {
-        this.data[address - offset] = signed(data);
+        this.data[index(address)] = signed(data);
     }
 
     private int unsigned(byte input) {
         return input & 0xFF;
+    }
+
+    private int index(int address) {
+        return address - offset;
     }
 
     private byte signed(int input) {

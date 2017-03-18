@@ -4,23 +4,23 @@ import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.io.sound.SoundPlayback;
 
-public class APU {
-    private static final int BUFFER_SIZE = 2048;
+import static se.omfilm.gameboy.io.sound.SoundPlayback.SAMPLING_RATE;
 
+public class APU {
+    private static final int WAVE_PATTERNS = 32;
     private final SoundPlayback device;
-    private final byte[] buffer = new byte[BUFFER_SIZE];
-    private int cycleCounter = CPU.FREQUENCY / SoundPlayback.SAMPLING_RATE;
-    private int bufferOffset = 0;
+    private int sampleCounter = CPU.FREQUENCY / SAMPLING_RATE;
+    private int durationCounter = CPU.FREQUENCY / SAMPLING_RATE / 2;
 
     private Sound1 sound1 = new Sound1();
     private Sound2 sound2 = new Sound2();
     private Sound3 sound3 = new Sound3();
     private Sound4 sound4 = new Sound4();
 
-    private Channel channel1 = new Channel();
-    private Channel channel2 = new Channel();
+    private Channel leftChannel = new Channel(Terminal.LEFT);
+    private Channel rightChannel = new Channel(Terminal.RIGHT);
 
-    private Memory wavePatternRAM = new ByteArrayMemory(0xFF30, new byte[16]);
+    private NibbleArrayMemory wavePatternRAM = new NibbleArrayMemory(0xFF30, new byte[WAVE_PATTERNS]);
 
     public APU(SoundPlayback device) {
         this.device = device;
@@ -28,18 +28,59 @@ public class APU {
     }
 
     public void step(int cycles, Interrupts interrupts) {
-        cycleCounter -= cycles;
-        if (cycleCounter < 0) {
-            cycleCounter = CPU.FREQUENCY / SoundPlayback.SAMPLING_RATE;
+        for (int i = 0; i < cycles; i++) {
+            durationCounter--;
+            if (durationCounter < 0) {
+                durationCounter += CPU.FREQUENCY / SAMPLING_RATE / 2;
+                stepDuration();
+            }
 
-            buffer[bufferOffset++] = (byte) sound1.frequency.value; //TODO: just testdata
-            buffer[bufferOffset++] = (byte) sound1.frequency.value;
+            stepFrequency();
 
-            if (bufferOffset == buffer.length) {
-                device.write(buffer, buffer.length);
-                bufferOffset = 0;
+            sampleCounter--;
+            if (sampleCounter < 0) {
+                sampleCounter += CPU.FREQUENCY / SAMPLING_RATE;
+                playSample();
             }
         }
+    }
+
+    private void stepDuration() {
+        if (sound3.enabled && sound3.frequency.mode == SoundMode.COUNTER) {
+            sound3.lengthCounter--;
+            if (sound3.lengthCounter <= 0) {
+                sound3.enabled = false;
+            }
+        }
+    }
+
+    private void stepFrequency() {
+        sound3.frequency.step();
+    }
+
+    private void playSample() {
+        if (anySoundEnabled()) {
+            int left = mixSample(leftChannel);
+            int right = mixSample(rightChannel);
+            device.output(left, right);
+        } else {
+            device.output(0, 0);
+        }
+    }
+
+    private int mixSample(Channel channel) {
+        int amp = 0;
+        amp += sound1.sample(channel.terminal);
+        amp += sound2.sample(channel.terminal);
+        amp += sound3.sample(channel.terminal);
+        amp += sound4.sample(channel.terminal);
+        amp *= channel.volume;
+
+        return amp;
+    }
+
+    private boolean anySoundEnabled() {
+        return sound1.enabled || sound2.enabled || sound3.enabled || sound4.enabled;
     }
 
     public void reset() {
@@ -78,17 +119,17 @@ public class APU {
     }
 
     public int channelControl() {
-        return  (channel1.enabled ? 0b1000_0000 : 0) |
-                (channel1.volume << 4) |
-                (channel2.enabled ? 0b0000_1000 : 0) |
-                channel2.volume;
+        return  (leftChannel.voiceInEnabled ? 0b1000_0000 : 0) |
+                (leftChannel.volume << 4) |
+                (rightChannel.voiceInEnabled ? 0b0000_1000 : 0) |
+                rightChannel.volume;
     }
 
     public void channelControl(int data) {
-        channel1.enabled = (data & 0b1000_0000) != 0;
-        channel1.volume = (data & 0b0111_0000) >> 4;
-        channel2.enabled = (data & 0b0000_1000) != 0;
-        channel2.volume = data & 0b0000_0111;
+        leftChannel.voiceInEnabled = (data & 0b1000_0000) != 0;
+        leftChannel.volume = (data & 0b0111_0000) >> 4;
+        rightChannel.voiceInEnabled = (data & 0b0000_1000) != 0;
+        rightChannel.volume = data & 0b0000_0111;
     }
 
     public int outputTerminal() {
@@ -111,13 +152,12 @@ public class APU {
 
     public void lowFrequency(int soundId, int data) {
         Frequency frequency = frequencyFromId(soundId);
-        frequency.value = (frequency.value & ~0xFF) | data;
+        frequency.update((frequency.value & ~0xFF) | data, frequency.mode);
     }
 
     public void highFrequency(int soundId, int data) {
         Frequency frequency = frequencyFromId(soundId);
-        frequency.value = (frequency.value & ~0xFF00) | ((data & 0b0000_0111) << 8);
-        frequency.mode = (data & 0b0100_0000) != 0 ? SoundMode.COUNTER : SoundMode.CONSECUTIVE;
+        frequency.update((frequency.value & ~0xFF00) | ((data & 0b0000_0111) << 8), (data & 0b0100_0000) != 0 ? SoundMode.COUNTER : SoundMode.CONSECUTIVE);
         if ((data & 0b1000_0000) != 0) {
             soundFromId(soundId).restart();
         }
@@ -149,6 +189,7 @@ public class APU {
             case 1:
                 sound1.waveDuty = data >> 6;
                 sound1.length = data & 0b0011_1111;
+                sound1.lengthCounter = sound1.length;
                 break;
             case 2:
                 sound2.waveDuty = data >> 6;
@@ -306,32 +347,69 @@ public class APU {
         Envelope envelope = new Envelope();
         int waveDuty = 0b10;
         Sweep sweep = new Sweep();
+
+        public int sample(Terminal terminal) {
+            return 0;
+        }
     }
 
     private class Sound2 extends Sound {
         Frequency frequency = new Frequency();
         Envelope envelope = new Envelope();
         int waveDuty = 0b10;
+
+        public int sample(Terminal terminal) {
+            return 0;
+        }
     }
 
     private class Sound3 extends Sound {
         Frequency frequency = new Frequency();
         WavePatternMode wavePatternMode = WavePatternMode.MUTE;
+
+        public int sample(Terminal terminal) {
+            if (enabledFor(terminal)) {
+                return 0;
+            }
+            switch (wavePatternMode) {
+                case MUTE:
+                    return 0;
+                case NORMAL:
+                    return wavePatternRAM.getNibble(frequency.phase);
+                case SHIFTED_ONCE:
+                    return wavePatternRAM.getNibble(frequency.phase) >> 1;
+                case SHIFTED_TWICE:
+                    return wavePatternRAM.getNibble(frequency.phase) >> 2;
+            }
+            return 0;
+        }
     }
 
     private class Sound4 extends Sound {
         Envelope envelope = new Envelope();
         Polynomial polynomial = new Polynomial();
         SoundMode soundMode = SoundMode.COUNTER;
+
+        public int sample(Terminal terminal) {
+            return 0;
+        }
     }
 
     private abstract class Sound {
         boolean enabled = false;
         Terminal terminal = Terminal.NONE;
         int length = 0;
+        int lengthCounter = 0;
 
         public void restart() {
+            lengthCounter = length;
+            enabled = true;
+        }
 
+        public abstract int sample(Terminal terminal);
+
+        protected boolean enabledFor(Terminal terminal) {
+            return enabled && this.terminal != Terminal.STEREO && this.terminal != terminal;
         }
     }
 
@@ -342,13 +420,39 @@ public class APU {
     }
 
     private class Channel {
-        private boolean enabled = false;
+        private final Terminal terminal;
+        private boolean voiceInEnabled = false;
         private int volume = 0;
+
+        public Channel(Terminal terminal) {
+            this.terminal = terminal;
+        }
     }
 
     private class Frequency {
         private int value = 0;
         private SoundMode mode = SoundMode.COUNTER;
+
+        private int counter = 0;
+        private int phase = 0;
+
+        public void update(int value, SoundMode mode) {
+            this.value = value;
+            this.counter = initialCounterValue(value);
+            this.mode = mode;
+        }
+
+        public void step() {
+            counter--;
+            if (counter < 0) {
+                phase = (phase + 1) % WAVE_PATTERNS;
+                counter = initialCounterValue(value);
+            }
+        }
+
+        private int initialCounterValue(int value) {
+            return CPU.FREQUENCY / (64 * (2048 - value));
+        }
     }
 
     private class Envelope {
@@ -369,9 +473,9 @@ public class APU {
 
     private enum Terminal {
         NONE(0b0000_0000),
-        S01 (0b0000_0001),
-        S02 (0b0001_0000),
-        BOTH(0b0001_0001);
+        LEFT(0b0000_0001),
+        RIGHT(0b0001_0000),
+        STEREO(0b0001_0001);
 
         private final int binaryValue;
 
@@ -429,5 +533,32 @@ public class APU {
     private enum PolynomialStep {
         _15_STEPS,
         _7_STEPS
+    }
+
+    /**
+     * The wave table samples is only 4 bit and is written with a whole byte representing 2 samples.
+     * So reuse the ByteArrayMemory and make it twice as big so the nibbles can be accessed without bitshifting.
+     */
+    private class NibbleArrayMemory extends ByteArrayMemory {
+        public NibbleArrayMemory(int offset, byte[] data) {
+            super(offset, data);
+        }
+
+        @Override
+        public int readByte(int address) {
+            int index = (address - offset) * 2;
+            return (this.data[index] << 4) & this.data[index + 1];
+        }
+
+        @Override
+        public void writeByte(int address, int data) {
+            int index = (address - offset) * 2;
+            this.data[index] = (byte) ((data >> 4) & 0b0000_1111);
+            this.data[index + 1] = (byte) (data & 0b0000_1111);
+        }
+
+        public byte getNibble(int index) {
+            return this.data[index];
+        }
     }
 }
