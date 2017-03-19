@@ -10,12 +10,11 @@ public class APU {
     private static final int WAVE_PATTERNS = 32;
     private final SoundPlayback device;
     private int sampleCounter = CPU.FREQUENCY / SAMPLING_RATE;
-    private int durationCounter = CPU.FREQUENCY / SAMPLING_RATE / 2;
 
-    private Sound1 sound1 = new Sound1();
-    private Sound2 sound2 = new Sound2();
-    private Sound3 sound3 = new Sound3();
-    private Sound4 sound4 = new Sound4();
+    private SquareWaveSound sound1 = new SquareWaveSound();
+    private SquareWaveSound sound2 = new SquareWaveSound();
+    private WaveSound sound3 = new WaveSound();
+    private NoiseSound sound4 = new NoiseSound();
 
     private Channel leftChannel = new Channel(Terminal.LEFT);
     private Channel rightChannel = new Channel(Terminal.RIGHT);
@@ -29,12 +28,7 @@ public class APU {
 
     public void step(int cycles, Interrupts interrupts) {
         for (int i = 0; i < cycles; i++) {
-            durationCounter--;
-            if (durationCounter < 0) {
-                durationCounter += CPU.FREQUENCY / SAMPLING_RATE / 2;
-                stepDuration();
-            }
-
+            stepDuration();
             stepFrequency();
 
             sampleCounter--;
@@ -46,15 +40,14 @@ public class APU {
     }
 
     private void stepDuration() {
-        if (sound3.enabled && sound3.frequency.mode == SoundMode.COUNTER) {
-            sound3.lengthCounter--;
-            if (sound3.lengthCounter <= 0) {
-                sound3.enabled = false;
-            }
-        }
+        sound1.duration.step();
+        sound2.duration.step();
+        sound3.duration.step();
     }
 
     private void stepFrequency() {
+        sound1.frequency.step();
+        sound2.frequency.step();
         sound3.frequency.step();
     }
 
@@ -152,19 +145,42 @@ public class APU {
 
     public void lowFrequency(int soundId, int data) {
         Frequency frequency = frequencyFromId(soundId);
-        frequency.update((frequency.value & ~0xFF) | data, frequency.mode);
+        int mergedData = (frequency.value & ~0xFF) | data;
+        switch (soundId) {
+            case 1:
+                sound1.frequency = new Frequency(mergedData, 32, frequency.mode);
+                break;
+            case 2:
+                sound2.frequency = new Frequency(mergedData, 32, frequency.mode);
+                break;
+            case 3:
+                sound3.frequency = new Frequency(mergedData, 64, frequency.mode);
+                break;
+        }
     }
 
     public void highFrequency(int soundId, int data) {
         Frequency frequency = frequencyFromId(soundId);
-        frequency.update((frequency.value & ~0xFF00) | ((data & 0b0000_0111) << 8), (data & 0b0100_0000) != 0 ? SoundMode.COUNTER : SoundMode.CONSECUTIVE);
+        int mergedData = (frequency.value & ~0xFF00) | ((data & 0b0000_0111) << 8);
+        SoundMode mode = (data & 0b0100_0000) != 0 ? SoundMode.USE_DURATION : SoundMode.REPEAT;
+        switch (soundId) {
+            case 1:
+                sound1.frequency = new Frequency(mergedData, 32, mode);
+                break;
+            case 2:
+                sound2.frequency = new Frequency(mergedData, 32, mode);
+                break;
+            case 3:
+                sound3.frequency = new Frequency(mergedData, 64, mode);
+                break;
+        }
         if ((data & 0b1000_0000) != 0) {
             soundFromId(soundId).restart();
         }
     }
 
     public int highFrequency(int soundId) {
-        return frequencyFromId(soundId).mode == SoundMode.COUNTER ? 0b01000_0000 : 0;
+        return frequencyFromId(soundId).mode == SoundMode.USE_DURATION ? 0b01000_0000 : 0;
     }
 
     public void envelope(int soundId, int data) {
@@ -187,19 +203,18 @@ public class APU {
     public void length(int soundId, int data) {
         switch(soundId) {
             case 1:
-                sound1.waveDuty = data >> 6;
-                sound1.length = data & 0b0011_1111;
-                sound1.lengthCounter = sound1.length;
+                sound1.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
+                sound1.duration = new Duration(data & 0b0011_1111);
                 break;
             case 2:
-                sound2.waveDuty = data >> 6;
-                sound2.length = data & 0b0011_1111;
+                sound2.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
+                sound2.duration = new Duration(data & 0b0011_1111);
                 break;
             case 3:
-                sound3.length = data;
+                sound3.duration = new Duration(data);
                 break;
             case 4:
-                sound4.length = data;
+                sound4.duration = new Duration(data);
                 break;
         }
     }
@@ -207,13 +222,13 @@ public class APU {
     public int length(int soundId) {
         switch (soundId) {
             case 1:
-                return sound1.waveDuty << 6 | sound1.length;
+                return sound1.waveDutyMode.bits << 6 | sound1.duration.length;
             case 2:
-                return sound2.waveDuty << 6 | sound2.length;
+                return sound2.waveDutyMode.bits << 6 | sound2.duration.length;
             case 3:
-                return sound3.length;
+                return sound3.duration.length;
             case 4:
-                return sound4.length;
+                return sound4.duration.length;
             default:
                 throw new IllegalArgumentException("Sound " + soundId + " has no length");
         }
@@ -246,7 +261,7 @@ public class APU {
         if (soundId != 4) {
             throw new IllegalArgumentException("Only sound4 can read sound mode.");
         }
-        return sound4.soundMode == SoundMode.COUNTER ? 0b01000_0000 : 0;
+        return sound4.soundMode == SoundMode.USE_DURATION ? 0b01000_0000 : 0;
     }
 
     public int polynomialCounter(int soundId) {
@@ -286,7 +301,7 @@ public class APU {
         if (soundId != 4) {
             throw new IllegalArgumentException("Only sound4 can set sound mode.");
         }
-        sound4.soundMode = (data & 0b0100_0000) != 0 ? SoundMode.COUNTER : SoundMode.CONSECUTIVE;
+        sound4.soundMode = (data & 0b0100_0000) != 0 ? SoundMode.USE_DURATION : SoundMode.REPEAT;
         if ((data & 0b1000_0000) != 0) {
             sound4.restart();
         }
@@ -342,33 +357,43 @@ public class APU {
         }
     }
 
-    private class Sound1 extends Sound {
-        Frequency frequency = new Frequency();
+    private class SquareWaveSound extends Sound {
+        Frequency frequency = new Frequency(0, 32, SoundMode.REPEAT);
         Envelope envelope = new Envelope();
-        int waveDuty = 0b10;
-        Sweep sweep = new Sweep();
+        WaveDutyMode waveDutyMode = WaveDutyMode.HALF;
+        Sweep sweep = new Sweep(); //Should only be used in sound1
 
         public int sample(Terminal terminal) {
+            if (!enabledFor(terminal)) {
+                return 0;
+            }
+
+            int waveData = waveData();
+            return waveData;
+        }
+
+        private int waveData() {
+            int phase = frequency.phase;
+            switch (waveDutyMode) {
+                case HALF:
+                    return phase < 16 ? 1 : 0;
+                case EIGHT:
+                    return phase < 4 ? 1 : 0;
+                case QUARTER:
+                    return phase < 8 ? 1 : 0;
+                case THREE_QUARTERS:
+                    return phase < 24 ? 1 : 0;
+            }
             return 0;
         }
     }
 
-    private class Sound2 extends Sound {
-        Frequency frequency = new Frequency();
-        Envelope envelope = new Envelope();
-        int waveDuty = 0b10;
-
-        public int sample(Terminal terminal) {
-            return 0;
-        }
-    }
-
-    private class Sound3 extends Sound {
-        Frequency frequency = new Frequency();
+    private class WaveSound extends Sound {
+        Frequency frequency = new Frequency(0, 64, SoundMode.REPEAT);
         WavePatternMode wavePatternMode = WavePatternMode.MUTE;
 
         public int sample(Terminal terminal) {
-            if (enabledFor(terminal)) {
+            if (!enabledFor(terminal)) {
                 return 0;
             }
             switch (wavePatternMode) {
@@ -385,10 +410,10 @@ public class APU {
         }
     }
 
-    private class Sound4 extends Sound {
+    private class NoiseSound extends Sound {
         Envelope envelope = new Envelope();
         Polynomial polynomial = new Polynomial();
-        SoundMode soundMode = SoundMode.COUNTER;
+        SoundMode soundMode = SoundMode.USE_DURATION;
 
         public int sample(Terminal terminal) {
             return 0;
@@ -398,18 +423,34 @@ public class APU {
     private abstract class Sound {
         boolean enabled = false;
         Terminal terminal = Terminal.NONE;
-        int length = 0;
-        int lengthCounter = 0;
+        Duration duration = new Duration(0);
 
         public void restart() {
-            lengthCounter = length;
+            duration.reset();
             enabled = true;
         }
 
         public abstract int sample(Terminal terminal);
 
         protected boolean enabledFor(Terminal terminal) {
-            return enabled && this.terminal != Terminal.STEREO && this.terminal != terminal;
+            return enabled && (this.terminal == Terminal.STEREO || this.terminal == terminal);
+        }
+    }
+
+    private class Duration {
+        private int length;
+        private int lengthCounter;
+
+        public Duration(int length) {
+            this.length = length;
+        }
+
+        public void reset() {
+            lengthCounter = length;
+        }
+
+        public void step() {
+
         }
     }
 
@@ -431,15 +472,20 @@ public class APU {
 
     private class Frequency {
         private int value = 0;
-        private SoundMode mode = SoundMode.COUNTER;
+        private SoundMode mode = SoundMode.USE_DURATION;
 
         private int counter = 0;
         private int phase = 0;
+        private int multiplier;
 
-        public void update(int value, SoundMode mode) {
+        public Frequency(int value, int multiplier, SoundMode mode) {
             this.value = value;
-            this.counter = initialCounterValue(value);
             this.mode = mode;
+            this.multiplier = multiplier;
+            this.counter = initialCounterValue(value);
+            if (mode == SoundMode.USE_DURATION) {
+                throw new UnsupportedOperationException("Created frequency with " + value + " that should use duration, not implemented yet");
+            }
         }
 
         public void step() {
@@ -451,7 +497,8 @@ public class APU {
         }
 
         private int initialCounterValue(int value) {
-            return CPU.FREQUENCY / (64 * (2048 - value));
+            int hz = CPU.FREQUENCY / (multiplier * (2048 - value));
+            return (CPU.FREQUENCY / hz / WAVE_PATTERNS);
         }
     }
 
@@ -499,8 +546,8 @@ public class APU {
     }
 
     private enum SoundMode {
-        COUNTER,
-        CONSECUTIVE
+        USE_DURATION,
+        REPEAT
     }
 
     private enum WavePatternMode {
@@ -522,6 +569,28 @@ public class APU {
                 }
             }
             throw new IllegalArgumentException("Invalid WavePatternMode value: " + input);
+        }
+    }
+
+    private enum WaveDutyMode {
+        EIGHT(0b00),
+        QUARTER(0b01),
+        HALF(0b10),
+        THREE_QUARTERS(0b11);
+
+        private final int bits;
+
+        WaveDutyMode(int bits) {
+            this.bits = bits;
+        }
+
+        public static WaveDutyMode fromValue(int input) {
+            for (WaveDutyMode w : values()) {
+                if (w.bits == input) {
+                    return w;
+                }
+            }
+            throw new IllegalArgumentException("Invalid WaveDutyMode value: " + input);
         }
     }
 
