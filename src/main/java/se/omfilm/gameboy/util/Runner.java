@@ -24,4 +24,28 @@ public class Runner {
             counter += callable.call();
         }
     }
+
+    public static Counter counter(Runnable runnable, int interval) {
+        return new Counter(runnable, interval);
+    }
+
+    public static class Counter {
+        private final Runnable runnable;
+        private final int interval;
+        private int counter;
+
+        public Counter(Runnable runnable, int interval) {
+            this.runnable = runnable;
+            this.interval = interval;
+            this.counter = interval;
+        }
+
+        public void step() {
+            counter--;
+            if (counter < 0) {
+                counter = interval;
+                runnable.run();
+            }
+        }
+    }
 }

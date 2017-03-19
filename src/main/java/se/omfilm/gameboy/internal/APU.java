@@ -1,25 +1,34 @@
 package se.omfilm.gameboy.internal;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.io.sound.SoundPlayback;
+import se.omfilm.gameboy.util.Runner.Counter;
+
 
 import static se.omfilm.gameboy.io.sound.SoundPlayback.SAMPLING_RATE;
+import static se.omfilm.gameboy.util.Runner.counter;
 
 public class APU {
+    private static final Logger log = LoggerFactory.getLogger(APU.class);
     private static final int WAVE_PATTERNS = 32;
+
     private final SoundPlayback device;
-    private int sampleCounter = CPU.FREQUENCY / SAMPLING_RATE;
 
-    private SquareWaveSound sound1 = new SquareWaveSound();
-    private SquareWaveSound sound2 = new SquareWaveSound();
-    private WaveSound sound3 = new WaveSound();
-    private NoiseSound sound4 = new NoiseSound();
+    private final Counter sampleCounter = counter(this::playSample, CPU.FREQUENCY / SAMPLING_RATE);
+    private final Counter envelopeCounter = counter(this::stepEnvelopes, CPU.FREQUENCY / 64);
 
-    private Channel leftChannel = new Channel(Terminal.LEFT);
-    private Channel rightChannel = new Channel(Terminal.RIGHT);
+    private final SquareWaveSound sound1 = new SquareWaveSound();
+    private final SquareWaveSound sound2 = new SquareWaveSound();
+    private final WaveSound sound3 = new WaveSound();
+    private final NoiseSound sound4 = new NoiseSound();
 
-    private NibbleArrayMemory wavePatternRAM = new NibbleArrayMemory(0xFF30, new byte[WAVE_PATTERNS]);
+    private final Channel leftChannel = new Channel(Terminal.LEFT);
+    private final Channel rightChannel = new Channel(Terminal.RIGHT);
+
+    private final NibbleArrayMemory wavePatternRAM = new NibbleArrayMemory(0xFF30, new byte[WAVE_PATTERNS]);
 
     public APU(SoundPlayback device) {
         this.device = device;
@@ -30,12 +39,8 @@ public class APU {
         for (int i = 0; i < cycles; i++) {
             stepDuration();
             stepFrequency();
-
-            sampleCounter--;
-            if (sampleCounter < 0) {
-                sampleCounter += CPU.FREQUENCY / SAMPLING_RATE;
-                playSample();
-            }
+            envelopeCounter.step();
+            sampleCounter.step();
         }
     }
 
@@ -43,6 +48,15 @@ public class APU {
         sound1.duration.step();
         sound2.duration.step();
         sound3.duration.step();
+    }
+
+    private void stepEnvelopes() {
+        if (sound1.enabled) {
+            sound1.envelope.step();
+        }
+        if (sound2.enabled) {
+            sound2.envelope.step();
+        }
     }
 
     private void stepFrequency() {
@@ -68,6 +82,7 @@ public class APU {
         amp += sound3.sample(channel.terminal);
         amp += sound4.sample(channel.terminal);
         amp *= channel.volume;
+        amp = amp / 5; //TODO: better way to do this?
 
         return amp;
     }
@@ -175,7 +190,7 @@ public class APU {
                 break;
         }
         if ((data & 0b1000_0000) != 0) {
-            soundFromId(soundId).restart();
+            log.warn("Restarting sound " + soundId + " not implemented");
         }
     }
 
@@ -184,20 +199,30 @@ public class APU {
     }
 
     public void envelope(int soundId, int data) {
-        Envelope envelope = envelopeFromId(soundId);
-        envelope.initialVolume = (data & 0b1111_0000) >> 4;
-        envelope.direction = (data & 0b0000_1000) != 0 ? EnvelopeDirection.AMPLIFY : EnvelopeDirection.ATTENUATE;
-        envelope.sweepCount = (data & 0b000_0111);
-        if (envelope.sweepCount == 0) {
-            envelope.stop();
+        int initialVolume = (data & 0b1111_0000) >> 4;
+        EnvelopeDirection direction = (data & 0b0000_1000) != 0 ? EnvelopeDirection.INCREASE : EnvelopeDirection.DECREASE;
+        int steps = (data & 0b000_0111);
+
+        Envelope envelope = new Envelope(initialVolume, direction, steps);
+
+        switch (soundId) {
+            case 1:
+                sound1.envelope = envelope;
+                break;
+            case 2:
+                sound2.envelope = envelope;
+                break;
+            case 4:
+                sound4.envelope = envelope;
+                break;
         }
     }
 
     public int envelope(int soundId) {
         Envelope envelope = envelopeFromId(soundId);
         return  (envelope.initialVolume << 4) |
-                (envelope.direction == EnvelopeDirection.AMPLIFY ? 0b0000_1000 : 0) |
-                envelope.sweepCount;
+                (envelope.direction == EnvelopeDirection.INCREASE ? 0b0000_1000 : 0) |
+                envelope.steps;
     }
 
     public void length(int soundId, int data) {
@@ -303,7 +328,7 @@ public class APU {
         }
         sound4.soundMode = (data & 0b0100_0000) != 0 ? SoundMode.USE_DURATION : SoundMode.REPEAT;
         if ((data & 0b1000_0000) != 0) {
-            sound4.restart();
+            log.warn("Restarting sound " + soundId + " not implemented");
         }
     }
 
@@ -342,24 +367,9 @@ public class APU {
         }
     }
 
-    private Sound soundFromId(int soundId) {
-        switch (soundId) {
-            case 1:
-                return sound1;
-            case 2:
-                return sound2;
-            case 3:
-                return sound3;
-            case 4:
-                return sound4;
-            default:
-                throw new IllegalArgumentException("Sound " + soundId + " not found");
-        }
-    }
-
     private class SquareWaveSound extends Sound {
         Frequency frequency = new Frequency(0, 32, SoundMode.REPEAT);
-        Envelope envelope = new Envelope();
+        Envelope envelope = new Envelope(0, EnvelopeDirection.DECREASE, 0);
         WaveDutyMode waveDutyMode = WaveDutyMode.HALF;
         Sweep sweep = new Sweep(); //Should only be used in sound1
 
@@ -368,8 +378,7 @@ public class APU {
                 return 0;
             }
 
-            int waveData = waveData();
-            return waveData;
+            return waveData() * envelope.volume();
         }
 
         private int waveData() {
@@ -411,7 +420,7 @@ public class APU {
     }
 
     private class NoiseSound extends Sound {
-        Envelope envelope = new Envelope();
+        Envelope envelope = new Envelope(0, EnvelopeDirection.DECREASE, 0);
         Polynomial polynomial = new Polynomial();
         SoundMode soundMode = SoundMode.USE_DURATION;
 
@@ -425,11 +434,6 @@ public class APU {
         Terminal terminal = Terminal.NONE;
         Duration duration = new Duration(0);
 
-        public void restart() {
-            duration.reset();
-            enabled = true;
-        }
-
         public abstract int sample(Terminal terminal);
 
         protected boolean enabledFor(Terminal terminal) {
@@ -439,14 +443,9 @@ public class APU {
 
     private class Duration {
         private int length;
-        private int lengthCounter;
 
         public Duration(int length) {
             this.length = length;
-        }
-
-        public void reset() {
-            lengthCounter = length;
         }
 
         public void step() {
@@ -471,29 +470,30 @@ public class APU {
     }
 
     private class Frequency {
-        private int value = 0;
-        private SoundMode mode = SoundMode.USE_DURATION;
+        private final int value;
+        private final SoundMode mode;
 
-        private int counter = 0;
+        private final Counter counter;
+        private final int multiplier;
+
         private int phase = 0;
-        private int multiplier;
 
         public Frequency(int value, int multiplier, SoundMode mode) {
             this.value = value;
             this.mode = mode;
             this.multiplier = multiplier;
-            this.counter = initialCounterValue(value);
+            this.counter = counter(this::increasePhase, initialCounterValue(value));
             if (mode == SoundMode.USE_DURATION) {
-                throw new UnsupportedOperationException("Created frequency with " + value + " that should use duration, not implemented yet");
+                log.warn("Created frequency with " + value + " that should use duration, not implemented yet");
             }
         }
 
         public void step() {
-            counter--;
-            if (counter < 0) {
-                phase = (phase + 1) % WAVE_PATTERNS;
-                counter = initialCounterValue(value);
-            }
+            counter.step();
+        }
+
+        private void increasePhase() {
+            phase = (phase + 1) % WAVE_PATTERNS;
         }
 
         private int initialCounterValue(int value) {
@@ -503,12 +503,39 @@ public class APU {
     }
 
     private class Envelope {
-        private int initialVolume = 0;
-        private EnvelopeDirection direction = EnvelopeDirection.ATTENUATE;
-        private int sweepCount = 0;
+        private final int initialVolume;
+        private final EnvelopeDirection direction;
+        private final int steps;
 
-        public void stop() {
+        private final Counter stepCounter;
+        private int volume;
 
+        public Envelope(int initialVolume, EnvelopeDirection direction, int steps) {
+            this.initialVolume = initialVolume;
+            this.direction = direction;
+            this.steps = steps;
+
+            this.stepCounter = counter(this::changeVolume, steps);
+            this.volume = initialVolume;
+        }
+
+        public void step() {
+            if (steps == 0) {
+                return;
+            }
+            stepCounter.step();
+        }
+
+        public int volume() {
+            return volume;
+        }
+
+        private void changeVolume() {
+            if (direction == EnvelopeDirection.INCREASE && volume < 0xF) {
+                volume++;
+            } else if (direction == EnvelopeDirection.DECREASE && volume > 0){
+                volume--;
+            }
         }
     }
 
@@ -541,8 +568,8 @@ public class APU {
     }
 
     private enum EnvelopeDirection {
-        ATTENUATE,
-        AMPLIFY
+        DECREASE,
+        INCREASE
     }
 
     private enum SoundMode {
