@@ -47,5 +47,9 @@ public class Runner {
                 runnable.run();
             }
         }
+
+        public void reset() {
+            this.counter = interval;
+        }
     }
 }

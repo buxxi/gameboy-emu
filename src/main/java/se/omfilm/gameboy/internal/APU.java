@@ -91,6 +91,30 @@ public class APU {
         return sound1.enabled || sound2.enabled || sound3.enabled || sound4.enabled;
     }
 
+    private void restartSound(int soundId) {
+        switch (soundId) {
+            case 1:
+                sound1.frequency.reset();
+                sound1.envelope.reset();
+                sound1.duration.reset();
+                sound1.enabled = true;
+                break;
+            case 2:
+                sound2.frequency.reset();
+                sound2.envelope.reset();
+                sound2.duration.reset();
+                sound2.enabled = true;
+                break;
+            case 3:
+                sound3.frequency.reset();
+                sound3.duration.reset();
+                sound3.enabled = true;
+                break;
+            default:
+                log.warn("Restarting sound " + soundId + " not implemented");
+        }
+    }
+
     public void reset() {
         sweep(1, 0x80);
         length(1, 0xBF);
@@ -190,7 +214,7 @@ public class APU {
                 break;
         }
         if ((data & 0b1000_0000) != 0) {
-            log.warn("Restarting sound " + soundId + " not implemented");
+            restartSound(soundId);
         }
     }
 
@@ -229,17 +253,17 @@ public class APU {
         switch(soundId) {
             case 1:
                 sound1.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
-                sound1.duration = new Duration(data & 0b0011_1111);
+                sound1.duration = new Duration(data & 0b0011_1111, DurationMode.SHORT, sound1);
                 break;
             case 2:
                 sound2.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
-                sound2.duration = new Duration(data & 0b0011_1111);
+                sound2.duration = new Duration(data & 0b0011_1111, DurationMode.SHORT, sound2);
                 break;
             case 3:
-                sound3.duration = new Duration(data);
+                sound3.duration = new Duration(data, DurationMode.LONG, sound3);
                 break;
             case 4:
-                sound4.duration = new Duration(data);
+                sound4.duration = new Duration(data, DurationMode.SHORT, sound4);
                 break;
         }
     }
@@ -328,7 +352,7 @@ public class APU {
         }
         sound4.soundMode = (data & 0b0100_0000) != 0 ? SoundMode.USE_DURATION : SoundMode.REPEAT;
         if ((data & 0b1000_0000) != 0) {
-            log.warn("Restarting sound " + soundId + " not implemented");
+            restartSound(soundId);
         }
     }
 
@@ -432,24 +456,55 @@ public class APU {
     private abstract class Sound {
         boolean enabled = false;
         Terminal terminal = Terminal.NONE;
-        Duration duration = new Duration(0);
+        Duration duration = new Duration(0, DurationMode.SHORT, this);
 
         public abstract int sample(Terminal terminal);
 
         protected boolean enabledFor(Terminal terminal) {
             return enabled && (this.terminal == Terminal.STEREO || this.terminal == terminal);
         }
+
+        protected void disable() {
+            this.enabled = false;
+        }
     }
 
     private class Duration {
-        private int length;
+        private final int length;
+        private final DurationMode mode;
+        private final Counter counter;
 
-        public Duration(int length) {
+        private boolean enabled;
+
+        public Duration(int length, DurationMode mode, Sound sound) {
             this.length = length;
+            this.mode = mode;
+            this.counter = counter(() -> {
+                this.enabled = false;
+                sound.disable();
+            }, initialCounterValue());
+            this.enabled = length != 0;
         }
 
         public void step() {
+            if (!enabled) {
+                return;
+            }
 
+            counter.step();
+        }
+
+        public void reset() {
+            this.counter.reset();
+            this.enabled = length != 0;
+        }
+
+        private int initialCounterValue() {
+            if (mode == DurationMode.LONG) {
+                return (256 - length) * (CPU.FREQUENCY / 2);
+            } else {
+                return (64 - length) * (CPU.FREQUENCY / 256);
+            }
         }
     }
 
@@ -482,21 +537,23 @@ public class APU {
             this.value = value;
             this.mode = mode;
             this.multiplier = multiplier;
-            this.counter = counter(this::increasePhase, initialCounterValue(value));
-            if (mode == SoundMode.USE_DURATION) {
-                log.warn("Created frequency with " + value + " that should use duration, not implemented yet");
-            }
+            this.counter = counter(this::increasePhase, initialCounterValue());
         }
 
         public void step() {
             counter.step();
         }
 
+        public void reset() {
+            counter.reset();
+            phase = 0;
+        }
+
         private void increasePhase() {
             phase = (phase + 1) % WAVE_PATTERNS;
         }
 
-        private int initialCounterValue(int value) {
+        private int initialCounterValue() {
             int hz = CPU.FREQUENCY / (multiplier * (2048 - value));
             return (CPU.FREQUENCY / hz / WAVE_PATTERNS);
         }
@@ -524,6 +581,11 @@ public class APU {
                 return;
             }
             stepCounter.step();
+        }
+
+        public void reset() {
+            stepCounter.reset();
+            volume = initialVolume;
         }
 
         public int volume() {
@@ -575,6 +637,11 @@ public class APU {
     private enum SoundMode {
         USE_DURATION,
         REPEAT
+    }
+
+    private enum DurationMode {
+        SHORT,
+        LONG
     }
 
     private enum WavePatternMode {
