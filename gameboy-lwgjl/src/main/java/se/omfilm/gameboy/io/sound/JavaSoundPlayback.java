@@ -7,7 +7,7 @@ import javax.sound.sampled.SourceDataLine;
 
 //TODO: use lwjgl for sound too
 public class JavaSoundPlayback implements SoundPlayback {
-    private static final int AUDIO_DELAY = 100;
+    private static final int AUDIO_DELAY = 10;
     private SourceDataLine line;
 
     private final byte[] outputBuffer = new byte[(int) (((double) SAMPLING_RATE * CHANNELS) / 1000 * AUDIO_DELAY)];
@@ -17,7 +17,7 @@ public class JavaSoundPlayback implements SoundPlayback {
         AudioFormat format = new AudioFormat(SAMPLING_RATE, BITS_PER_SAMPLE, CHANNELS, true, true);
         try {
             line = AudioSystem.getSourceDataLine(format);
-            line.open();
+            line.open(format, outputBuffer.length);
             line.start();
         } catch (LineUnavailableException e) {
             e.printStackTrace(); //TODO
@@ -35,6 +35,7 @@ public class JavaSoundPlayback implements SoundPlayback {
         bufferPosition = bufferPosition % outputBuffer.length;
 
         if (bufferPosition == 0) {
+            //TODO: handle this blocking when running in unlimited speed, is it possible to play the music not at a fixed rate?
             line.write(outputBuffer, 0, outputBuffer.length);
         }
     }

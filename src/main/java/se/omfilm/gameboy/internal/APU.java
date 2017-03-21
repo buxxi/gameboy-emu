@@ -330,6 +330,9 @@ public class APU {
         sound1.sweep.time = (data & 0b0111_0000) >> 4;
         sound1.sweep.mode = (data & 0b0000_1000) != 0 ? SweepMode.SUBTRACTION : SweepMode.ADDITION;
         sound1.sweep.shifts = data & 0b0000_0111;
+        if (sound1.sweep.time > 0) {
+            log.warn("Sound sweep time set to " + sound1.sweep.time + ", not implemented");
+        }
     }
 
     public void soundControl(int soundId, int data) {
