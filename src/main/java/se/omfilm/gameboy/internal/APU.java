@@ -19,6 +19,7 @@ public class APU {
 
     private final Counter sampleCounter = counter(this::playSample, CPU.FREQUENCY / SAMPLING_RATE);
     private final Counter envelopeCounter = counter(this::stepEnvelopes, CPU.FREQUENCY / 64);
+    private final Counter sweepCounter = counter(this::stepSweep, CPU.FREQUENCY / 128);
 
     private final SquareWaveSound sound1 = new SquareWaveSound();
     private final SquareWaveSound sound2 = new SquareWaveSound();
@@ -40,14 +41,21 @@ public class APU {
             stepDuration();
             stepFrequency();
             envelopeCounter.step();
+            sweepCounter.step();
             sampleCounter.step();
         }
     }
 
     private void stepDuration() {
-        sound1.duration.step();
-        sound2.duration.step();
-        sound3.duration.step();
+        if (sound1.enabled) {
+            sound1.duration.step();
+        }
+        if (sound2.enabled) {
+            sound2.duration.step();
+        }
+        if (sound3.enabled) {
+            sound3.duration.step();
+        }
     }
 
     private void stepEnvelopes() {
@@ -59,10 +67,22 @@ public class APU {
         }
     }
 
+    private void stepSweep() {
+        if (sound1.enabled) {
+            sound1.sweep.step();
+        }
+    }
+
     private void stepFrequency() {
-        sound1.frequency.step();
-        sound2.frequency.step();
-        sound3.frequency.step();
+        if (sound1.enabled) {
+            sound1.frequency.step();
+        }
+        if (sound2.enabled) {
+            sound2.frequency.step();
+        }
+        if (sound3.enabled) {
+            sound3.frequency.step();
+        }
     }
 
     private void playSample() {
@@ -327,12 +347,10 @@ public class APU {
         if (soundId != 1) {
             throw new IllegalArgumentException("Only sound1 can sweep.");
         }
-        sound1.sweep.time = (data & 0b0111_0000) >> 4;
-        sound1.sweep.mode = (data & 0b0000_1000) != 0 ? SweepMode.SUBTRACTION : SweepMode.ADDITION;
-        sound1.sweep.shifts = data & 0b0000_0111;
-        if (sound1.sweep.time > 0) {
-            log.warn("Sound sweep time set to " + sound1.sweep.time + ", not implemented");
-        }
+        int time = (data & 0b0111_0000) >> 4;
+        SweepMode mode = (data & 0b0000_1000) != 0 ? SweepMode.SUBTRACTION : SweepMode.ADDITION;
+        int shifts = data & 0b0000_0111;
+        sound1.sweep = new Sweep(time, mode, shifts);
     }
 
     public void soundControl(int soundId, int data) {
@@ -398,7 +416,7 @@ public class APU {
         Frequency frequency = new Frequency(0, 32, SoundMode.REPEAT);
         Envelope envelope = new Envelope(0, EnvelopeDirection.DECREASE, 0);
         WaveDutyMode waveDutyMode = WaveDutyMode.HALF;
-        Sweep sweep = new Sweep(); //Should only be used in sound1
+        Sweep sweep = new Sweep(0, SweepMode.ADDITION, 0); //Should only be used in sound1
 
         public int sample(Terminal terminal) {
             if (!enabledFor(terminal)) {
@@ -512,9 +530,43 @@ public class APU {
     }
 
     private class Sweep {
-        int time = 0;
-        SweepMode mode = SweepMode.ADDITION;
-        int shifts = 0;
+        private final int time;
+        private final SweepMode mode;
+        private final int shifts;
+
+        private final Counter sweepCounter;
+        private int shadowFrequency;
+
+        public Sweep(int time, SweepMode mode, int shifts) {
+            this.time = time;
+            this.mode = mode;
+            this.shifts = shifts;
+            this.sweepCounter = counter(this::changeFrequency, time);
+            if (time != 0) {
+                shadowFrequency = sound1.frequency.value;
+            }
+        }
+
+        public void step() {
+            if (time != 0) {
+                sweepCounter.step();
+            }
+        }
+
+        private void changeFrequency() {
+            int change = shadowFrequency >> shifts;
+            if (mode == SweepMode.ADDITION) {
+                shadowFrequency += change;
+            } else {
+                shadowFrequency -= change;
+            }
+
+            if (shadowFrequency > 2047) {
+                sound1.enabled = false;
+            } else {
+                sound1.frequency = new Frequency(shadowFrequency, sound1.frequency.multiplier, sound1.frequency.mode);
+            }
+        }
     }
 
     private class Channel {
