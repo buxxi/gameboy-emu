@@ -120,7 +120,7 @@ public class MMU implements Memory {
 
     private int invalidRead(IORegister reg) {
         log.warn("Reading from " + reg + " is not supported");
-        return 0;
+        return 0xFF;
     }
 
     private void invalidWrite(IORegister reg, int data) {
@@ -250,7 +250,7 @@ public class MMU implements Memory {
         ),
         SOUND_4_LENGTH(0xFF20,
                 (mmu, reg) -> mmu.apu.length(4),
-                (mmu, reg, data) -> mmu.apu.length(4)
+                (mmu, reg, data) -> mmu.apu.length(4, data)
         ),
         SOUND_4_ENVELOPE(0xFF21,
                 (mmu, reg) -> mmu.apu.envelope(4),

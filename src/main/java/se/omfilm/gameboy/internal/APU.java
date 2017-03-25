@@ -7,7 +7,6 @@ import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.io.sound.SoundPlayback;
 import se.omfilm.gameboy.util.Runner.Counter;
 
-
 import static se.omfilm.gameboy.io.sound.SoundPlayback.SAMPLING_RATE;
 import static se.omfilm.gameboy.util.Runner.counter;
 
@@ -157,17 +156,46 @@ public class APU {
     }
 
     public int soundEnabled() {
-        return  (sound4.enabled ? 0b0000_1000 : 0) |
-                (sound3.enabled ? 0b0000_0100 : 0) |
-                (sound2.enabled ? 0b0000_0010 : 0) |
-                (sound1.enabled ? 0b0000_0001 : 0);
+        return  (sound1.enabled | sound2.enabled | sound3.enabled | sound4.enabled ? 0b1000_0000 : 0) |
+                0b0111_0000 |
+                (sound4.enabled && sound4.terminal != Terminal.NONE ? 0b0000_1000 : 0) |
+                (sound3.enabled && sound3.terminal != Terminal.NONE ? 0b0000_0100 : 0) |
+                (sound2.enabled && sound2.terminal != Terminal.NONE ? 0b0000_0010 : 0) |
+                (sound1.enabled && sound1.terminal != Terminal.NONE ? 0b0000_0001 : 0);
     }
 
     public void soundEnabled(int data) {
-        sound1.enabled = (data & 0b1000_0000) != 0;
-        sound2.enabled = (data & 0b1000_0000) != 0;
-        sound3.enabled = (data & 0b1000_0000) != 0;
-        sound4.enabled = (data & 0b1000_0000) != 0;
+        if ((data & 0b1000_0000) == 0) {
+            sweep(1, 0x00);
+            length(1, 0x00);
+            envelope(1, 0x00);
+            lowFrequency(1, 0x00);
+            highFrequency(1, 0x00);
+            length(2, 0x00);
+            envelope(2, 0x00);
+            lowFrequency(2, 0x00);
+            highFrequency(2, 0x00);
+            soundControl(3, 0x00);
+            length(3, 0x00);
+            outputLevel(3, 0x00);
+            lowFrequency(3, 0x00);
+            highFrequency(3, 0x00);
+            //length(4, 0x00); //TODO: why should not this be affected for test rom?
+            envelope(4, 0x00);
+            polynomialCounter(4, 0x00);
+            soundMode(4, 0x00);
+            channelControl(0x00);
+            outputTerminal(0x00);
+            sound1.enabled = false;
+            sound2.enabled = false;
+            sound3.enabled = false;
+            sound4.enabled = false;
+        } else {
+            sound1.enabled = true;
+            sound2.enabled = true;
+            //sound3.enabled = true;
+            sound4.enabled = true;
+        }
     }
 
     public int channelControl() {
@@ -178,6 +206,9 @@ public class APU {
     }
 
     public void channelControl(int data) {
+        if (!anySoundEnabled()) {
+            return;
+        }
         leftChannel.voiceInEnabled = (data & 0b1000_0000) != 0;
         leftChannel.volume = (data & 0b0111_0000) >> 4;
         rightChannel.voiceInEnabled = (data & 0b0000_1000) != 0;
@@ -192,6 +223,9 @@ public class APU {
     }
 
     public void outputTerminal(int data) {
+        if (!anySoundEnabled()) {
+            return;
+        }
         sound4.terminal = Terminal.fromBinary((data & 0b1000_1000) >> 3);
         sound3.terminal = Terminal.fromBinary((data & 0b0100_0100) >> 2);
         sound2.terminal = Terminal.fromBinary((data & 0b0010_0010) >> 1);
@@ -203,6 +237,10 @@ public class APU {
     }
 
     public void lowFrequency(int soundId, int data) {
+        if (!anySoundEnabled()) {
+            return;
+        }
+
         Frequency frequency = frequencyFromId(soundId);
         int mergedData = (frequency.value & ~0xFF) | data;
         switch (soundId) {
@@ -219,6 +257,9 @@ public class APU {
     }
 
     public void highFrequency(int soundId, int data) {
+        if (!anySoundEnabled()) {
+            return;
+        }
         Frequency frequency = frequencyFromId(soundId);
         int mergedData = (frequency.value & ~0xFF00) | ((data & 0b0000_0111) << 8);
         SoundMode mode = (data & 0b0100_0000) != 0 ? SoundMode.USE_DURATION : SoundMode.REPEAT;
@@ -239,10 +280,14 @@ public class APU {
     }
 
     public int highFrequency(int soundId) {
-        return frequencyFromId(soundId).mode == SoundMode.USE_DURATION ? 0b01000_0000 : 0;
+        return frequencyFromId(soundId).mode == SoundMode.USE_DURATION ? 0b1111_1111 : 0b1011_1111;
     }
 
     public void envelope(int soundId, int data) {
+        if (!anySoundEnabled()) {
+            return;
+        }
+
         int initialVolume = (data & 0b1111_0000) >> 4;
         EnvelopeDirection direction = (data & 0b0000_1000) != 0 ? EnvelopeDirection.INCREASE : EnvelopeDirection.DECREASE;
         int steps = (data & 0b000_0111);
@@ -270,6 +315,10 @@ public class APU {
     }
 
     public void length(int soundId, int data) {
+        if (!anySoundEnabled()) {
+            return;
+        }
+
         switch(soundId) {
             case 1:
                 sound1.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
@@ -291,13 +340,13 @@ public class APU {
     public int length(int soundId) {
         switch (soundId) {
             case 1:
-                return sound1.waveDutyMode.bits << 6 | sound1.duration.length;
+                return sound1.waveDutyMode.bits << 6 | 0b0011_1111;
             case 2:
-                return sound2.waveDutyMode.bits << 6 | sound2.duration.length;
+                return sound2.waveDutyMode.bits << 6 | 0b0011_1111;
             case 3:
-                return sound3.duration.length;
+                return sound3.enabled ? sound3.duration.length : 0b1111_1111;
             case 4:
-                return sound4.duration.length;
+                return sound4.enabled && sound4.terminal != Terminal.NONE ? (sound4.duration.length | 0b1100_0000) : 0xFF;
             default:
                 throw new IllegalArgumentException("Sound " + soundId + " has no length");
         }
@@ -307,7 +356,8 @@ public class APU {
         if (soundId != 1) {
             throw new IllegalArgumentException("Only sound1 can sweep.");
         }
-        return  (sound1.sweep.time << 4) |
+        return  0b1000_0000 |
+                (sound1.sweep.time << 4) |
                 (sound1.sweep.mode == SweepMode.SUBTRACTION ? 0b0000_1000 : 0) |
                 sound1.sweep.shifts;
     }
@@ -316,21 +366,21 @@ public class APU {
         if (soundId != 3) {
             throw new IllegalArgumentException("Only sound3 can turn on/off.");
         }
-        return sound3.enabled ? 0b1000_0000 : 0;
+        return sound3.enabled ? 0b1111_1111 : 0b0111_1111;
     }
 
     public int outputLevel(int soundId) {
         if (soundId != 3) {
             throw new IllegalArgumentException("Only sound3 can read output levels.");
         }
-        return sound3.wavePatternMode.bits << 5;
+        return sound3.wavePatternMode.bits << 5 | 0b1001_1111;
     }
 
     public int soundMode(int soundId) {
         if (soundId != 4) {
             throw new IllegalArgumentException("Only sound4 can read sound mode.");
         }
-        return sound4.soundMode == SoundMode.USE_DURATION ? 0b01000_0000 : 0;
+        return sound4.soundMode == SoundMode.USE_DURATION ? 0b1111_1111 : 0b1011_1111;
     }
 
     public int polynomialCounter(int soundId) {
@@ -347,6 +397,10 @@ public class APU {
         if (soundId != 1) {
             throw new IllegalArgumentException("Only sound1 can sweep.");
         }
+        if (!anySoundEnabled()) {
+            return;
+        }
+
         int time = (data & 0b0111_0000) >> 4;
         SweepMode mode = (data & 0b0000_1000) != 0 ? SweepMode.SUBTRACTION : SweepMode.ADDITION;
         int shifts = data & 0b0000_0111;
@@ -357,12 +411,19 @@ public class APU {
         if (soundId != 3) {
             throw new IllegalArgumentException("Only sound3 can turn on/off.");
         }
+        if (!anySoundEnabled()) {
+            return;
+        }
+
         sound3.enabled = (data & 0b1000_0000) != 0;
     }
 
     public void outputLevel(int soundId, int data) {
         if (soundId != 3) {
             throw new IllegalArgumentException("Only sound3 can set output levels.");
+        }
+        if (!anySoundEnabled()) {
+            return;
         }
         sound3.wavePatternMode = WavePatternMode.fromValue((data & 0b0110_0000) >> 5);
     }
@@ -371,6 +432,10 @@ public class APU {
         if (soundId != 4) {
             throw new IllegalArgumentException("Only sound4 can set sound mode.");
         }
+        if (!anySoundEnabled()) {
+            return;
+        }
+
         sound4.soundMode = (data & 0b0100_0000) != 0 ? SoundMode.USE_DURATION : SoundMode.REPEAT;
         if ((data & 0b1000_0000) != 0) {
             restartSound(soundId);
@@ -381,6 +446,10 @@ public class APU {
         if (soundId != 4) {
             throw new IllegalArgumentException("Only sound4 can set polynomial counter.");
         }
+        if (!anySoundEnabled()) {
+            return;
+        }
+
         sound4.polynomial.shiftClock = (data & 0b1111_0000) >> 4;
         sound4.polynomial.step = (data & 0b0000_1000) != 0 ? PolynomialStep._7_STEPS : PolynomialStep._15_STEPS;
         sound4.polynomial.dividingRatio = (data & 0b0000_0111);
@@ -765,7 +834,7 @@ public class APU {
         @Override
         public int readByte(int address) {
             int index = (address - offset) * 2;
-            return (this.data[index] << 4) & this.data[index + 1];
+            return (this.data[index] << 4) | this.data[index + 1];
         }
 
         @Override
