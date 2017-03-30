@@ -11,12 +11,16 @@ import se.omfilm.gameboy.io.screen.GLFWScreen;
 import se.omfilm.gameboy.io.serial.ConsoleSerialConnection;
 import se.omfilm.gameboy.io.sound.JavaSoundPlayback;
 import se.omfilm.gameboy.io.sound.NullSoundPlayback;
+import se.omfilm.gameboy.io.sound.ResampledSoundPlayback;
+import se.omfilm.gameboy.io.sound.SoundPlayback;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
+
+import static se.omfilm.gameboy.io.sound.ResampledSoundPlayback.Filter.FLAT;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -34,7 +38,16 @@ public class Main {
         GLFWCompositeController controller = new GLFWCompositeController();
         GLFWScreen screen = new GLFWScreen(rom.name(), controller, mode);
 
-        new Gameboy(screen, palette, controller, new ConsoleSerialConnection(), new JavaSoundPlayback(), rom, speed, false).withBootData(Files.readAllBytes(bootPath)).run();
+        SoundPlayback sound = createSound(speed);
+
+        new Gameboy(screen, palette, controller, new ConsoleSerialConnection(), sound, rom, speed, false).withBootData(Files.readAllBytes(bootPath)).run();
+    }
+
+    private static SoundPlayback createSound(Gameboy.Speed speed) {
+        if (speed == Gameboy.Speed.NORMAL) {
+            return new ResampledSoundPlayback(new JavaSoundPlayback(), FLAT);
+        }
+        return new NullSoundPlayback();
     }
 
     private static ColorPalette parsePalette(String arg) {

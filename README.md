@@ -9,8 +9,8 @@ Made in Java since that's my primary language and I just want to learn about the
  - [x] Make an OpenGL implementation for the display
  - [x] Joypad support
  - [x] Save game support
+ - [x] Some kind of sound support
  - [ ] Pass all test roms (see below)
- - [ ] Some kind of sound support
  - [ ] Simple GUI for loading ROMs and configure the emulator
  - [ ] Being able to play through a full game without any problems
  

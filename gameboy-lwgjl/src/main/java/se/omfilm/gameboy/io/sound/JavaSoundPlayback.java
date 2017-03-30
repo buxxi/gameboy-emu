@@ -10,11 +10,11 @@ public class JavaSoundPlayback implements SoundPlayback {
     private static final int AUDIO_DELAY = 10;
     private SourceDataLine line;
 
-    private final byte[] outputBuffer = new byte[(int) (((double) SAMPLING_RATE * CHANNELS) / 1000 * AUDIO_DELAY)];
+    private final byte[] outputBuffer = new byte[(int) (((double) sampleRate()) / 1000 * AUDIO_DELAY) * CHANNELS];
     private int bufferPosition = 0;
 
     public void start() {
-        AudioFormat format = new AudioFormat(SAMPLING_RATE, BITS_PER_SAMPLE, CHANNELS, true, true);
+        AudioFormat format = new AudioFormat(sampleRate(), BITS_PER_SAMPLE, CHANNELS, true, true);
         try {
             line = AudioSystem.getSourceDataLine(format);
             line.open(format, outputBuffer.length);
@@ -38,5 +38,10 @@ public class JavaSoundPlayback implements SoundPlayback {
             //TODO: handle this blocking when running in unlimited speed, is it possible to play the music not at a fixed rate?
             line.write(outputBuffer, 0, outputBuffer.length);
         }
+    }
+
+    @Override
+    public int sampleRate() {
+        return 49152; // 8192 * 6
     }
 }
