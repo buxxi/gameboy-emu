@@ -7,6 +7,7 @@ import se.omfilm.gameboy.util.DebugPrinter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.BiFunction;
 
 public class ROM {
     private static final Logger log = LoggerFactory.getLogger(ROM.class);
@@ -34,10 +35,7 @@ public class ROM {
     public static ROM load(byte[] data) throws IOException {
         ROM rom = new ROM(data);
         if (data[0x146] != 0) {
-            throw new IllegalArgumentException("Can only handle the original GameBoy");
-        }
-        if (rom.romType.value > 3) {
-            throw new IllegalArgumentException("Can't handle rom of type " + rom.romType);
+            log.warn("ROM uses Super GameBoy functions, this is not implemented");
         }
 
         if (rom.romSize.expectedSize != data.length) {
@@ -47,7 +45,7 @@ public class ROM {
     }
 
     public ROM saveRAM(Path path) {
-        if (romType == ROMType.ROM_MBC1_RAM_BATTERY) {
+        if (romType.battery) {
             ramPath = path;
         }
         return this;
@@ -64,16 +62,12 @@ public class ROM {
         return BankableRAM.inMemory(ramSize.banks);
     }
 
-    public Memory createROMBanks(BankableRAM ramBanks) {
+    public Memory createROMBanks() {
+        BankableRAM ramBanks = createRAMBanks();
         ByteArrayMemory rom = new ByteArrayMemory(data);
-        switch (romType) {
-            case ROM_ONLY:
-                return new ReadOnlyMemory(rom);
-            case ROM_MBC1:
-            case ROM_MBC1_RAM:
-            case ROM_MBC1_RAM_BATTERY:
-                return new MBC1(rom, ramBanks);
-            default:
+        try {
+            return romType.create(rom, ramBanks);
+        } catch (Exception e) {
                 throw new IllegalArgumentException("Can't create ROM from type: " + romType);
         }
     }
@@ -89,6 +83,14 @@ public class ROM {
 
     public String name() {
         return name;
+    }
+
+    private static Memory readOnly(ByteArrayMemory rom, BankableRAM ramBanks) {
+        return new ReadOnlyMemory(rom);
+    }
+
+    private static Memory unsupported(ByteArrayMemory rom, BankableRAM ramBanks) {
+        throw new UnsupportedOperationException("Unsupported memory type");
     }
 
     private static String readGameName(byte[] rom) {
@@ -155,37 +157,45 @@ public class ROM {
     }
 
     private enum ROMType {
-        ROM_ONLY(                       0x00),
-        ROM_MBC1(                       0x01),
-        ROM_MBC1_RAM(                   0x02),
-        ROM_MBC1_RAM_BATTERY(           0x03),
-        ROM_MBC2(                       0x05),
-        ROM_MBC2_BATTERY(               0x06),
-        ROM_RAM(                        0x08),
-        ROM_RAM_BATTERY(                0x09),
-        ROM_MMM01(                      0x0B),
-        ROM_MMM01_SRAM(                 0x0C),
-        ROM_MMM0_SRAM_BATTERY(          0x0D),
-        ROM_MBC3_TIMER_BATTERY(         0x0F),
-        ROM_MBC3_TIMER_RAM_BATTERY(     0x10),
-        ROM_MBC3(                       0x11),
-        ROM_MBC3_RAM(                   0x12),
-        ROM_MBC3_RAM_BATTERY(           0x13),
-        ROM_MBC5(                       0x19),
-        ROM_MBC5_RAM(                   0x1A),
-        ROM_MBC5_RAM_BATTERY(           0x1B),
-        ROM_MBC5_RUMBLE(                0x1C),
-        ROM_MBC5_RUMBLE_SRAM(           0x1D),
-        ROM_MBC5_RUMBLE_SRAM_BATTERY(   0x1E),
-        POCKET_CAMERA(                  0x1F),
-        BANDAI_TAMA5(                   0xFD),
-        HUDSON_HUC3(                    0xFE),
-        HUDSOM_HUC1(                    0xFF);
+        ROM_ONLY(                       0x00, false, ROM::readOnly),
+        ROM_MBC1(                       0x01, false, MBC1::new),
+        ROM_MBC1_RAM(                   0x02, false, MBC1::new),
+        ROM_MBC1_RAM_BATTERY(           0x03, true, MBC1::new),
+        ROM_MBC2(                       0x05, false, MBC2::new),
+        ROM_MBC2_BATTERY(               0x06, true, MBC2::new),
+        ROM_RAM(                        0x08, false, ROM::unsupported),
+        ROM_RAM_BATTERY(                0x09, true, ROM::unsupported),
+        ROM_MMM01(                      0x0B, false, ROM::unsupported),
+        ROM_MMM01_SRAM(                 0x0C, false, ROM::unsupported),
+        ROM_MMM0_SRAM_BATTERY(          0x0D, true, ROM::unsupported),
+        ROM_MBC3_TIMER_BATTERY(         0x0F, true, MBC3::new),
+        ROM_MBC3_TIMER_RAM_BATTERY(     0x10, true, MBC3::new),
+        ROM_MBC3(                       0x11, false, MBC3::new),
+        ROM_MBC3_RAM(                   0x12, false, MBC3::new),
+        ROM_MBC3_RAM_BATTERY(           0x13, true, MBC3::new),
+        ROM_MBC5(                       0x19, false, MBC5::new),
+        ROM_MBC5_RAM(                   0x1A, false, MBC5::new),
+        ROM_MBC5_RAM_BATTERY(           0x1B, true, MBC5::new),
+        ROM_MBC5_RUMBLE(                0x1C, false, MBC5::new),
+        ROM_MBC5_RUMBLE_SRAM(           0x1D, false, MBC5::new),
+        ROM_MBC5_RUMBLE_SRAM_BATTERY(   0x1E, true, MBC5::new),
+        POCKET_CAMERA(                  0x1F, false, ROM::unsupported),
+        BANDAI_TAMA5(                   0xFD, false, ROM::unsupported),
+        HUDSON_HUC3(                    0xFE, false, ROM::unsupported),
+        HUDSOM_HUC1(                    0xFF, false, ROM::unsupported);
 
         private final int value;
+        private final boolean battery;
+        private final BiFunction<ByteArrayMemory, BankableRAM, Memory> creator;
 
-        ROMType(int value) {
+        ROMType(int value, boolean battery, BiFunction<ByteArrayMemory, BankableRAM, Memory> creator) {
             this.value = value;
+            this.battery = battery;
+            this.creator = creator;
+        }
+
+        public Memory create(ByteArrayMemory rom, BankableRAM ramBanks) {
+            return creator.apply(rom, ramBanks);
         }
 
         public static ROMType fromValue(int value) {

@@ -2,7 +2,6 @@ package se.omfilm.gameboy.internal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.omfilm.gameboy.internal.memory.BankableRAM;
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.internal.memory.ROM;
@@ -22,11 +21,9 @@ public class MMU implements Memory {
     private final Timer timer;
     private final SerialConnection serial;
     private final Memory ram;
-    private final BankableRAM switchableRam;
 
     public MMU(ROM rom, PPU ppu, APU apu, Interrupts interrupts, Timer timer, SerialConnection serial, Input input) {
-        this.switchableRam = rom.createRAMBanks();
-        this.rom = rom.createROMBanks(switchableRam);
+        this.rom = rom.createROMBanks();
         this.apu = apu;
         this.interrupts = interrupts;
         this.timer = timer;
@@ -43,12 +40,11 @@ public class MMU implements Memory {
         switch (type) {
             case ROM_BANK0:
             case ROM_SWITCHABLE_BANKS:
+            case RAM_BANKS:
                 return rom.readByte(address);
             case RAM:
             case ECHO_RAM:
                 return ram.readByte(virtualAddress);
-            case RAM_BANKS:
-                return switchableRam.readByte(virtualAddress);
             case ZERO_PAGE:
                 return zeroPage.readByte(virtualAddress);
             case VIDEO_RAM:
@@ -75,6 +71,7 @@ public class MMU implements Memory {
         switch (type) {
             case ROM_BANK0:
             case ROM_SWITCHABLE_BANKS:
+            case RAM_BANKS:
                 rom.writeByte(address, data);
                 return;
             case VIDEO_RAM:
@@ -93,9 +90,6 @@ public class MMU implements Memory {
                 } catch (Exception e) {
                     log.warn(e.getMessage());
                 }
-                return;
-            case RAM_BANKS:
-                switchableRam.writeByte(virtualAddress, data);
                 return;
             case RAM:
             case ECHO_RAM:

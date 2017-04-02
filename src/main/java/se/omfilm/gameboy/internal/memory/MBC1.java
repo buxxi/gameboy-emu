@@ -19,8 +19,10 @@ public class MBC1 implements Memory {
     }
 
     public int readByte(int address) {
-        if (address >= MMU.MemoryType.ROM_SWITCHABLE_BANKS.from) {
+        if (MMU.MemoryType.ROM_SWITCHABLE_BANKS.compareTo(address) == 0) {
             return rom.readByte(address + ((currentROMBank - 1) * MMU.MemoryType.ROM_SWITCHABLE_BANKS.size()));
+        } else if (MMU.MemoryType.RAM_BANKS.compareTo(address) == 0) {
+            return ramBanks.readByte(address - MMU.MemoryType.RAM_BANKS.from);
         }
         return rom.readByte(address);
     }
@@ -47,6 +49,8 @@ public class MBC1 implements Memory {
             } else {
                 mode = MemoryMode._16MBIT_ROM_8KBYTE_RAM;
             }
+        } else if (MMU.MemoryType.RAM_BANKS.compareTo(address) == 0) {
+            ramBanks.writeByte(address - MMU.MemoryType.RAM_BANKS.from, data);
         } else {
             log.warn("Can't write " + DebugPrinter.hex(data, 2) + " to " + getClass().getSimpleName() + "@" + DebugPrinter.hex(address, 4));
         }
