@@ -32,11 +32,12 @@ public class JavaSoundPlayback implements SoundPlayback {
     public void output(int left, int right) {
         outputBuffer[bufferPosition++] = (byte) left;
         outputBuffer[bufferPosition++] = (byte) right;
-        bufferPosition = bufferPosition % outputBuffer.length;
 
-        if (bufferPosition == 0) {
-            //TODO: handle this blocking when running in unlimited speed, is it possible to play the music not at a fixed rate?
-            line.write(outputBuffer, 0, outputBuffer.length);
+        if (line.available() >= bufferPosition) {
+            line.write(outputBuffer, 0, bufferPosition);
+            bufferPosition = 0;
+        } else {
+            bufferPosition = bufferPosition % outputBuffer.length;
         }
     }
 

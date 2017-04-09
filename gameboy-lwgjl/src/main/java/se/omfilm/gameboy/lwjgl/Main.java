@@ -44,7 +44,7 @@ public class Main {
     }
 
     private static SoundPlayback createSound(Gameboy.Speed speed) {
-        if (speed == Gameboy.Speed.NORMAL) {
+        if (speed != Gameboy.Speed.HALF) { //As long as we're playing it on normal or faster speed we can just drop samples
             return new ResampledSoundPlayback(new JavaSoundPlayback(), FLAT);
         }
         return new NullSoundPlayback();
