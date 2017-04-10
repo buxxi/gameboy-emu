@@ -50,7 +50,7 @@ public class CPU {
     }
 
     public int step(Memory memory) {
-        return state.step(memory);
+        return state.step(memory) + interrupts.step(memory);
     }
 
     public void reset() {
@@ -208,7 +208,7 @@ public class CPU {
         private int enabledInterrupts = 0;
         private int requestedInterrupts = 0;
 
-        public int step(Memory memory) {
+        private int step(Memory memory) {
             switch (enableDelay) {
                 case 2:
                     enableDelay--;

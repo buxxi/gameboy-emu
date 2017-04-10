@@ -1,7 +1,5 @@
 package se.omfilm.gameboy.internal;
 
-import se.omfilm.gameboy.internal.memory.Memory;
-
 /**
  * Represents the interrupt handling for the CPU.
  * Requesting a interrupt when it is enabled makes the CPUs program counter jump to specific memory address for that interrupt.
@@ -13,8 +11,6 @@ import se.omfilm.gameboy.internal.memory.Memory;
  * otherwise it can be requested by the code by writing to the correct memory address (see MMU.IORegister).
  */
 public interface Interrupts {
-    int step(Memory memory);
-
     void enable(Interrupt interrupt, boolean enabled);
 
     void request(Interrupt interrupt, boolean requested);
