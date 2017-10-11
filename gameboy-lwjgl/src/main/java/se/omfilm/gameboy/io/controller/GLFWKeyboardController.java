@@ -33,7 +33,11 @@ public class GLFWKeyboardController implements Controller, WindowChangeListener 
         }
     }
 
-    private boolean checkKey(int glfwKeyW) {
-        return GLFW.glfwGetKey(window, glfwKeyW) == 1;
+    public void update() {
+
+    }
+
+    private boolean checkKey(int keyId) {
+        return GLFW.glfwGetKey(window, keyId) == 1;
     }
 }

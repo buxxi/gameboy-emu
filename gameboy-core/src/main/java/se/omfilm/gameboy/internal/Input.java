@@ -19,6 +19,7 @@ public class Input {
 
     public void step(int cycles, Interrupts interrupts) {
         int controllerState = this.controllerState;
+        controller.update();
         if (checkButtons) {
             controllerState = buttonsState();
         } else if (checkDirections) {

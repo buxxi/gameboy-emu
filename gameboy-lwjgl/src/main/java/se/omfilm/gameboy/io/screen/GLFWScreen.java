@@ -106,18 +106,18 @@ public class GLFWScreen implements Screen {
     }
 
     private void renderToGL() {
+        GL11.glBegin(GL11.GL_QUADS);
         for (int y = 0; y < Screen.HEIGHT; y++) {
             for (int x = 0; x < Screen.WIDTH; x++) {
                 int index = index(x, y);
                 GL11.glColor3ub(pixelBuffer[index], pixelBuffer[index + 1], pixelBuffer[index + 2]);
-                GL11.glBegin(GL11.GL_QUADS);
                 GL11.glVertex2f(x, y);
                 GL11.glVertex2f(x, y + 1);
                 GL11.glVertex2f(x + 1, y + 1);
                 GL11.glVertex2f(x + 1, y);
-                GL11.glEnd();
             }
         }
+        GL11.glEnd();
     }
 
     private void initializeGL() {

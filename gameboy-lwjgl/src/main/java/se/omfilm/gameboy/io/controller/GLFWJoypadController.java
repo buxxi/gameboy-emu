@@ -1,49 +1,54 @@
 package se.omfilm.gameboy.io.controller;
 
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWGamepadState;
 import se.omfilm.gameboy.io.screen.WindowChangeListener;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
+import static org.lwjgl.glfw.GLFW.*;
 
 public class GLFWJoypadController implements Controller, WindowChangeListener {
     private final int joypad;
+    private final GLFWGamepadState state;
 
     public GLFWJoypadController(int joypad) {
         this.joypad = joypad;
+        state = GLFWGamepadState.create();
     }
 
     public boolean isPressed(Button button) {
+
         switch (button) {
             case UP:
-                return checkAxis(7, -1) || checkAxis(1, -1);
+                return checkAxis(GLFW_GAMEPAD_AXIS_LEFT_Y, -1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_UP);
             case DOWN:
-                return checkAxis(7, 1) || checkAxis(1, 1);
+                return checkAxis(GLFW_GAMEPAD_AXIS_LEFT_Y, 1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_DOWN);
             case LEFT:
-                return checkAxis(6, -1) || checkAxis(0, -1);
+                return checkAxis(GLFW_GAMEPAD_AXIS_LEFT_X, -1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_LEFT);
             case RIGHT:
-                return checkAxis(6, 1) || checkAxis(0, 1);
+                return checkAxis(GLFW_GAMEPAD_AXIS_LEFT_X, 1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_RIGHT);
             case START:
-                return checkButton(7);
+                return checkButton(GLFW_GAMEPAD_BUTTON_START);
             case SELECT:
-                return checkButton(6);
+                return checkButton(GLFW_GAMEPAD_BUTTON_BACK);
             case A:
-                return checkButton(0);
+                return checkButton(GLFW_GAMEPAD_BUTTON_A);
             case B:
-                return checkButton(1) || checkButton(2);
+                return checkButton(GLFW_GAMEPAD_BUTTON_X) || checkButton(GLFW_GAMEPAD_BUTTON_B);
             default:
                 return false;
         }
     }
 
+    public void update() {
+        GLFW.glfwGetGamepadState(joypad, state);
+    }
+
     private boolean checkAxis(int axisIndex, int expectedValue) {
-        FloatBuffer buffer = GLFW.glfwGetJoystickAxes(joypad);
-        return Math.round(buffer.get(axisIndex)) == expectedValue;
+        return Math.round(state.axes(axisIndex)) == expectedValue;
     }
 
     private boolean checkButton(int buttonIndex) {
-        ByteBuffer buffer = GLFW.glfwGetJoystickButtons(joypad);
-        return buffer.get(buttonIndex) == 1;
+        return state.buttons(buttonIndex) == 1;
     }
 
     public void windowChanged(long window) {
