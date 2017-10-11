@@ -13,7 +13,7 @@ import se.omfilm.gameboy.util.Runner;
 import java.io.IOException;
 
 public class Gameboy {
-    private final MMU memory;
+    protected final MMU memory;
     private final CPU cpu;
     private final PPU ppu;
     private final APU apu;
@@ -63,7 +63,7 @@ public class Gameboy {
         return running;
     }
 
-    private Integer step() {
+    protected Integer step() {
         Interrupts interrupts = cpu.interrupts();
         int cycles = cpu.step(memory);
         input.step(cycles, interrupts);
