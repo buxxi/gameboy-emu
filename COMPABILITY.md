@@ -1,0 +1,45 @@
+### Blargg Test ROMS result
+ - [x] cpu_instrs:
+	- [x] 01-special
+	- [x] 02-interrupts
+	- [x] 03-op sp,hl
+	- [x] 04-op r,imm
+	- [x] 05 op rp
+	- [x] 06-ld r,r
+	- [x] 07-jr,jp,call,ret,rst
+	- [x] 08-misc instrs
+	- [x] 09-op r,r
+	- [x] 10-bit ops
+	- [x] 11-op a,(hl)
+ - [ ] dmg_sound:
+	- [x] 01-registers
+	- [ ] 02-len ctr
+	- [ ] 03-trigger
+	- [ ] 04-sweep
+	- [ ] 05-sweep details
+	- [ ] 06-overflow on trigger
+	- [ ] 07-len sweep period sync
+	- [ ] 08-len ctr during power
+	- [ ] 09-wave read while on
+	- [ ] 10-wave trigger while on
+	- [ ] 11-regs after power
+	- [ ] 12-wave write while on
+ - [ ] halt_bug:
+	- [ ] halt bug
+ - [x] instr_timing:
+	- [x] instr_timing
+ - [ ] interrupt_time:
+	- [ ] interrupt time
+ - [ ] mem_timing:
+	- [ ] 01-read_timing
+	- [ ] 02-write_timing
+	- [ ] 03-modify_timing
+ - [ ] oam_bug:
+	- [ ] 1-lcd sync
+	- [x] 2-causes
+	- [ ] 3-non_causes
+	- [ ] 4-scanline_timing
+	- [x] 5-timing_bug
+	- [ ] 6-timing_no_bug
+	- [ ] 7-timing_effect
+	- [ ] 8-instr_effect

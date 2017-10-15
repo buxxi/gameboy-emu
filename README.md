@@ -21,37 +21,7 @@ Made in Java since that's my primary language and I just want to learn about the
  - Serial connection support locally or over internet
 
 ### Blargg test roms
-This is the current status of the unit tests that automatically runs [Blarggs test roms](http://blargg.8bitalley.com/parodius/gb-tests/). Run the tests to get the actual errors.
- - [x] cpu_instrs
- - [x] instr_timing
- - [ ] mem_timing:
-    - [ ] 01-read timing
-    - [ ] 02-write timing
-    - [ ] 03-modify timing
- - [ ] dmg_sound:
-    - [x] 01-registers
-    - [ ] 02-len ctr
-    - [ ] 03-trigger
-    - [ ] 04-sweep
-    - [ ] 05-sweep details
-    - [ ] 06-overflow on trigger
-    - [ ] 07-len sweep period sync
-    - [ ] 08-len ctr during power
-    - [ ] 09-wave read while on
-    - [ ] 10-wave trigger while on
-    - [ ] 11-regs after power
-    - [ ] 12-wave write while on
- - [ ] halt_bug
- - [ ] interrupt_time
- - [ ] oam_bug:
-    - [ ] 1-lcd_sync
-    - [x] 2-causes
-    - [ ] 3-non_causes
-    - [ ] 4-scanline_timing
-    - [x] 5-timing_bug
-    - [ ] 6-timing_no_bug
-    - [ ] 7-timing_effect
-    - [ ] 8-instr_effect
+See [COMPABILITY.md](COMPABILITY.md) for a detailed report how well this emulator passes the Blargg test roms
 
 ### References, Thanks!
  - http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
