@@ -10,8 +10,6 @@ import se.omfilm.gameboy.io.sound.SoundPlayback;
 import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.util.Runner;
 
-import java.io.IOException;
-
 public class Gameboy {
     protected final MMU memory;
     private final CPU cpu;
@@ -23,7 +21,7 @@ public class Gameboy {
     private final int frequency;
     private boolean running = false;
 
-    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, SoundPlayback soundPlayback, ROM rom, Speed speed, boolean debug) throws IOException {
+    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, SoundPlayback soundPlayback, ROM rom, Speed speed, boolean debug) {
         this.cpu = new CPU(debug);
         this.ppu = new PPU(screen, colorPalette);
         this.apu = new APU(soundPlayback);
@@ -69,7 +67,7 @@ public class Gameboy {
         input.step(cycles, interrupts);
         timer.step(cycles, interrupts);
         ppu.step(cycles, interrupts);
-        apu.step(cycles, interrupts);
+        apu.step(cycles);
         return cycles;
     }
 

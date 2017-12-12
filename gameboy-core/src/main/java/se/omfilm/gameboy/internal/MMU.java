@@ -187,76 +187,76 @@ public class MMU implements Memory {
                 (mmu, reg, data) -> mmu.requestedInterrupts(data)
         ),
         SOUND_1_SWEEP(0xFF10,
-                (mmu, reg) -> mmu.apu.sweep(1),
-                (mmu, reg, data) -> mmu.apu.sweep(1, data)
+                (mmu, reg) -> mmu.apu.sweep(APU.SoundId.SOUND1_SQUARE_WAVE),
+                (mmu, reg, data) -> mmu.apu.sweep(APU.SoundId.SOUND1_SQUARE_WAVE, data)
         ),
         SOUND_1_LENGTH_PATTERN_DUTY(0xFF11,
-                (mmu, reg) -> mmu.apu.length(1),
-                (mmu, reg, data) -> mmu.apu.length(1, data)
+                (mmu, reg) -> mmu.apu.length(APU.SoundId.SOUND1_SQUARE_WAVE),
+                (mmu, reg, data) -> mmu.apu.length(APU.SoundId.SOUND1_SQUARE_WAVE, data)
         ),
         SOUND_1_ENVELOPE(0xFF12,
-                (mmu, reg) -> mmu.apu.envelope(1),
-                (mmu, reg, data) -> mmu.apu.envelope(1, data)
+                (mmu, reg) -> mmu.apu.envelope(APU.SoundId.SOUND1_SQUARE_WAVE),
+                (mmu, reg, data) -> mmu.apu.envelope(APU.SoundId.SOUND1_SQUARE_WAVE, data)
         ),
         SOUND_1_FREQUENCY_LOW(0xFF13,
                 MMU::invalidRead,
-                (mmu, reg, data) -> mmu.apu.lowFrequency(1, data)
+                (mmu, reg, data) -> mmu.apu.lowFrequency(APU.SoundId.SOUND1_SQUARE_WAVE, data)
         ),
         SOUND_1_FREQUENCY_HIGH(0xFF14,
-                (mmu, reg) -> mmu.apu.highFrequency(1),
-                (mmu, reg, data) -> mmu.apu.highFrequency(1, data)
+                (mmu, reg) -> mmu.apu.highFrequency(APU.SoundId.SOUND1_SQUARE_WAVE),
+                (mmu, reg, data) -> mmu.apu.highFrequency(APU.SoundId.SOUND1_SQUARE_WAVE, data)
         ),
         SOUND_2_LENGTH_PATTERN_DUTY(0xFF16,
-                (mmu, reg) -> mmu.apu.length(2),
-                (mmu, reg, data) -> mmu.apu.length(2, data)
+                (mmu, reg) -> mmu.apu.length(APU.SoundId.SOUND2_SQUARE_WAVE),
+                (mmu, reg, data) -> mmu.apu.length(APU.SoundId.SOUND2_SQUARE_WAVE, data)
         ),
         SOUND_2_ENVELOPE(0xFF17,
-                (mmu, reg) -> mmu.apu.envelope(2),
-                (mmu, reg, data) -> mmu.apu.envelope(2, data)
+                (mmu, reg) -> mmu.apu.envelope(APU.SoundId.SOUND2_SQUARE_WAVE),
+                (mmu, reg, data) -> mmu.apu.envelope(APU.SoundId.SOUND2_SQUARE_WAVE, data)
         ),
         SOUND_2_FREQUENCY_LOW(0xFF18,
                 MMU::invalidRead,
-                (mmu, reg, data) -> mmu.apu.lowFrequency(2, data)
+                (mmu, reg, data) -> mmu.apu.lowFrequency(APU.SoundId.SOUND2_SQUARE_WAVE, data)
         ),
         SOUND_2_FREQUENCY_HIGH(0xFF19,
-                (mmu, reg) -> mmu.apu.highFrequency(2),
-                (mmu, reg, data) -> mmu.apu.highFrequency(2, data)
+                (mmu, reg) -> mmu.apu.highFrequency(APU.SoundId.SOUND2_SQUARE_WAVE),
+                (mmu, reg, data) -> mmu.apu.highFrequency(APU.SoundId.SOUND2_SQUARE_WAVE, data)
         ),
         SOUND_3_ON_OFF(0xFF1A,
-                (mmu, reg) -> mmu.apu.soundControl(3),
-                (mmu, reg, data) -> mmu.apu.soundControl(3, data)
+                (mmu, reg) -> mmu.apu.soundControl(APU.SoundId.SOUND3_WAVE),
+                (mmu, reg, data) -> mmu.apu.soundControl(APU.SoundId.SOUND3_WAVE, data)
         ),
         SOUND_3_LENGTH(0xFF1B,
-                (mmu, reg) -> mmu.apu.length(3),
-                (mmu, reg, data) -> mmu.apu.length(3, data)
+                (mmu, reg) -> mmu.apu.length(APU.SoundId.SOUND3_WAVE),
+                (mmu, reg, data) -> mmu.apu.length(APU.SoundId.SOUND3_WAVE, data)
         ),
         SOUND_3_SELECT_OUTPUT_LEVEL(0xFF1C,
-                (mmu, reg) -> mmu.apu.outputLevel(3),
-                (mmu, reg, data) -> mmu.apu.outputLevel(3, data)
+                (mmu, reg) -> mmu.apu.outputLevel(APU.SoundId.SOUND3_WAVE),
+                (mmu, reg, data) -> mmu.apu.outputLevel(APU.SoundId.SOUND3_WAVE, data)
         ),
         SOUND_3_FREQUENCY_LOW(0xFF1D,
                 MMU::invalidRead,
-                (mmu, reg, data) -> mmu.apu.lowFrequency(3, data)
+                (mmu, reg, data) -> mmu.apu.lowFrequency(APU.SoundId.SOUND3_WAVE, data)
         ),
         SOUND_3_FREQUENCY_HIGH(0xFF1E,
-                (mmu, reg) -> mmu.apu.highFrequency(3),
-                (mmu, reg, data) -> mmu.apu.highFrequency(3, data)
+                (mmu, reg) -> mmu.apu.highFrequency(APU.SoundId.SOUND3_WAVE),
+                (mmu, reg, data) -> mmu.apu.highFrequency(APU.SoundId.SOUND3_WAVE, data)
         ),
         SOUND_4_LENGTH(0xFF20,
-                (mmu, reg) -> mmu.apu.length(4),
-                (mmu, reg, data) -> mmu.apu.length(4, data)
+                (mmu, reg) -> mmu.apu.length(APU.SoundId.SOUND4_NOISE),
+                (mmu, reg, data) -> mmu.apu.length(APU.SoundId.SOUND4_NOISE, data)
         ),
         SOUND_4_ENVELOPE(0xFF21,
-                (mmu, reg) -> mmu.apu.envelope(4),
-                (mmu, reg, data) -> mmu.apu.envelope(4, data)
+                (mmu, reg) -> mmu.apu.envelope(APU.SoundId.SOUND4_NOISE),
+                (mmu, reg, data) -> mmu.apu.envelope(APU.SoundId.SOUND4_NOISE, data)
         ),
         SOUND_4_POLYNOMIAL_COUNTER(0xFF22,
-                (mmu, reg) -> mmu.apu.polynomialCounter(4),
-                (mmu, reg, data) -> mmu.apu.polynomialCounter(4, data)
+                (mmu, reg) -> mmu.apu.polynomialCounter(APU.SoundId.SOUND4_NOISE),
+                (mmu, reg, data) -> mmu.apu.polynomialCounter(APU.SoundId.SOUND4_NOISE, data)
         ),
         SOUND_4_COUNTER_CONSECUTIVE(0xFF23,
-                (mmu, reg) -> mmu.apu.soundMode(4),
-                (mmu, reg, data) -> mmu.apu.soundMode(4, data)
+                (mmu, reg) -> mmu.apu.soundMode(APU.SoundId.SOUND4_NOISE),
+                (mmu, reg, data) -> mmu.apu.soundMode(APU.SoundId.SOUND4_NOISE, data)
         ),
         SOUND_CHANNEL_CONTROL(0xFF24,
                 (mmu, reg) -> mmu.apu.channelControl(),

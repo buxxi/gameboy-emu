@@ -32,12 +32,14 @@ public class CPU {
         instructionProvider.add(InstructionType.HALT, this::halt);
     }
 
+    @SuppressWarnings("unused")
     private int stop(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         state = new StoppedState();
         log.info("Going into stopped state");
         return 4;
     }
 
+    @SuppressWarnings("unused")
     private int halt(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         if ((interrupts.requestedInterrupts & interrupts.enabledInterrupts) != 0 && !interrupts.interruptMasterEnable) {
             log.warn(InstructionType.HALT + " bug triggered, the program counter wont be incremented for the next instruction");

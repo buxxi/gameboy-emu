@@ -1,7 +1,6 @@
 package se.omfilm.gameboy;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Test;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.FixedColorPalette;
 import se.omfilm.gameboy.io.controller.NullController;
@@ -13,7 +12,6 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
