@@ -153,6 +153,7 @@ public class MMU implements Memory {
         }
     }
 
+    @SuppressWarnings("unused")
     private enum IORegister implements EnumByValue.ComparableByInt {
         JOYPAD(0xFF00,
                 (mmu, reg) -> mmu.input.readState(),
@@ -312,7 +313,7 @@ public class MMU implements Memory {
         ),
         DMA_TRANSFER(0xFF46,
                 MMU::invalidRead,
-                (mmu, reg, data) -> mmu.ppu.transferDMA((data * 0x100) - MemoryType.RAM.from, mmu.ram)
+                (mmu, reg, data) -> mmu.ppu.transferDMA((data * 0x100) - MemoryType.RAM.from, mmu.ram) //TODO: this should take 160 microseconds ((4 * 1024 * 1024) * (1/1000000) * 160 ticks)
         ),
         BACKGROUND_PALETTE_DATA(0xFF47,
                 (mmu, reg) -> mmu.ppu.backgroundPalette(),
