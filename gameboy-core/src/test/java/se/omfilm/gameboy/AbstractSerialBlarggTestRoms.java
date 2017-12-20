@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.junit.Assert.fail;
-
 /**
  * Depends on having the test roms from Blargg. Won't run otherwise.
  * Runs at maximum possible speed and skips the regular boot screen.
@@ -43,20 +41,14 @@ public abstract class AbstractSerialBlarggTestRoms {
     }
 
     protected class StringSerialConnection implements SerialConnection {
-        protected String expected;
         protected String result = "";
-        private int index = 0;
 
         public void data(int data) {
-            if (expected.charAt(index) != (char) data) {
-                String text = escape(expected.substring(0, index));
-                target.stop();
-                fail("Expected char at " + index + " to be '" + escape("" + expected.charAt(index)) + "'\nwas: '" + (escape("" + (char) data)) + "'\nAll before: '" + text + "'");
-            }
             result = result + ((char) data);
-            index++;
-            if (index == expected.length()) {
-                target.stop();
+            if (data == 10) {
+                if (result.trim().endsWith("Failed") || result.trim().endsWith("Passed")) {
+                    target.stop();
+                }
             }
         }
 
@@ -71,14 +63,5 @@ public abstract class AbstractSerialBlarggTestRoms {
         public int control() {
             return 0;
         }
-
-        public void setExpected(String expected) {
-            this.expected = expected;
-        }
-
-        private String escape(String input) {
-            return input.replaceAll("\n", "\\\\n");
-        }
     }
-
 }

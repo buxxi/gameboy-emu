@@ -39,7 +39,7 @@ public class AbstractMemoryBlarggTestRoms {
         }
 
         @Override
-        public void run() throws InterruptedException {
+        public void run() {
             int prev = 0;
             while (true) {
                 step();
