@@ -46,7 +46,7 @@ public abstract class AbstractSerialBlarggTestRoms {
         public void data(int data) {
             result = result + ((char) data);
             if (data == 10) {
-                if (result.trim().endsWith("Failed") || result.trim().endsWith("Passed")) {
+                if (result.trim().contains("Failed") || result.trim().contains("Passed")) {
                     target.stop();
                 }
             }
