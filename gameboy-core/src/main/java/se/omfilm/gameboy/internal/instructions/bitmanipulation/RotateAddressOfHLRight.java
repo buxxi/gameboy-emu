@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.bitmanipulation;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryModifyInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class RotateAddressOfHLRight implements Instruction {
+public class RotateAddressOfHLRight implements MemoryModifyInstruction {
     private final CarryTransfer carryTransfer;
 
     private RotateAddressOfHLRight(CarryTransfer carryTransfer) {

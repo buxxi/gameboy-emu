@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.bitmanipulation;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryModifyInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class ShiftAddressOfHLRight implements Instruction {
+public class ShiftAddressOfHLRight implements MemoryModifyInstruction {
     private final int oldMask;
 
     private ShiftAddressOfHLRight(int oldMask) {

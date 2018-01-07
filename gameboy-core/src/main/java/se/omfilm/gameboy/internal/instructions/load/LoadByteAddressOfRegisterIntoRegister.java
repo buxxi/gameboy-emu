@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.load;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryReadInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class LoadByteAddressOfRegisterIntoRegister implements Instruction {
+public class LoadByteAddressOfRegisterIntoRegister implements MemoryReadInstruction {
     private final RegisterReader source;
     private final RegisterWriter target;
 
@@ -15,6 +16,10 @@ public class LoadByteAddressOfRegisterIntoRegister implements Instruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         target.write(registers, memory.readByte(source.read(registers)));
 
+        return totalCycles();
+    }
+
+    public int totalCycles() {
         return 8;
     }
 

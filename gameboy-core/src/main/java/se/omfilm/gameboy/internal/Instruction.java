@@ -21,6 +21,10 @@ import java.util.function.Supplier;
  */
 @FunctionalInterface
 public interface Instruction {
+    default int paddingCycles() {
+        return 0;
+    }
+
     /**
      * Execute the instruction and return the number of cycles that instruction took.
      * This should NEVER throw an Exception, so that needs to be handled in the the instruction.

@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.arithmetic;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryModifyInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class DecrementAddressOfHL implements Instruction {
+public class DecrementAddressOfHL implements MemoryModifyInstruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int hl = registers.readHL();
 

@@ -313,13 +313,24 @@ public class CPU {
      * Execute instructions as normal and service requests only when IME is set.
      */
     private class NormalState implements State {
+        Instruction previous = null;
+
         public int step(Memory memory) {
-            Instruction instruction = instructionProvider.read(programCounter, memory);
-            return instruction.execute(memory, registers, flags, programCounter, stackPointer);
+            Instruction instruction = previous != null ? previous : instructionProvider.read(programCounter, memory);
+            int padding = instruction.paddingCycles();
+
+            if (padding > 0 && previous == null) {
+                previous = instruction;
+                return padding;
+            }
+
+            previous = null;
+
+            return instruction.execute(memory, registers, flags, programCounter, stackPointer) - padding;
         }
 
         public int execute(Memory memory) {
-            if (!interrupts.interruptMasterEnable) {
+            if (!interrupts.interruptMasterEnable || previous != null) {
                 return 0;
             }
             for (Interrupts.Interrupt interrupt : Interrupts.Interrupt.cachedValues()) {

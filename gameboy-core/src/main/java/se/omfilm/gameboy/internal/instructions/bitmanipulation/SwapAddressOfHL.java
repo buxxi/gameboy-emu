@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.bitmanipulation;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryModifyInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class SwapAddressOfHL implements Instruction {
+public class SwapAddressOfHL implements MemoryModifyInstruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int address = registers.readHL();
         int n = memory.readByte(address);

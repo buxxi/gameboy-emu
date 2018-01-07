@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.arithmetic;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryReadInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class AddByteAddressOfHLIntoA implements Instruction {
+public class AddByteAddressOfHLIntoA implements MemoryReadInstruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
         int n = memory.readByte(registers.readHL());
         int a = registers.readA();
@@ -21,6 +22,10 @@ public class AddByteAddressOfHLIntoA implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 
+        return totalCycles();
+    }
+
+    public int totalCycles() {
         return 8;
     }
 }

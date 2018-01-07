@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.arithmetic;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryReadInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class SubtractAddressOfHLFromA implements Instruction {
+public class SubtractAddressOfHLFromA implements MemoryReadInstruction {
     private final boolean withCarry;
 
     private SubtractAddressOfHLFromA(boolean withCarry) {
@@ -26,6 +27,10 @@ public class SubtractAddressOfHLFromA implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 
+        return totalCycles();
+    }
+
+    public int totalCycles() {
         return 8;
     }
 

@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.flagmanipulation;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryReadInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class CompareBitAddressOfHL implements Instruction {
+public class CompareBitAddressOfHL implements MemoryReadInstruction {
     private final int mask;
 
     private CompareBitAddressOfHL(int mask) {
@@ -19,6 +20,10 @@ public class CompareBitAddressOfHL implements Instruction {
         flags.set(Flags.Flag.SUBTRACT, false);
         flags.set(Flags.Flag.HALF_CARRY, true);
 
+        return totalCycles();
+    }
+
+    public int totalCycles() {
         return 12;
     }
 

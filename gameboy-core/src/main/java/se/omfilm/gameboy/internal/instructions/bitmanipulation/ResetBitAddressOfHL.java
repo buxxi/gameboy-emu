@@ -1,9 +1,10 @@
 package se.omfilm.gameboy.internal.instructions.bitmanipulation;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryModifyInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class ResetBitAddressOfHL implements Instruction {
+public class ResetBitAddressOfHL implements MemoryModifyInstruction {
     private final int bit;
 
     private ResetBitAddressOfHL(int bit) {
