@@ -5,9 +5,11 @@ import se.omfilm.gameboy.io.screen.WindowChangeListener;
 
 public class GLFWKeyboardController implements Controller, WindowChangeListener {
     private long window;
+    private boolean windowSet = false;
 
     public void windowChanged(long window) {
         this.window = window;
+        windowSet = true;
     }
 
     public boolean isPressed(Button button) {
@@ -38,6 +40,6 @@ public class GLFWKeyboardController implements Controller, WindowChangeListener 
     }
 
     private boolean checkKey(int keyId) {
-        return GLFW.glfwGetKey(window, keyId) == 1;
+        return windowSet && GLFW.glfwGetKey(window, keyId) == 1;
     }
 }
