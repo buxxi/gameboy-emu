@@ -71,7 +71,7 @@ public interface Instruction {
         RLCA(       0x07, RotateRegisterLeft::AresetZero), //Page 99
         LD_nn_SP(   0x08, LoadStackPointerToAddressOfWord::new), //Page 78
         ADD_HL_BC(  0x09, AddWordRegisterIntoRegister::BCtoHL), //Page 90
-        LD_A_BC(    0x0A, LoadByteAddressOfRegisterIntoRegister::fromBCtoA), //Page 68
+        LD_A_BC(    0x0A, LoadAddressOfRegisterIntoRegister::fromBCtoA), //Page 68
         DEC_BC(     0x0B, DecrementWordRegister::BC), //Page 93
         INC_C(      0x0C, IncrementByteRegister::C), //Page 88
         DEC_C(      0x0D, DecrementByteRegister::C), //Page 89
@@ -88,7 +88,7 @@ public interface Instruction {
         RLA(        0x17, RotateRegisterLeft::AthroughCarryResetZero), //Page 99
         JR_n(       0x18, JumpRelative::unconditional), //Page 112
         ADD_HL_DE(  0x19, AddWordRegisterIntoRegister::DEtoHL), //Page 90
-        LD_A_DE(    0x1A, LoadByteAddressOfRegisterIntoRegister::fromDEtoA), //Page 68
+        LD_A_DE(    0x1A, LoadAddressOfRegisterIntoRegister::fromDEtoA), //Page 68
         DEC_DE(     0x1B, DecrementWordRegister::DE), //Page 93
         INC_E(      0x1C, IncrementByteRegister::E), //Page 88
         DEC_E(      0x1D, DecrementByteRegister::E), //Page 89
@@ -135,7 +135,7 @@ public interface Instruction {
         LD_B_E(     0x43, LoadRegisterIntoRegister::fromEtoB), //Page 66
         LD_B_H(     0x44, LoadRegisterIntoRegister::fromHtoB), //Page 66
         LD_B_L(     0x45, LoadRegisterIntoRegister::fromLtoB), //Page 66
-        LD_B_HL(    0x46, LoadByteAddressOfRegisterIntoRegister::fromHLtoB), //Page 66
+        LD_B_HL(    0x46, LoadAddressOfRegisterIntoRegister::fromHLtoB), //Page 66
         LD_B_A(     0x47, LoadRegisterIntoRegister::fromAtoB), //Page 69
         LD_C_B(     0x48, LoadRegisterIntoRegister::fromBtoC), //Page 66
         LD_C_C(     0x49, LoadRegisterIntoRegister::fromCtoC), //Page 66
@@ -143,7 +143,7 @@ public interface Instruction {
         LD_C_E(     0x4B, LoadRegisterIntoRegister::fromEtoC), //Page 66
         LD_C_H(     0x4C, LoadRegisterIntoRegister::fromHtoC), //Page 66
         LD_C_L(     0x4D, LoadRegisterIntoRegister::fromLtoC), //Page 66
-        LD_C_HL(    0x4E, LoadByteAddressOfRegisterIntoRegister::fromHLtoC), //Page 66
+        LD_C_HL(    0x4E, LoadAddressOfRegisterIntoRegister::fromHLtoC), //Page 66
         LD_C_A(     0x4F, LoadRegisterIntoRegister::fromAtoC), //Page 69
 
         LD_D_B(     0x50, LoadRegisterIntoRegister::fromBtoD), //Page 66
@@ -152,7 +152,7 @@ public interface Instruction {
         LD_D_E(     0x53, LoadRegisterIntoRegister::fromEtoD), //Page 66
         LD_D_H(     0x54, LoadRegisterIntoRegister::fromHtoD), //Page 66
         LD_D_L(     0x55, LoadRegisterIntoRegister::fromLtoD), //Page 66
-        LD_D_HL(    0x56, LoadByteAddressOfRegisterIntoRegister::fromHLtoD), //Page 66
+        LD_D_HL(    0x56, LoadAddressOfRegisterIntoRegister::fromHLtoD), //Page 66
         LD_D_A(     0x57, LoadRegisterIntoRegister::fromAtoD), //Page 69
         LD_E_B(     0x58, LoadRegisterIntoRegister::fromBtoE), //Page 66
         LD_E_C(     0x59, LoadRegisterIntoRegister::fromCtoE), //Page 66
@@ -160,7 +160,7 @@ public interface Instruction {
         LD_E_E(     0x5B, LoadRegisterIntoRegister::fromEtoE), //Page 66
         LD_E_H(     0x5C, LoadRegisterIntoRegister::fromHtoE), //Page 66
         LD_E_L(     0x5D, LoadRegisterIntoRegister::fromLtoE), //Page 66
-        LD_E_HL(    0x5E, LoadByteAddressOfRegisterIntoRegister::fromHLtoE), //Page 66
+        LD_E_HL(    0x5E, LoadAddressOfRegisterIntoRegister::fromHLtoE), //Page 66
         LD_E_A(     0x5F, LoadRegisterIntoRegister::fromAtoE), //Page 69
 
         LD_H_B(     0x60, LoadRegisterIntoRegister::fromBtoH), //Page 66
@@ -169,7 +169,7 @@ public interface Instruction {
         LD_H_E(     0x63, LoadRegisterIntoRegister::fromEtoH), //Page 66
         LD_H_H(     0x64, LoadRegisterIntoRegister::fromHtoH), //Page 66
         LD_H_L(     0x65, LoadRegisterIntoRegister::fromLtoH), //Page 66
-        LD_H_HL(    0x66, LoadByteAddressOfRegisterIntoRegister::fromHLtoH), //Page 66
+        LD_H_HL(    0x66, LoadAddressOfRegisterIntoRegister::fromHLtoH), //Page 66
         LD_H_A(     0x67, LoadRegisterIntoRegister::fromAtoH), //Page 69
         LD_L_B(     0x68, LoadRegisterIntoRegister::fromBtoL), //Page 66
         LD_L_C(     0x69, LoadRegisterIntoRegister::fromCtoL), //Page 66
@@ -177,7 +177,7 @@ public interface Instruction {
         LD_L_E(     0x6B, LoadRegisterIntoRegister::fromEtoL), //Page 66
         LD_L_H(     0x6C, LoadRegisterIntoRegister::fromHtoL), //Page 66
         LD_L_L(     0x6D, LoadRegisterIntoRegister::fromLtoL), //Page 66
-        LD_L_HL(    0x6E, LoadByteAddressOfRegisterIntoRegister::fromHLtoL), //Page 66
+        LD_L_HL(    0x6E, LoadAddressOfRegisterIntoRegister::fromHLtoL), //Page 66
         LD_L_A(     0x6F, LoadRegisterIntoRegister::fromAtoL), //Page 69
 
         LD_HL_B(    0x70, LoadRegisterIntoAddressOfWordRegister::BtoHL), //Page 67
@@ -194,7 +194,7 @@ public interface Instruction {
         LD_A_E(     0x7B, LoadRegisterIntoRegister::fromEtoA), //Page 66
         LD_A_H(     0x7C, LoadRegisterIntoRegister::fromHtoA), //Page 66
         LD_A_L(     0x7D, LoadRegisterIntoRegister::fromLtoA), //Page 66
-        LD_A_HL(    0x7E, LoadByteAddressOfRegisterIntoRegister::fromHLtoA), //Page 66
+        LD_A_HL(    0x7E, LoadAddressOfRegisterIntoRegister::fromHLtoA), //Page 66
         LD_A_A(     0x7F, LoadRegisterIntoRegister::fromAtoA), //Page 68
 
         ADD_A_B(    0x80, AddRegisterIntoA::B), //Page 80
@@ -203,7 +203,7 @@ public interface Instruction {
         ADD_A_E(    0x83, AddRegisterIntoA::E), //Page 80
         ADD_A_H(    0x84, AddRegisterIntoA::H), //Page 80
         ADD_A_L(    0x85, AddRegisterIntoA::L), //Page 80
-        ADD_A_HL(   0x86, AddByteAddressOfHLIntoA::new), //Page 80
+        ADD_A_HL(   0x86, AddAddressOfHLIntoA::new), //Page 80
         ADD_A_A(    0x87, AddRegisterIntoA::A), //Page 80
         ADC_A_B(    0x88, AddRegisterWithCarryIntoA::B), //Page 81
         ADC_A_C(    0x89, AddRegisterWithCarryIntoA::C), //Page 81
@@ -211,7 +211,7 @@ public interface Instruction {
         ADC_A_E(    0x8B, AddRegisterWithCarryIntoA::E), //Page 81
         ADC_A_H(    0x8C, AddRegisterWithCarryIntoA::H), //Page 81
         ADC_A_L(    0x8D, AddRegisterWithCarryIntoA::L), //Page 81
-        ADC_A_HL(   0x8E, AddByteAddressOfHLWithCarryIntoA::new), //Page 81
+        ADC_A_HL(   0x8E, AddAddressOfHLWithCarryIntoA::new), //Page 81
         ADC_A_A(    0x8F, AddRegisterWithCarryIntoA::A), //Page 81
 
         SUB_B(      0x90, SubtractRegisterFromA::fromB), //Page 82
@@ -271,7 +271,7 @@ public interface Instruction {
         JP_nn(      0xC3, JumpWord::unconditional), //Page 111
         CALL_NZ(    0xC4, CallRoutine::ifLastNotZero), //Page 115
         PUSH_BC(    0xC5, PushRegisterIntoStack::fromBC), //Page 78
-        ADD_n(      0xC6, AddByteFromAddressIntoA::new), //Page 80
+        ADD_n(      0xC6, AddByteIntoA::new), //Page 80
         RST_00(     0xC7, Restart::to00), //Page 116
         RET_Z(      0xC8, Return::ifZero), //Page 117
         RET(        0xC9, Return::unconditional), //Page 117
@@ -279,7 +279,7 @@ public interface Instruction {
         CB(         0xCB, InvalidInstruction::new), //Page 99-110, special case (append 0xCB before CB-instructions)
         CALL_Z(     0xCC, CallRoutine::ifLastZero), //Page 114
         CALL_nn(    0xCD, CallRoutine::unconditional), //Page 114
-        ADC_A_n(    0xCE, AddByteFromAddressWithCarryIntoA::new), //Page 81
+        ADC_A_n(    0xCE, AddByteWithCarryIntoA::new), //Page 81
         RST_08(     0xCF, Restart::to08), //Page 116
 
         RET_NC(     0xD0, Return::ifNotCarry), //Page 117
@@ -296,9 +296,9 @@ public interface Instruction {
         SBC_n(      0xDE, SubtractByteFromA::withCarry), //Page 83
         RST_18(     0xDF, Restart::to18), //Page 116
 
-        LDH_n_A(    0xE0, LoadAIntoByteOffsetByte::new), //Page 75
+        LDH_n_A(    0xE0, LoadAIntoAddressOffsetByte::new), //Page 75
         POP_HL(     0xE1, PopStackIntoRegister::toHL), //Page 79
-        LDH_C_A(    0xE2, LoadAIntoByteOffsetC::new), //Page 70
+        LDH_C_A(    0xE2, LoadAIntoAddressOffsetC::new), //Page 70
         PUSH_HL(    0xE5, PushRegisterIntoStack::fromHL), //Page 78
         AND_n(      0xE6, AndByteWithA::new), //Page 84
         RST_20(     0xE7, Restart::to20), //Page 116
@@ -308,16 +308,16 @@ public interface Instruction {
         XOR_n(      0xEE, XorByteWithA::new), //Page 86
         RST_28(     0xEF, Restart::to28), //Page 116
 
-        LDH_A_n(    0xF0, LoadByteOffsetIntoA::new), //Page 75
+        LDH_A_n(    0xF0, LoadAddressOfByteOffsetIntoA::new), //Page 75
         POP_AF(     0xF1, PopStackIntoRegister::toAF), //Page 79
-        LDH_A_C(    0xF2, LoadByteOffsetCIntoA::new), //Page 70
+        LDH_A_C(    0xF2, LoadAddressOfOffsetCIntoA::new), //Page 70
         DI(         0xF3, DisableInterrupts::new), //Page 98
         PUSH_AF(    0xF5, PushRegisterIntoStack::fromAF), //Page 78
         OR_n(       0xF6, OrByteWithA::new), //Page 85
         RST_30(     0xF7, Restart::to30), //Page 116
         LD_HL_SP_n( 0xF8, LoadStackPointerOffsetByteIntoHL::new), //Page 77
         LD_SP_HL(   0xF9, LoadHLIntoStackPointer::new), //Page 76
-        LD_A_nn(    0xFA, LoadAddressOfByteIntoA::new), //Page 68
+        LD_A_nn(    0xFA, LoadAddressOfWordIntoA::new), //Page 68
         EI(         0xFB, EnableInterrupts::new), //Page 98
         CP_n(       0xFE, CompareByteAgainstA::new), //Page 87
         RST_38(     0xFF, Restart::to38), //Page 116

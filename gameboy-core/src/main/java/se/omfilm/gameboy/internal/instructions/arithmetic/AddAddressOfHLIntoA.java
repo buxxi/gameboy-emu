@@ -1,13 +1,14 @@
 package se.omfilm.gameboy.internal.instructions.arithmetic;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.instructions.MemoryReadInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 
-public class AddByteFromAddressWithCarryIntoA implements Instruction {
+public class AddAddressOfHLIntoA implements MemoryReadInstruction {
     public int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
-        int n = programCounter.byteOperand(memory);
+        int n = memory.readByte(registers.readHL());
         int a = registers.readA();
-        int result = n + a + (flags.isSet(Flags.Flag.CARRY) ? 1 : 0);
+        int result = n + a;
 
         boolean carry = result > 0xFF;
         result = result & 0xFF;
@@ -21,6 +22,10 @@ public class AddByteFromAddressWithCarryIntoA implements Instruction {
         flags.set(Flags.Flag.HALF_CARRY, halfCarry);
         flags.set(Flags.Flag.CARRY, carry);
 
+        return totalCycles();
+    }
+
+    public int totalCycles() {
         return 8;
     }
 }
