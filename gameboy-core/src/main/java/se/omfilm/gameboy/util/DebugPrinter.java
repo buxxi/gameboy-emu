@@ -22,15 +22,17 @@ public class DebugPrinter {
         return "0x" + result;
     }
 
-    public static void debugException(Exception e) throws InterruptedException {
-        Thread.sleep(100);
+    public static void debugException(Exception e) {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) {}
         e.printStackTrace();
         log.error("Instruction call stack: ");
         debugCallStack();
         System.exit(0);
     }
 
-    public static void debugCallStack() {
+    private static void debugCallStack() {
         LinkedList<RecordedInstruction> copy = (LinkedList<RecordedInstruction>) instructionStack.clone();
         while (!copy.isEmpty()) {
             log.error("\t" + copy.removeLast());

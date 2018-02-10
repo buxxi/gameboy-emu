@@ -35,7 +35,7 @@ public class Main {
     private static final String MUTE_ARG = "mute";
     private static final String SERIAL_ARG = "serial";
 
-    public static void main(String[] args) throws IOException, InterruptedException, ParseException {
+    public static void main(String[] args) throws IOException, ParseException {
         Options options = new Options();
         options.addOption("h", HELP_ARG, false, "Prints this message");
         options.addOption("b", BOOT_ARG, true, "Path to the boot ROM");
@@ -56,7 +56,7 @@ public class Main {
         }
     }
 
-    private static void run(CommandLine cli) throws IOException, InterruptedException {
+    private static void run(CommandLine cli) throws IOException {
         Path romPath = Paths.get(cli.getOptionValue(ROM_ARG));
         Path savePath = romPath.resolveSibling(romPath.getFileName().toString() + ".sav");
 

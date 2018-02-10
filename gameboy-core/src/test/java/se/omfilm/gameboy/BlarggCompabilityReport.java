@@ -63,7 +63,7 @@ public class BlarggCompabilityReport {
         JUnitCore runner = new JUnitCore();
         runner.addListener(new RunListener() {
             @Override
-            public void testFinished(Description description) throws Exception {
+            public void testFinished(Description description) {
                 String name = description.getAnnotation(ReportName.class).value();
                 if (!success.containsKey(name)) {
                     success.put(name, true);
@@ -71,7 +71,7 @@ public class BlarggCompabilityReport {
             }
 
             @Override
-            public void testFailure(Failure failure) throws Exception {
+            public void testFailure(Failure failure) {
                 success.put(failure.getDescription().getAnnotation(ReportName.class).value(), false);
             }
         });

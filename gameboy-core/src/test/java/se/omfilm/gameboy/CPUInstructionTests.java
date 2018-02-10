@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
     @Test(timeout = 2000)
     @ReportName("cpu_instrs/01-special")
-    public void itShouldHandleSpecialInstructions() throws IOException, InterruptedException {
+    public void itShouldHandleSpecialInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/01-special.gb");
 
         target.run();

@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 public class HaltBugTest extends AbstractMemoryBlarggTestRoms {
     @Test(timeout = 2000)
     @ReportName("halt_bug/halt bug")
-    public void itShouldHandleHaltBug() throws IOException, InterruptedException {
+    public void itShouldHandleHaltBug() throws IOException {
         loadROM("halt_bug.zip", "halt_bug.gb");
 
         target.run();

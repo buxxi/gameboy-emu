@@ -36,7 +36,7 @@ public class Gameboy {
         return this;
     }
 
-    public void run() throws InterruptedException {
+    public void run() {
         running = true;
         try {
             Runner.atFrequency(this::stepFrequency, frequency);

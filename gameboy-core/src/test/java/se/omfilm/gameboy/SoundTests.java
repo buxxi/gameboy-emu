@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 public class SoundTests extends AbstractMemoryBlarggTestRoms {
     @Test(timeout = 2000)
     @ReportName("dmg_sound/01-registers")
-    public void itShouldHandleSoundRegisters() throws IOException, InterruptedException {
+    public void itShouldHandleSoundRegisters() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/01-registers.gb");
 
         target.run();
@@ -20,7 +20,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/02-len ctr")
-    public void itShouldHandleLengthControl() throws IOException, InterruptedException {
+    public void itShouldHandleLengthControl() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/02-len ctr.gb");
 
         target.run();
@@ -30,7 +30,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/03-trigger")
-    public void itShouldHandleTrigger() throws IOException, InterruptedException {
+    public void itShouldHandleTrigger() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/03-trigger.gb");
 
         target.run();
@@ -40,7 +40,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/04-sweep")
-    public void itShouldHandleSweep() throws IOException, InterruptedException {
+    public void itShouldHandleSweep() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/04-sweep.gb");
 
         target.run();
@@ -50,7 +50,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/05-sweep details")
-    public void itShouldHandleSweepDetails() throws IOException, InterruptedException {
+    public void itShouldHandleSweepDetails() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/05-sweep details.gb");
 
         target.run();
@@ -60,7 +60,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/06-overflow on trigger")
-    public void itShouldHandleOverflowOnTrigger() throws IOException, InterruptedException {
+    public void itShouldHandleOverflowOnTrigger() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/06-overflow on trigger.gb");
 
         target.run();
@@ -70,7 +70,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/07-len sweep period sync")
-    public void itShouldHandleLengthSweepPeriodSync() throws IOException, InterruptedException {
+    public void itShouldHandleLengthSweepPeriodSync() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/07-len sweep period sync.gb");
 
         target.run();
@@ -80,7 +80,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/08-len ctr during power")
-    public void itShouldHandleLengthControlDuringPower() throws IOException, InterruptedException {
+    public void itShouldHandleLengthControlDuringPower() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/08-len ctr during power.gb");
 
         target.run();
@@ -90,7 +90,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/09-wave read while on")
-    public void itShouldHandleWaveReadWhileOn() throws IOException, InterruptedException {
+    public void itShouldHandleWaveReadWhileOn() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/09-wave read while on.gb");
 
         target.run();
@@ -100,7 +100,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/10-wave trigger while on")
-    public void itShouldHandleWaveTriggerWhileOn() throws IOException, InterruptedException {
+    public void itShouldHandleWaveTriggerWhileOn() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/10-wave trigger while on.gb");
 
         target.run();
@@ -110,7 +110,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/11-regs after power")
-    public void itShouldHandleRegistersAfterPower() throws IOException, InterruptedException {
+    public void itShouldHandleRegistersAfterPower() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/11-regs after power.gb");
 
         target.run();
@@ -120,7 +120,7 @@ public class SoundTests extends AbstractMemoryBlarggTestRoms {
 
     @Test(timeout = 2000)
     @ReportName("dmg_sound/12-wave write while on")
-    public void itShouldHandleWaveWriteWhileOn() throws IOException, InterruptedException {
+    public void itShouldHandleWaveWriteWhileOn() throws IOException {
         loadROM("dmg_sound.zip", "dmg_sound/rom_singles/12-wave write while on.gb");
 
         target.run();

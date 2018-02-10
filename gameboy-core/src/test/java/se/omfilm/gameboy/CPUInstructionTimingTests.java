@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 public class CPUInstructionTimingTests extends AbstractSerialBlarggTestRoms {
     @Test(timeout = 2000)
     @ReportName("instr_timing/instr_timing")
-    public void itShouldTestInstructionTimings() throws IOException, InterruptedException {
+    public void itShouldTestInstructionTimings() throws IOException {
         loadROM("instr_timing.zip", "instr_timing/instr_timing.gb");
 
         target.run();
