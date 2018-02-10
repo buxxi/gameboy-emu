@@ -3,6 +3,7 @@ package se.omfilm.gameboy.internal;
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.io.sound.SoundPlayback;
+import se.omfilm.gameboy.util.EnumByValue;
 import se.omfilm.gameboy.util.Runner.Counter;
 
 import static se.omfilm.gameboy.io.sound.SoundPlayback.SAMPLING_RATE;
@@ -183,10 +184,10 @@ public class APU {
     }
 
     public int outputTerminal() {
-        return  sound4.terminal.binaryValue << 3 |
-                sound3.terminal.binaryValue << 2 |
-                sound2.terminal.binaryValue << 1 |
-                sound1.terminal.binaryValue;
+        return  sound4.terminal.bits << 3 |
+                sound3.terminal.bits << 2 |
+                sound2.terminal.bits << 1 |
+                sound1.terminal.bits;
     }
 
     public void outputTerminal(int data) {
@@ -815,25 +816,29 @@ public class APU {
         }
     }
 
-    private enum Terminal {
+    private enum Terminal implements EnumByValue.ComparableByInt {
         NONE(0b0000_0000),
         LEFT(0b0000_0001),
         RIGHT(0b0001_0000),
         STEREO(0b0001_0001);
 
-        private final int binaryValue;
+        private final static EnumByValue<Terminal> valuesCache = EnumByValue.create(values(), Terminal.class, Terminal::missing);
+        private final int bits;
 
-        Terminal(int binaryValue) {
-            this.binaryValue = binaryValue;
+        Terminal(int bits) {
+            this.bits = bits;
         }
 
-        static Terminal fromBinary(int binaryValue) {
-            for (Terminal t : values()) {
-                if (binaryValue == t.binaryValue) {
-                    return t;
-                }
-            }
-            throw new IllegalArgumentException("Invalid terminal value: " + binaryValue);
+        static Terminal fromBinary(int input) {
+            return valuesCache.fromValue(input);
+        }
+
+        public int compareTo(int value) {
+            return value - bits;
+        }
+
+        public static void missing(int value) {
+            throw new IllegalArgumentException("Invalid terminal value: " + value);
         }
     }
 
@@ -852,12 +857,13 @@ public class APU {
         LONG
     }
 
-    private enum WavePatternMode {
+    private enum WavePatternMode implements EnumByValue.ComparableByInt {
         MUTE            (0b00),
         NORMAL          (0b01),
         SHIFTED_ONCE    (0b10),
         SHIFTED_TWICE   (0b11);
 
+        private final static EnumByValue<WavePatternMode> valuesCache = EnumByValue.create(values(), WavePatternMode.class, WavePatternMode::missing);
         private final int bits;
 
         WavePatternMode(int bits) {
@@ -865,21 +871,25 @@ public class APU {
         }
 
         public static WavePatternMode fromValue(int input) {
-            for (WavePatternMode w : values()) {
-                if (w.bits == input) {
-                    return w;
-                }
-            }
+            return valuesCache.fromValue(input);
+        }
+
+        public int compareTo(int value) {
+            return value - bits;
+        }
+
+        public static void missing(int input) {
             throw new IllegalArgumentException("Invalid WavePatternMode value: " + input);
         }
     }
 
-    private enum WaveDutyMode {
+    private enum WaveDutyMode implements EnumByValue.ComparableByInt {
         EIGHT(0b00),
         QUARTER(0b01),
         HALF(0b10),
         THREE_QUARTERS(0b11);
 
+        private final static EnumByValue<WaveDutyMode> valuesCache = EnumByValue.create(values(), WaveDutyMode.class, WaveDutyMode::missing);
         private final int bits;
 
         WaveDutyMode(int bits) {
@@ -887,11 +897,14 @@ public class APU {
         }
 
         public static WaveDutyMode fromValue(int input) {
-            for (WaveDutyMode w : values()) {
-                if (w.bits == input) {
-                    return w;
-                }
-            }
+            return valuesCache.fromValue(input);
+        }
+
+        public int compareTo(int value) {
+            return value - bits;
+        }
+
+        public static void missing(int input) {
             throw new IllegalArgumentException("Invalid WaveDutyMode value: " + input);
         }
     }

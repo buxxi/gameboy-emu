@@ -1,10 +1,11 @@
 package se.omfilm.gameboy.internal;
 
 import se.omfilm.gameboy.util.DebugPrinter;
+import se.omfilm.gameboy.util.EnumByValue;
 
 public class Timer {
     private boolean enabled = false;
-    private FREQUENCY frequency = FREQUENCY._4096;
+    private Frequency frequency = Frequency._4096;
 
     private int dividerCycles;
     private int dividerCounter;
@@ -54,7 +55,7 @@ public class Timer {
 
     public void control(int data) {
         enabled = (data & 0b0000_0100) != 0;
-        FREQUENCY newFrequency = FREQUENCY.fromBits(data & 0b0000_0011);
+        Frequency newFrequency = Frequency.fromBits(data & 0b0000_0011);
         if (newFrequency != this.frequency) {
             this.frequency = newFrequency;
             timerCycles = this.frequency.counterInitialValue();
@@ -87,16 +88,17 @@ public class Timer {
         control(0x00);
     }
 
-    private enum FREQUENCY {
+    private enum Frequency implements EnumByValue.ComparableByInt {
         _4096(  0b0000_0000, 4096),
         _262144(0b0000_0001, 262144),
         _65536( 0b0000_0010, 65536),
         _16384( 0b0000_0011, 16284);
 
+        private final static EnumByValue<Frequency> valuesCache = EnumByValue.create(values(), Frequency.class, Frequency::missing);
         private final int code;
         private final int freq;
 
-        FREQUENCY(int code, int freq) {
+        Frequency(int code, int freq) {
             this.code = code;
             this.freq = freq;
         }
@@ -105,13 +107,16 @@ public class Timer {
             return CPU.FREQUENCY / freq;
         }
 
-        public static FREQUENCY fromBits(int bits) {
-            for (FREQUENCY frequency : values()) {
-                if (frequency.code == bits) {
-                    return frequency;
-                }
-            }
-            throw new IllegalArgumentException("No " + FREQUENCY.class.getSimpleName() + " for bits " + DebugPrinter.hex(bits, 4));
+        public static Frequency fromBits(int input) {
+            return valuesCache.fromValue(input);
+        }
+
+        public static Throwable missing(int input) {
+            return new IllegalArgumentException("No " + Frequency.class.getSimpleName() + " for bits " + DebugPrinter.hex(input, 4));
+        }
+
+        public int compareTo(int value) {
+            return value - code;
         }
 
         @Override

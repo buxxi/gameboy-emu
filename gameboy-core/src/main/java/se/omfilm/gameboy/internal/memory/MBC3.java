@@ -141,7 +141,7 @@ public class MBC3 implements Memory {
         DAYS_LOWER(0x0B),
         DAYS_UPPER(0x0C);
 
-        private final static EnumByValue<RTCRegister> valuesCache = new EnumByValue<>(RTCRegister.values(), RTCRegister.class);
+        private final static EnumByValue<RTCRegister> valuesCache = EnumByValue.create(RTCRegister.values(), RTCRegister.class, RTCRegister::missing);
         private final int code;
 
         RTCRegister(int code) {
@@ -149,10 +149,10 @@ public class MBC3 implements Memory {
         }
 
         public static RTCRegister fromValue(int value) {
-            RTCRegister type = valuesCache.fromValue(value);
-            if (type != null) {
-                return type;
-            }
+            return valuesCache.fromValue(value);
+        }
+
+        public static void missing(int value) {
             throw new IllegalArgumentException("No such " + RTCRegister.class.getName() + " with value: " + DebugPrinter.hex(value, 2));
         }
 

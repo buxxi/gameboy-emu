@@ -344,7 +344,7 @@ public class MMU implements Memory {
                 (mmu, reg, data) -> mmu.enabledInterrupts(data)
         );
 
-        private final static EnumByValue<IORegister> valuesCache = new EnumByValue<>(values(), IORegister.class);
+        private final static EnumByValue<IORegister> valuesCache = EnumByValue.create(values(), IORegister.class, IORegister::missing);
         private final int address;
         private final IOReader reader;
         private final IOWriter writer;
@@ -369,10 +369,10 @@ public class MMU implements Memory {
         }
 
         public static IORegister fromAddress(int address) {
-            IORegister reg = valuesCache.fromValue(address);
-            if (reg != null) {
-                return reg;
-            }
+            return valuesCache.fromValue(address);
+        }
+
+        public static void missing(int address) {
             throw new IllegalArgumentException("No " + IORegister.class.getSimpleName() + " for address " + DebugPrinter.hex(address, 4));
         }
 
@@ -402,7 +402,7 @@ public class MMU implements Memory {
         ZERO_PAGE(              0xFF80, 0xFFFE),
         INTERRUPT_ENABLE(       0xFFFF, 0xFFFF);
 
-        private final static EnumByValue<MemoryType> valuesCache = new EnumByValue<>(MemoryType.values(), MemoryType.class);
+        private final static EnumByValue<MemoryType> valuesCache = EnumByValue.create(MemoryType.values(), MemoryType.class, MemoryType::missing);
 
         public final int from;
         public final int to;
@@ -413,10 +413,10 @@ public class MMU implements Memory {
         }
 
         public static MemoryType fromAddress(int address) {
-            MemoryType type = valuesCache.fromValue(address);
-            if (type != null) {
-                return type;
-            }
+            return valuesCache.fromValue(address);
+        }
+
+        public static void missing(int address) {
             throw new IllegalArgumentException("No such memory mapped " + DebugPrinter.hex(address, 4));
         }
 

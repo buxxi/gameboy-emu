@@ -1,6 +1,7 @@
 package se.omfilm.gameboy.internal;
 
-import se.omfilm.gameboy.internal.instructions.*;
+import se.omfilm.gameboy.internal.instructions.InvalidInstruction;
+import se.omfilm.gameboy.internal.instructions.NoOp;
 import se.omfilm.gameboy.internal.instructions.arithmetic.*;
 import se.omfilm.gameboy.internal.instructions.bitmanipulation.*;
 import se.omfilm.gameboy.internal.instructions.flagmanipulation.*;
@@ -594,7 +595,7 @@ public interface Instruction {
         SET_7_HL(   0xCBFE, SetBitAddressOfHL::bit7), //Page 109
         SET_A7(     0xCBFF, SetBitInRegister::bit7ofA); //Page 109
 
-        private final static EnumByValue<InstructionType> valuesCache = new EnumByValue<>(values(), InstructionType.class);
+        private final static EnumByValue<InstructionType> valuesCache = EnumByValue.create(values(), InstructionType.class, InstructionType::missing);
         private final int opcode;
         private final Supplier<Instruction> instructionSupplier;
 
@@ -609,11 +610,11 @@ public interface Instruction {
         }
 
         public static InstructionType fromOpCode(int opcode) {
-            InstructionType type = valuesCache.fromValue(opcode);
-            if (type != null) {
-                return type;
-            }
-            throw new IllegalArgumentException("No such instruction " + DebugPrinter.hex(opcode, 4));
+            return valuesCache.fromValue(opcode);
+        }
+
+        public static Throwable missing(int opcode) {
+            return new IllegalArgumentException("No such instruction " + DebugPrinter.hex(opcode, 4));
         }
 
         @Override
