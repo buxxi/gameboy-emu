@@ -36,7 +36,7 @@ public class MBC2 implements Memory {
             } else {
                 log.warn("Trying to enable/disable RAM with invalid address: " + DebugPrinter.hex(address, 4));
             }
-        } else if (address >= 0x2000 && address < 0x4000) {
+        } else if (address < 0x4000) {
             if ((address & 0b0000_0001_0000_0000) != 0) {
                 currentROMBank = (data & 0b0000_1111);
                 if (currentROMBank == 0) {

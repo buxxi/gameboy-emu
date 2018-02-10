@@ -50,12 +50,12 @@ public class MBC3 implements Memory {
             boolean enabled = (data & 0b0000_1010) != 0;
             ramBanks.enable(enabled);
             clock.enable(enabled);
-        } else if (address >= 0x2000 && address < 0x4000) {
+        } else if (address < 0x4000) {
             currentROMBank = (data & 0b0111_1111);
             if (currentROMBank == 0) {
                 currentROMBank += 1;
             }
-        } else if (address >= 0x4000 && address < 0x6000) {
+        } else if (address < 0x6000) {
             if (data <= 0b0000_0011) {
                 ramBanks.selectBank(data & 0b0000_0011);
                 mode = Mode.RAM_BANKS;
@@ -63,7 +63,7 @@ public class MBC3 implements Memory {
                 clock.select(RTCRegister.fromValue(data));
                 mode = Mode.REAL_TIME_CLOCK;
             }
-        } else if (address >= 0x6000 && address < 0x8000) {
+        } else if (address < 0x8000) {
             clock.latch(data);
         } else {
             log.warn("Can't write " + DebugPrinter.hex(data, 2) + " to " + getClass().getSimpleName() + "@" + DebugPrinter.hex(address, 4));

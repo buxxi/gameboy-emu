@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
 
@@ -32,7 +31,7 @@ public class ROM {
         this.region = Region.fromValue(data[0x14A]);
     }
 
-    public static ROM load(byte[] data) throws IOException {
+    public static ROM load(byte[] data) {
         ROM rom = new ROM(data);
         if (data[0x146] != 0) {
             log.warn("ROM uses Super GameBoy functions, this is not implemented");
@@ -51,7 +50,7 @@ public class ROM {
         return this;
     }
 
-    public BankableRAM createRAMBanks() {
+    private BankableRAM createRAMBanks() {
         if (ramPath != null) {
             try {
                 return BankableRAM.toFile(ramSize.banks, ramPath.toFile());
@@ -85,10 +84,12 @@ public class ROM {
         return name;
     }
 
+    @SuppressWarnings("unused")
     private static Memory readOnly(ByteArrayMemory rom, BankableRAM ramBanks) {
         return new ReadOnlyMemory(rom);
     }
 
+    @SuppressWarnings("unused")
     private static Memory unsupported(ByteArrayMemory rom, BankableRAM ramBanks) {
         throw new UnsupportedOperationException("Unsupported memory type");
     }
