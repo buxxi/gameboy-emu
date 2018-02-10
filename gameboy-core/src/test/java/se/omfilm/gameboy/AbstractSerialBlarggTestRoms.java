@@ -1,6 +1,5 @@
 package se.omfilm.gameboy;
 
-import org.apache.commons.io.IOUtils;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.FixedColorPalette;
 import se.omfilm.gameboy.io.controller.NullController;
@@ -8,6 +7,7 @@ import se.omfilm.gameboy.io.screen.NullScreen;
 import se.omfilm.gameboy.io.serial.SerialConnection;
 import se.omfilm.gameboy.io.sound.NullSoundPlayback;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -27,7 +27,9 @@ public abstract class AbstractSerialBlarggTestRoms {
         do {
             entry = zipFile.getNextEntry();
             if (entry != null && romName.equals(entry.getName())) {
-                loadROM(IOUtils.toByteArray(zipFile));
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                zipFile.transferTo(out);
+                loadROM(out.toByteArray());
                 return;
             }
         } while (entry != null);
