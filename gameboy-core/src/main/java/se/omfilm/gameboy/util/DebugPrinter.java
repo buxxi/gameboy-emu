@@ -15,11 +15,11 @@ public class DebugPrinter {
     private static LinkedList<RecordedInstruction> instructionStack = new LinkedList<>();
 
     public static String hex(int val, int length) {
-        String result = Integer.toHexString(val).toUpperCase();
-        while (result.length() < length) {
-            result = "0" + result;
+        if (length == 2) {
+            return String.format("0x%02X", val);
+        } else {
+            return String.format("0x%04X", val);
         }
-        return "0x" + result;
     }
 
     public static void debugException(Exception e) {
@@ -33,7 +33,7 @@ public class DebugPrinter {
     }
 
     private static void debugCallStack() {
-        LinkedList<RecordedInstruction> copy = (LinkedList<RecordedInstruction>) instructionStack.clone();
+        LinkedList<RecordedInstruction> copy = new LinkedList<>(instructionStack);
         while (!copy.isEmpty()) {
             log.error("\t" + copy.removeLast());
         }
