@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.MMU;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-public class MBC2 implements Memory {
+public class MBC2 implements Cartridge {
     private static final Logger log = LoggerFactory.getLogger(MBC2.class);
     private final Memory rom;
     private final BankableRAM builtInRAM; //TODO: should only be 512 bytes
@@ -14,6 +14,10 @@ public class MBC2 implements Memory {
     public MBC2(Memory memory, BankableRAM bankableRAM) {
         this.rom = memory;
         this.builtInRAM = bankableRAM;
+    }
+
+    public void step(int cycles) {
+
     }
 
     public int readByte(int address) {

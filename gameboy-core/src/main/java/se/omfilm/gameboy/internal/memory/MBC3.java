@@ -2,16 +2,20 @@ package se.omfilm.gameboy.internal.memory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.omfilm.gameboy.internal.CPU;
 import se.omfilm.gameboy.internal.MMU;
 import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.util.EnumByValue;
+import se.omfilm.gameboy.util.Runner;
 
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
 
 import static java.lang.Integer.compare;
 
-public class MBC3 implements Memory {
+public class MBC3 implements Cartridge {
     private static final Logger log = LoggerFactory.getLogger(MBC3.class);
+    private static final int CLOCK_DATA_SIZE = 48;
 
     private final Memory rom;
     private final BankableRAM ramBanks;
@@ -23,7 +27,13 @@ public class MBC3 implements Memory {
     public MBC3(Memory rom, BankableRAM ramBanks) {
         this.rom = rom;
         this.ramBanks = ramBanks;
-        this.clock = new RealTimeClock(ramBanks.lastPowerOff());
+        this.clock = new RealTimeClock(ramBanks.clockData(CLOCK_DATA_SIZE));
+    }
+
+    public void step(int cycles) {
+        for (int i = 0; i < cycles; i++) {
+            clock.step();
+        }
     }
 
     public int readByte(int address) {
@@ -71,16 +81,23 @@ public class MBC3 implements Memory {
     }
 
     private static class RealTimeClock {
+        private final Memory clockMemory;
+        private final Runner.Counter counter = Runner.counter(this::addSecond, CPU.FREQUENCY);
+        private Duration duration;
+        private Duration latchedDuration;
+
+        private RTCRegister selectedRegister = RTCRegister.SECONDS;
         private boolean enabled = false;
-        private RTCRegister register = RTCRegister.SECONDS;
-        private int latchData = 0xFF;
+        private boolean latched = false;
+        private boolean halted = false;
 
-        private Instant offsetTime;
-        private Instant currentTime;
+        public RealTimeClock(Memory clockMemory) {
+            this.clockMemory = clockMemory;
+            loadClockRAM();
+        }
 
-        public RealTimeClock(Instant initialTime) {
-            offsetTime = initialTime;
-            offsetTime = LocalDateTime.of(2015, 2, 1, 8, 32, 15).atZone(ZoneId.systemDefault()).toInstant();
+        public void step() {
+            counter.step();
         }
 
         public void enable(boolean enabled) {
@@ -88,35 +105,36 @@ public class MBC3 implements Memory {
         }
 
         public void latch(int data) {
-            if (latchData == 0 && data == 1) {
-                currentTime = Instant.now();
+            boolean shouldLatch = data == 0x0000_0001;
+            if (!latched && shouldLatch) {
+                latchedDuration = duration;
+            } else if (latched && !shouldLatch) {
+                log.debug("Unlatching");
             }
-            latchData = data;
+            latched = shouldLatch;
         }
 
         public void select(RTCRegister register) {
-            this.register = register;
+            this.selectedRegister = register;
         }
 
         public int read() {
             if (!enabled) {
                 return 0xFF;
             }
-            Duration between = Duration.between(offsetTime, currentTime);
-            switch (register) {
-                case SECONDS:
-                    return (int) (between.getSeconds() % 60);
-                case MINUTES:
-                    return (int) ((between.getSeconds() / 60) % 60);
-                case HOURS:
-                    return (int) ((between.getSeconds() / (60 * 60)) % 24);
+            switch (selectedRegister) {
+                case HALT_AND_DAYS_UPPER:
+                    return readHalt();
                 case DAYS_LOWER:
-                    return (int) (between.getSeconds() / (60 * 60 * 24)) & 0b1111_1111;
-                case DAYS_UPPER:
-                    int days = (int) (between.getSeconds() / (60 * 60 * 24));
-                    log.warn("Reading " + register);
+                    return readDays();
+                case HOURS:
+                    return readHours();
+                case MINUTES:
+                    return readMinutes();
+                case SECONDS:
+                    return readSeconds();
                 default:
-                    return 0xFF;
+                    throw new UnsupportedOperationException("Not implemented for " + selectedRegister);
             }
         }
 
@@ -124,8 +142,137 @@ public class MBC3 implements Memory {
             if (!enabled) {
                 return;
             }
-            //TODO
-            log.warn("Writing " + register + ": " + DebugPrinter.hex(data, 2));
+            switch (selectedRegister) {
+                case HALT_AND_DAYS_UPPER:
+                    writeHalt(data);
+                    break;
+                case DAYS_LOWER:
+                    writeDays(data);
+                    break;
+                case HOURS:
+                    writeHours(data);
+                    break;
+                case MINUTES:
+                    writeMinutes(data);
+                    break;
+                case SECONDS:
+                    writeSeconds(data);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Not implemented for " + selectedRegister + ": " + DebugPrinter.hex(data, 2));
+            }
+            persistClockRAM();
+        }
+
+        private void addSecond() {
+            duration = duration.plusSeconds(1);
+            persistClockRAM();
+        }
+
+        private int readHalt() {
+            int days = (int) (latched ? latchedDuration : duration).toDaysPart();
+            return  (days & 0b0001_0000_0000) >> 8 |
+                    (halted ? 0b0100_0000 : 0) |
+                    (days > 0x1FF ? 0b1000_0000 : 0);
+        }
+
+        private void writeHalt(int data) {
+            halted = (data & 0b0100_0000) != 0;
+            if (halted) {
+                int days = ((data & 0b0000_0001) << 8) | readDays();
+                duration = duration.minusDays(duration.toDaysPart()).plusDays(days);
+            }
+            //TODO: if first bit is set, remove the overflowing part
+        }
+
+        private int readDays() {
+            int days = (int) (latched ? latchedDuration : duration).toDaysPart();
+            return days & 0b1111_1111;
+        }
+
+        private void writeDays(int data) {
+            if (!halted) {
+                return;
+            }
+
+            int days = ((int) duration.toDaysPart() & 0b0001_0000_0000) | data;
+            duration = duration.minusDays(duration.toDaysPart()).plusDays(days);
+        }
+
+        private int readHours() {
+            return (latched ? latchedDuration : duration).toHoursPart();
+        }
+
+        private void writeHours(int data) {
+            if (!halted) {
+                return;
+            }
+            duration = duration.minusHours(duration.toHoursPart()).plusHours(data);
+        }
+
+        private int readMinutes() {
+            return (latched ? latchedDuration : duration).toMinutesPart();
+        }
+
+        private void writeMinutes(int data) {
+            if (!halted) {
+                return;
+            }
+            duration = duration.minusMinutes(duration.toMinutesPart()).plusMinutes(data);
+        }
+
+        private int readSeconds() {
+            return (latched ? latchedDuration : duration).toSecondsPart();
+        }
+
+        private void writeSeconds(int data) {
+            if (!halted) {
+                return;
+            }
+            duration = duration.minusSeconds(duration.toSecondsPart()).plusSeconds(data);
+        }
+
+        private void persistClockRAM() {
+            writeClockMemoryDuration(0, duration);
+            writeClockMemoryDuration(20, latchedDuration);
+
+            long now = Instant.now().getEpochSecond();
+            for (int i = 0; i < 8; i++) {
+                clockMemory.writeByte(40 + i, (int) ((now >> (i * 8)) & 0xFF));
+            }
+        }
+
+        private void writeClockMemoryDuration(int offsetAddress, Duration duration) {
+            writeClockMemoryInt(offsetAddress, duration.toSecondsPart());
+            writeClockMemoryInt(offsetAddress + 4, duration.toMinutesPart());
+            writeClockMemoryInt(offsetAddress + 8, duration.toHoursPart());
+            writeClockMemoryInt(offsetAddress + 12, (int) duration.toDaysPart() & 0b1111_1111);
+            writeClockMemoryInt(offsetAddress + 16, (int) (duration.toDaysPart() >> 8) & 0b0000_0001);
+        }
+
+        private void writeClockMemoryInt(int offsetAddress, int data) {
+            clockMemory.writeByte(offsetAddress, data);
+            clockMemory.writeByte(offsetAddress + 1, 0);
+            clockMemory.writeByte(offsetAddress + 2, 0);
+            clockMemory.writeByte(offsetAddress + 3, 0);
+        }
+
+        private void loadClockRAM() {
+            long lastTime = 0;
+            for (int i = 0; i < 8; i++) {
+                lastTime += clockMemory.readByte(40 + i) << (i * 8);
+            }
+            duration = readClockMemoryDuration(0, Duration.between(Instant.ofEpochSecond(lastTime), Instant.now()));
+            latchedDuration = readClockMemoryDuration(20, Duration.ZERO);
+        }
+
+        private Duration readClockMemoryDuration(int offsetAddress, Duration duration) {
+            duration = duration.plusSeconds(clockMemory.readByte(offsetAddress));
+            duration = duration.plusMinutes(clockMemory.readByte(offsetAddress + 4));
+            duration = duration.plusHours(clockMemory.readByte(offsetAddress + 8));
+            duration = duration.plusDays(clockMemory.readByte(offsetAddress + 12));
+            duration = duration.plusDays((clockMemory.readByte(offsetAddress + 16) & 0b0000_0001) << 8);
+            return duration;
         }
     }
 
@@ -139,7 +286,7 @@ public class MBC3 implements Memory {
         MINUTES(0x09),
         HOURS(0x0A),
         DAYS_LOWER(0x0B),
-        DAYS_UPPER(0x0C);
+        HALT_AND_DAYS_UPPER(0x0C);
 
         private final static EnumByValue<RTCRegister> valuesCache = EnumByValue.create(RTCRegister.values(), RTCRegister.class, RTCRegister::missing);
         private final int code;

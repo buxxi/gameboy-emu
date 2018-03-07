@@ -4,13 +4,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-public class ReadOnlyMemory implements Memory {
+public class ReadOnlyMemory implements Cartridge {
     private static final Logger log = LoggerFactory.getLogger(ReadOnlyMemory.class);
 
     private final Memory delegate;
 
     public ReadOnlyMemory(Memory delegate) {
         this.delegate = delegate;
+    }
+
+    public void step(int cycles) {
+
     }
 
     public int readByte(int address) {

@@ -5,7 +5,6 @@ import se.omfilm.gameboy.internal.MMU;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
-import java.time.Instant;
 
 public abstract class BankableRAM implements Memory {
     private final Memory[] banks;
@@ -22,7 +21,7 @@ public abstract class BankableRAM implements Memory {
 
     protected abstract Memory createBank(int bank);
 
-    public abstract Instant lastPowerOff();
+    public abstract Memory clockData(int size);
 
     public int readByte(int address) {
         if (!enabled) {
@@ -52,8 +51,8 @@ public abstract class BankableRAM implements Memory {
                 return new ByteArrayMemory(MMU.MemoryType.RAM_BANKS.allocate());
             }
 
-            public Instant lastPowerOff() {
-                return Instant.now();
+            public Memory clockData(int size) {
+                return new ByteArrayMemory(new byte[size]);
             }
         };
     }
@@ -65,8 +64,8 @@ public abstract class BankableRAM implements Memory {
                 return new PersistentMemory(bank * MMU.MemoryType.RAM_BANKS.size(), raf);
             }
 
-            public Instant lastPowerOff() {
-                return Instant.ofEpochMilli(file.lastModified());
+            public Memory clockData(int size) {
+                return new PersistentMemory(banks * MMU.MemoryType.RAM_BANKS.size(), raf);
             }
         };
     }

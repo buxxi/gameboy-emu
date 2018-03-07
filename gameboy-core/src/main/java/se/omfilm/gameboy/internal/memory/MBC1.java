@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.MMU;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-public class MBC1 implements Memory {
+public class MBC1 implements Cartridge {
     private static final Logger log = LoggerFactory.getLogger(MBC1.class);
     private final Memory rom;
     private final BankableRAM ramBanks;
@@ -16,6 +16,10 @@ public class MBC1 implements Memory {
     public MBC1(Memory rom, BankableRAM ramBanks) {
         this.rom = rom;
         this.ramBanks = ramBanks;
+    }
+
+    public void step(int cycles) {
+
     }
 
     public int readByte(int address) {

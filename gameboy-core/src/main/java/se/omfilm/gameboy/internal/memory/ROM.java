@@ -61,7 +61,7 @@ public class ROM {
         return BankableRAM.inMemory(ramSize.banks);
     }
 
-    public Memory createROMBanks() {
+    public Cartridge createCartridge() {
         BankableRAM ramBanks = createRAMBanks();
         ByteArrayMemory rom = new ByteArrayMemory(data);
         try {
@@ -85,12 +85,12 @@ public class ROM {
     }
 
     @SuppressWarnings("unused")
-    private static Memory readOnly(ByteArrayMemory rom, BankableRAM ramBanks) {
+    private static Cartridge readOnly(ByteArrayMemory rom, BankableRAM ramBanks) {
         return new ReadOnlyMemory(rom);
     }
 
     @SuppressWarnings("unused")
-    private static Memory unsupported(ByteArrayMemory rom, BankableRAM ramBanks) {
+    private static Cartridge unsupported(ByteArrayMemory rom, BankableRAM ramBanks) {
         throw new UnsupportedOperationException("Unsupported memory type");
     }
 
@@ -187,15 +187,15 @@ public class ROM {
 
         private final int value;
         private final boolean battery;
-        private final BiFunction<ByteArrayMemory, BankableRAM, Memory> creator;
+        private final BiFunction<ByteArrayMemory, BankableRAM, Cartridge> creator;
 
-        ROMType(int value, boolean battery, BiFunction<ByteArrayMemory, BankableRAM, Memory> creator) {
+        ROMType(int value, boolean battery, BiFunction<ByteArrayMemory, BankableRAM, Cartridge> creator) {
             this.value = value;
             this.battery = battery;
             this.creator = creator;
         }
 
-        public Memory create(ByteArrayMemory rom, BankableRAM ramBanks) {
+        public Cartridge create(ByteArrayMemory rom, BankableRAM ramBanks) {
             return creator.apply(rom, ramBanks);
         }
 

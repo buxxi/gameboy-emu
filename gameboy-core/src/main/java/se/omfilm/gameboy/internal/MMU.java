@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.internal.memory.ROM;
+import se.omfilm.gameboy.internal.memory.Cartridge;
 import se.omfilm.gameboy.io.serial.SerialConnection;
 import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.util.EnumByValue;
@@ -12,7 +13,7 @@ import se.omfilm.gameboy.util.EnumByValue;
 public class MMU implements Memory {
     private static final Logger log = LoggerFactory.getLogger(MMU.class);
 
-    private Memory rom;
+    private Cartridge rom;
     private final Memory zeroPage;
     private final Input input;
     private final PPU ppu;
@@ -23,7 +24,7 @@ public class MMU implements Memory {
     private final Memory ram;
 
     public MMU(ROM rom, PPU ppu, APU apu, Interrupts interrupts, Timer timer, SerialConnection serial, Input input) {
-        this.rom = rom.createROMBanks();
+        this.rom = rom.createCartridge();
         this.apu = apu;
         this.interrupts = interrupts;
         this.timer = timer;
@@ -32,6 +33,10 @@ public class MMU implements Memory {
         this.ppu = ppu;
         this.zeroPage = new ByteArrayMemory(MemoryType.ZERO_PAGE.allocate());
         this.ram = new ByteArrayMemory(MemoryType.RAM.allocate());
+    }
+
+    public void step(int cycles) {
+        rom.step(cycles);
     }
 
     public int readByte(int address) {
@@ -443,13 +448,17 @@ public class MMU implements Memory {
         }
     }
 
-    private class BootMemory implements Memory {
+    private class BootMemory implements Cartridge {
         private final ByteArrayMemory boot;
-        private final Memory delegate;
+        private final Cartridge delegate;
 
-        public BootMemory(byte[] boot, Memory delegate) {
+        public BootMemory(byte[] boot, Cartridge delegate) {
             this.boot = new ByteArrayMemory(boot);
             this.delegate = delegate;
+        }
+
+        public void step(int cycles) {
+            this.delegate.step(cycles);
         }
 
         public int readByte(int address) {

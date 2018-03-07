@@ -68,6 +68,7 @@ public class Gameboy {
         timer.step(cycles, interrupts);
         ppu.step(cycles, interrupts);
         apu.step(cycles);
+        memory.step(cycles);
         return cycles;
     }
 
