@@ -95,8 +95,15 @@ public class ROM {
     }
 
     private static String readGameName(byte[] rom) {
-        byte[] name = new byte[16];
-        System.arraycopy(rom, 0x0134, name, 0, 16);
+        int length = 0;
+        for (int i = 0; i < 16; i++) {
+            if (rom[0x0134 + i] == -128) {
+                break;
+            }
+            length = i + 1;
+        }
+        byte[] name = new byte[length];
+        System.arraycopy(rom, 0x0134, name, 0, length);
         return new String(name).trim();
     }
 
