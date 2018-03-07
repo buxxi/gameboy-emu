@@ -3,6 +3,7 @@ package se.omfilm.gameboy.internal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.Instruction.InstructionType;
+import se.omfilm.gameboy.internal.instructions.InvalidInstruction;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.util.DebugPrinter;
 
@@ -271,6 +272,7 @@ public class CPU {
 
     public static class InstructionProvider {
         private final Map<InstructionType, Instruction> instructionMap = new EnumMap<>(InstructionType.class);
+        private final Instruction invalidInstruction = new InvalidInstruction();
 
         public Instruction read(ProgramCounter programCounter, Memory memory) {
             return resolveImpl(resolveType(programCounter, memory));
@@ -289,13 +291,7 @@ public class CPU {
         }
 
         protected Instruction resolveImpl(InstructionType instructionType) {
-            return instructionMap.getOrDefault(instructionType, unmappedInstruction(instructionType));
-        }
-
-        private Instruction unmappedInstruction(InstructionType instructionType) {
-            return (memory, registers, flags, programCounter, stackPointer) -> {
-                throw new UnsupportedOperationException(instructionType + " not implemented");
-            };
+            return instructionMap.getOrDefault(instructionType, invalidInstruction);
         }
     }
 

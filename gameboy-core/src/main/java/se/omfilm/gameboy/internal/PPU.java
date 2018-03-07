@@ -6,7 +6,6 @@ import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.screen.Screen;
 
 import java.util.BitSet;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
 public class PPU {
@@ -155,7 +154,7 @@ public class PPU {
         int adjustedX = ((x + windowX - 7) + Screen.WIDTH) % Screen.WIDTH;
         Tile tile = tileAt(adjustedX, y, windowTileMap);
         Shade shade = tile.shadeAt(adjustedX, y, backgroundPalette);
-        drawPixel(x, shade, colorPalette::window);
+        drawPixel(x, shade, colorPalette.window(shade));
     }
 
     private void drawBackgroundPixel(int x) {
@@ -163,12 +162,12 @@ public class PPU {
         int adjustedX = x + scrollX;
         Tile tile = tileAt(adjustedX, y, backgroundTileMap);
         Shade shade = tile.shadeAt(adjustedX, y, backgroundPalette);
-        drawPixel(x, shade, colorPalette::background);
+        drawPixel(x, shade, colorPalette.background(shade));
     }
 
-    private void drawPixel(int x, Shade shade, Function<Shade, Color> tranform) {
+    private void drawPixel(int x, Shade shade, Color color) {
         backgroundMask.set(x, shade != Shade.LIGHTEST);
-        screen.setPixel(x, scanline - 1, tranform.apply(shade));
+        screen.setPixel(x, scanline - 1, color);
     }
 
     private void drawSprites() {
@@ -532,7 +531,7 @@ public class PPU {
                 }
 
                 Shade shade = tile.shadeAt(x, y, palette);
-                drawPixel(this.x + i, shade,  this::shadeToColor);
+                drawPixel(this.x + i, shade, shadeToColor(shade));
             }
         }
 
