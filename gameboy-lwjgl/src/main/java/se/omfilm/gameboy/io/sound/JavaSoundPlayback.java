@@ -61,12 +61,12 @@ public class JavaSoundPlayback implements SoundPlayback {
 
     private void playback() {
         while (playing) {
-            int availableInput = line.available();
-            if (availableInput > 0) {
+            int availableOutput = line.available();
+            if (availableOutput > 0) {
                 bufferLock.readLock().lock();
                 try {
-                    int availableOutput = available();
-                    int outputCount = Math.min(availableInput, availableOutput);
+                    int availableInput = available();
+                    int outputCount = Math.min(availableOutput, availableInput);
                     writeToLine(outputCount);
                 } finally {
                     bufferLock.readLock().unlock();
