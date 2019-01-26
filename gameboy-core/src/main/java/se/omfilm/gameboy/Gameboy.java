@@ -61,7 +61,7 @@ public class Gameboy {
     }
 
     private boolean stepFrequency() throws Exception {
-        Runner.times(this::step, CPU.FREQUENCY / Screen.FREQUENCY);
+        Runner.times(this::step, CPU.FREQUENCY / Screen.FREQUENCY); //TODO: Should be 70224 but is not even dividable
         return running;
     }
 
