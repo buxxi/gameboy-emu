@@ -1,23 +1,57 @@
 package se.omfilm.gameboy.util;
 
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Runner {
+    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
+    /**
+     * Schedules a callable to be called at a fixed fps until it return false.
+     *
+     * This method blocks the current thread and no parallel calls should be made.
+     */
     public static void atFrequency(Callable<Boolean> callable, int fps) throws Exception {
-        long expectedDiff = 1000 / fps;
-        boolean running = true;
-        while (running) {
-            long before = System.currentTimeMillis();
-            running = callable.call();
-            long after = System.currentTimeMillis();
-            long diff = after - before;
-            if (diff < expectedDiff) {
-                long l = expectedDiff - diff;
-                Thread.sleep(l);
+        long rate = SECONDS.toNanos(1) / fps;
+
+        AtomicReference<Exception> exception = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        ScheduledFuture<?> await = executor.scheduleAtFixedRate(() -> {
+            try {
+                if (!callable.call()) {
+                    latch.countDown();
+                }
+            } catch (Exception e) {
+                exception.set(e);
+                latch.countDown();
             }
+        }, 0, rate, NANOSECONDS);
+
+        latch.await();
+        await.cancel(false);
+
+        if (exception.get() != null) {
+            throw new Exception(exception.get());
         }
     }
 
+    /**
+     * Runs the callable until it returns false as fast as possible
+     */
+    public static void atMaximumCapacity(Callable<Boolean> callable) throws Exception {
+        boolean result;
+        do {
+            result = callable.call();
+        } while (result);
+    }
+
+    /**
+     * Runs the callable a fixed amount of times
+     */
     public static void times(Callable<Integer> callable, int times) throws Exception {
         int counter = 0;
         while (counter < times) {
@@ -25,6 +59,9 @@ public class Runner {
         }
     }
 
+    /**
+     * Returns a Counter class that calls the Runnable once per number of calls to the step-method.
+     */
     public static Counter counter(Runnable runnable, int interval) {
         return new Counter(runnable, interval);
     }

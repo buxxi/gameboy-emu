@@ -18,7 +18,7 @@ public class Gameboy {
     private final Timer timer;
     private final Input input;
 
-    private final int frequency;
+    private final Speed speed;
     private boolean running = false;
 
     public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, SoundPlayback soundPlayback, ROM rom, Speed speed, boolean debug) {
@@ -28,7 +28,7 @@ public class Gameboy {
         this.timer = new Timer();
         input = new Input(controller);
         this.memory = new MMU(rom, ppu, apu, cpu.interrupts(), timer, serial, input);
-        this.frequency = speed.frequency;
+        this.speed = speed;
     }
 
     public Gameboy withBootData(byte[] boot) {
@@ -39,7 +39,11 @@ public class Gameboy {
     public void run() {
         running = true;
         try {
-            Runner.atFrequency(this::stepFrequency, frequency);
+            if (speed != Speed.UNLIMITED) {
+                Runner.atFrequency(this::stepFrequency, speed.frequency);
+            } else {
+                Runner.atMaximumCapacity(this::stepFrequency);
+            }
         } catch (Exception e) {
             DebugPrinter.debugException(e);
         }
