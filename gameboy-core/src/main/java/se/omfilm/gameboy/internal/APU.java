@@ -39,7 +39,7 @@ public class APU {
     public void step(int cycles) {
         for (int i = 0; i < cycles; i++) {
             stepDuration();
-            stepFrequency();
+            stepFrequency(); //Commenting out this makes the emulator run i 200fps more, can it be optimized?
             envelopeCounter.step();
             sweepCounter.step();
             sampleCounter.step();
