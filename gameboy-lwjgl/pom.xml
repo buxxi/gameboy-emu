@@ -12,9 +12,7 @@
     </parent>
 
     <properties>
-        <lwjgl.version>3.1.6</lwjgl.version>
-        <maven.compiler.source>1.9</maven.compiler.source>
-        <maven.compiler.target>1.9</maven.compiler.target>
+        <lwjgl.version>3.2.0</lwjgl.version>
     </properties>
 
     <dependencies>
