@@ -10,11 +10,12 @@ public class JavaSoundPlayback implements SoundPlayback {
     private static final int AUDIO_DELAY = 10;
     private SourceDataLine line;
 
-    private final byte[] outputBuffer = new byte[(int) (((double) sampleRate()) / 1000 * AUDIO_DELAY) * CHANNELS];
+    private byte[] outputBuffer;
     private int bufferPosition = 0;
 
-    public void start() {
-        AudioFormat format = new AudioFormat(sampleRate(), BITS_PER_SAMPLE, CHANNELS, true, true);
+    public void start(int samplingRate) {
+        AudioFormat format = new AudioFormat(samplingRate, BITS_PER_SAMPLE, CHANNELS, true, true);
+        outputBuffer = new byte[(int) (((double) samplingRate) / 1000 * AUDIO_DELAY) * CHANNELS];
         try {
             line = AudioSystem.getSourceDataLine(format);
             line.open(format, outputBuffer.length);
@@ -39,10 +40,5 @@ public class JavaSoundPlayback implements SoundPlayback {
         } else {
             bufferPosition = bufferPosition % outputBuffer.length;
         }
-    }
-
-    @Override
-    public int sampleRate() {
-        return 49152; // 8192 * 6
     }
 }

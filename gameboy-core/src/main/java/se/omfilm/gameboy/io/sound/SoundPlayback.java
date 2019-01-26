@@ -5,13 +5,9 @@ public interface SoundPlayback {
     int BITS_PER_SAMPLE = 8;
     int CHANNELS = 2;
 
-    void start();
+    void start(int samplingRate);
 
     void stop();
 
     void output(int left, int right);
-
-    default int sampleRate() {
-        return SAMPLING_RATE;
-    }
 }

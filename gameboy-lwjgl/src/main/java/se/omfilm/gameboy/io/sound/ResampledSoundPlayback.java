@@ -1,25 +1,32 @@
 package se.omfilm.gameboy.io.sound;
 
 public class ResampledSoundPlayback implements SoundPlayback {
+    private static final int DEFAULT_SAMPLING_RATE = SoundPlayback.SAMPLING_RATE * 6;
+
     private final SoundPlayback delegate;
-    private final int steps;
     private final Filter filter;
+    private final int outputSamplingRate;
+    private int steps;
 
     private int previousLeft = 0;
     private int previousRight = 0;
 
-    public ResampledSoundPlayback(SoundPlayback delegate, Filter filter) {
-        this.delegate = delegate;
-        this.steps = delegate.sampleRate() / SoundPlayback.SAMPLING_RATE;
-        if ((delegate.sampleRate() % SoundPlayback.SAMPLING_RATE) != 0) {
-            throw new UnsupportedOperationException("Sampling rate of playback must be even dividable by the sampling rate of the emulator");
-        }
-
-        this.filter = filter;
+    public ResampledSoundPlayback(JavaSoundPlayback delegate, Filter filter) {
+        this(delegate, filter, DEFAULT_SAMPLING_RATE);
     }
 
-    public void start() {
-        delegate.start();
+    public ResampledSoundPlayback(SoundPlayback delegate, Filter filter, int outputSamplingRate) {
+        this.delegate = delegate;
+        this.filter = filter;
+        this.outputSamplingRate = outputSamplingRate;
+    }
+
+    public void start(int samplingRate) {
+        if ((outputSamplingRate % samplingRate) != 0) {
+            throw new UnsupportedOperationException("Sampling rate of playback must be even dividable by the sampling rate of the emulator");
+        }
+        this.steps = outputSamplingRate / samplingRate;
+        delegate.start(outputSamplingRate);
     }
 
     public void stop() {

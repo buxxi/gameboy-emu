@@ -33,7 +33,7 @@ public class APU {
 
     public APU(SoundPlayback device) {
         this.device = device;
-        device.start(); //TODO
+        device.start(SAMPLING_RATE); //TODO: this should probably be called from somewhere else and not the constructor
     }
 
     public void step(int cycles) {
