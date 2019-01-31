@@ -13,7 +13,7 @@
 	- [x] 11-op a,(hl)
  - [ ] dmg_sound:
 	- [x] 01-registers
-	- [ ] 02-len ctr
+	- [x] 02-len ctr
 	- [ ] 03-trigger
 	- [ ] 04-sweep
 	- [ ] 05-sweep details

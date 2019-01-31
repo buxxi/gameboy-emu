@@ -78,15 +78,12 @@ public class Runner {
         }
 
         public void step() {
-            counter--;
-            if (counter == 0) {
+            if (counter > 0) {
+                counter--;
+            } else {
                 counter = interval;
                 runnable.run();
             }
-        }
-
-        public void reset() {
-            this.counter = interval;
         }
     }
 }
