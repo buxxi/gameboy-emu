@@ -11,6 +11,8 @@ import se.omfilm.gameboy.internal.Interrupts;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static se.omfilm.gameboy.util.DebugPrinter.hex;
 
@@ -51,12 +53,54 @@ public class DebugGUI {
 
     private EmulatorState lastState;
 
+    private boolean paused = false;
+    private final ReentrantLock pauseLock = new ReentrantLock();
+    private final Condition pausedCondition = pauseLock.newCondition();
+
     public void start() {
         new Thread(this::run).start();
     }
 
     public void update(EmulatorState state) {
         lastState = state;
+
+        if (paused) {
+            try {
+                pauseLock.lock();
+                pausedCondition.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                pauseLock.unlock();
+            }
+        }
+    }
+
+    private void pause() {
+        paused = !paused;
+        if (!paused) {
+            try {
+                pauseLock.lock();
+                pausedCondition.signalAll();
+            } finally {
+                pauseLock.unlock();
+            }
+        }
+    }
+
+    private void step() {
+        if (paused) {
+            try {
+                pauseLock.lock();
+                pausedCondition.signalAll();
+            } finally {
+                pauseLock.unlock();
+            }
+        }
+    }
+
+    private void quit() {
+        System.exit(0);
     }
 
     private void redraw(MultiWindowTextGUI gui) throws IOException {
@@ -118,12 +162,23 @@ public class DebugGUI {
 
         Panel rightPanel = new Panel();
         rightPanel.setLayoutManager(new LinearLayout());
+        rightPanel.addComponent(createButtonsPanel());
 
         mainPanel.addComponent(leftPanel);
         mainPanel.addComponent(middlePanel);
         mainPanel.addComponent(rightPanel);
 
         return mainPanel;
+    }
+
+    private Component createButtonsPanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new LinearLayout());
+        panel.addComponent(new Button("Break", this::pause));
+        panel.addComponent(new Button("Step", this::step));
+        panel.addComponent(new Button("Quit", this::quit));
+
+        return panel.withBorder(Borders.singleLine("Actions"));
     }
 
     private Component createRegistersPanel() {
@@ -266,6 +321,7 @@ public class DebugGUI {
             MultiWindowTextGUI gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
             gui.addWindow(window);
             while (true) {
+                gui.processInput();
                 redraw(gui);
             }
         } catch (Exception e) {
