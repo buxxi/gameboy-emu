@@ -10,6 +10,7 @@
         <module>gameboy-core</module>
         <module>gameboy-lwjgl</module>
         <module>gameboy-cli</module>
+        <module>gameboy-debug</module>
     </modules>
     <name>gameboy</name>
 

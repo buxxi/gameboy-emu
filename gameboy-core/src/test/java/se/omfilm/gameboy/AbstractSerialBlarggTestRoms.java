@@ -36,9 +36,9 @@ public abstract class AbstractSerialBlarggTestRoms {
         throw new IllegalArgumentException(romName + " not found in " + zipName);
     }
 
-    private void loadROM(byte[] rom) throws IOException {
+    private void loadROM(byte[] rom) {
         serial = new StringSerialConnection();
-        target = new Gameboy(new NullScreen(), FixedColorPalette.PRESET.MONOCHROME.getPalette(), new NullController(), serial, new NullSoundPlayback(), ROM.load(rom), Gameboy.Speed.UNLIMITED, false);
+        target = new Gameboy(new NullScreen(), FixedColorPalette.PRESET.MONOCHROME.getPalette(), new NullController(), serial, new NullSoundPlayback(), ROM.load(rom), Gameboy.Speed.UNLIMITED);
         target.reset();
     }
 

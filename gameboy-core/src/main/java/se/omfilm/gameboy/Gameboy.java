@@ -7,22 +7,21 @@ import se.omfilm.gameboy.io.controller.Controller;
 import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.io.serial.SerialConnection;
 import se.omfilm.gameboy.io.sound.SoundPlayback;
-import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.util.Runner;
 
 public class Gameboy {
     protected final MMU memory;
-    private final CPU cpu;
-    private final PPU ppu;
-    private final APU apu;
-    private final Timer timer;
-    private final Input input;
+    protected final CPU cpu;
+    protected final PPU ppu;
+    protected final APU apu;
+    protected final Timer timer;
+    protected final Input input;
 
     private final Speed speed;
     private boolean running = false;
 
-    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, SoundPlayback soundPlayback, ROM rom, Speed speed, boolean debug) {
-        this.cpu = new CPU(debug);
+    public Gameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, SoundPlayback soundPlayback, ROM rom, Speed speed) {
+        this.cpu = new CPU();
         this.ppu = new PPU(screen, colorPalette);
         this.apu = new APU(soundPlayback);
         this.timer = new Timer();
@@ -45,7 +44,7 @@ public class Gameboy {
                 Runner.atMaximumCapacity(this::stepFrequency);
             }
         } catch (Exception e) {
-            DebugPrinter.debugException(e);
+            running = false;
         }
     }
 

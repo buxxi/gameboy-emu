@@ -30,14 +30,14 @@ public class AbstractMemoryBlarggTestRoms {
         throw new IllegalArgumentException(romName + " not found in " + zipName);
     }
 
-    private void loadROM(byte[] rom) throws IOException {
+    private void loadROM(byte[] rom) {
         target = new BlarggGameboy(rom);
         target.reset();
     }
 
     public class BlarggGameboy extends Gameboy {
-        public BlarggGameboy(byte[] rom) throws IOException {
-            super(new NullScreen(), FixedColorPalette.PRESET.MONOCHROME.getPalette(), new NullController(), new NullSerialConnection(), new NullSoundPlayback(), ROM.load(rom), Speed.UNLIMITED, false);
+        public BlarggGameboy(byte[] rom) {
+            super(new NullScreen(), FixedColorPalette.PRESET.MONOCHROME.getPalette(), new NullController(), new NullSerialConnection(), new NullSoundPlayback(), ROM.load(rom), Speed.UNLIMITED);
         }
 
         @Override

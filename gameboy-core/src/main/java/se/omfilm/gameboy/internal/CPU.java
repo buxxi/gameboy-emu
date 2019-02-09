@@ -15,7 +15,7 @@ public class CPU {
 
     public static int FREQUENCY = 4 * 1024 * 1024;
 
-    private final InstructionProvider instructionProvider;
+    private final InstructionProvider instructionProvider = new InstructionProvider();
     private final Flags flags = new FlagsImpl();
     private final InterruptsImpl interrupts = new InterruptsImpl();
     private final ProgramCounter programCounter = new ProgramCounterImpl();
@@ -23,15 +23,6 @@ public class CPU {
     private final Registers registers = new RegistersImpl();
 
     private State state = new NormalState();
-
-    public CPU(boolean debug) {
-        this.instructionProvider = debug ? new DebugPrinter.DebuggableInstructionProvider() : new InstructionProvider();
-        for (InstructionType type : InstructionType.values()) {
-            instructionProvider.add(type, type.instruction().get());
-        }
-        instructionProvider.add(InstructionType.STOP, this::stop);
-        instructionProvider.add(InstructionType.HALT, this::halt);
-    }
 
     @SuppressWarnings("unused")
     private int stop(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer) {
@@ -71,6 +62,22 @@ public class CPU {
 
     public Interrupts interrupts() {
         return this.interrupts;
+    }
+
+    public StackPointer stackPointer() {
+        return this.stackPointer;
+    }
+
+    public ProgramCounter programCounter() {
+        return this.programCounter;
+    }
+
+    public Registers registers() {
+        return this.registers;
+    }
+
+    public Flags flags() {
+        return flags;
     }
 
     private static class ProgramCounterImpl implements ProgramCounter {
@@ -270,9 +277,17 @@ public class CPU {
         }
     }
 
-    public static class InstructionProvider {
+    private class InstructionProvider {
         private final Map<InstructionType, Instruction> instructionMap = new EnumMap<>(InstructionType.class);
         private final Instruction invalidInstruction = new InvalidInstruction();
+
+        public InstructionProvider() {
+            for (InstructionType type : InstructionType.values()) {
+                add(type, type.instruction().get());
+            }
+            add(InstructionType.STOP, CPU.this::stop);
+            add(InstructionType.HALT, CPU.this::halt);
+        }
 
         public Instruction read(ProgramCounter programCounter, Memory memory) {
             return resolveImpl(resolveType(programCounter, memory));

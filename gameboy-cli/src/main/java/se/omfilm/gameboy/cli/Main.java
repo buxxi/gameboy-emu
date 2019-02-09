@@ -2,6 +2,7 @@ package se.omfilm.gameboy.cli;
 
 import org.apache.commons.cli.*;
 import se.omfilm.gameboy.Gameboy;
+import se.omfilm.gameboy.debug.DebuggableGameboy;
 import se.omfilm.gameboy.internal.PPU.Shade;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.ColorPalette;
@@ -34,6 +35,7 @@ public class Main {
     private static final String RESAMPLE_ARG = "resample";
     private static final String MUTE_ARG = "mute";
     private static final String SERIAL_ARG = "serial";
+    private static final String DEBUG_ARG = "debug";
 
     public static void main(String[] args) throws IOException, ParseException {
         Options options = new Options();
@@ -46,6 +48,7 @@ public class Main {
         options.addOption("r", RESAMPLE_ARG, true, "The mode to use for resampling sound");
         options.addOption("m", MUTE_ARG, false, "If the emulator shouldn't produce any sound");
         options.addOption("se", SERIAL_ARG, false, "If the emulator should output serial data to console");
+        options.addOption("d", DEBUG_ARG, false, "If the debugger should be used");
         CommandLineParser parser = new DefaultParser();
         CommandLine result = parser.parse(options, args);
 
@@ -71,7 +74,7 @@ public class Main {
         SoundPlayback sound = createSound(cli, speed);
         SerialConnection serial = createSerial(cli);
 
-        Gameboy gameboy = new Gameboy(screen, palette, controller, serial, sound, rom, speed, false);
+        Gameboy gameboy = createGameboy(cli.hasOption(DEBUG_ARG), rom, palette, speed, controller, screen, sound, serial);
         if (cli.hasOption(BOOT_ARG)) {
             Path bootPath = Paths.get(cli.getOptionValue(BOOT_ARG));
             gameboy = gameboy.withBootData(Files.readAllBytes(bootPath));
@@ -79,6 +82,13 @@ public class Main {
             gameboy.reset();
         }
         gameboy.run();
+    }
+
+    private static Gameboy createGameboy(boolean debug, ROM rom, ColorPalette palette, Gameboy.Speed speed, GLFWCompositeController controller, Screen screen, SoundPlayback sound, SerialConnection serial) {
+        if (debug) {
+            return new DebuggableGameboy(screen, palette, controller, serial, sound, rom, speed);
+        }
+        return new Gameboy(screen, palette, controller, serial, sound, rom, speed);
     }
 
     private static SerialConnection createSerial(CommandLine cli) {
