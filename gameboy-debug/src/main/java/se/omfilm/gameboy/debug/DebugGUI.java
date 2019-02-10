@@ -4,15 +4,19 @@ import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.bundle.LanternaThemes;
 import com.googlecode.lanterna.graphics.Theme;
 import com.googlecode.lanterna.gui2.*;
+import com.googlecode.lanterna.gui2.dialogs.TextInputDialog;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 import se.omfilm.gameboy.internal.Flags;
+import se.omfilm.gameboy.internal.Instruction;
 import se.omfilm.gameboy.internal.Interrupts;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static se.omfilm.gameboy.util.DebugPrinter.hex;
 
@@ -54,10 +58,13 @@ public class DebugGUI {
     private TextBox registerDE;
     private TextBox registerHL;
 
+    private CheckBoxList<String> breakPoints;
+
     private boolean needsRedraw = false;
 
     private Theme normalTheme = LanternaThemes.getRegisteredTheme("blaster");
     private Theme highlightTheme = LanternaThemes.getRegisteredTheme("defrost");
+    private MultiWindowTextGUI gui;
 
     public DebugGUI(Debugger debugger) {
         this.debugger = debugger;
@@ -73,14 +80,53 @@ public class DebugGUI {
 
     private void pause() {
         debugger.pause();
+        reloadBreakpoints();
     }
 
     private void step() {
         debugger.step();
     }
 
+    private void addInstructionBreakpoint() {
+        try {
+            String name = TextInputDialog.showDialog(gui, "Add Instruction Breakpoint", "Name of the instruction to break on", "");
+            debugger.addBreakpoint(Instruction.InstructionType.valueOf(name));
+            reloadBreakpoints();
+        } catch (Exception e) {
+            addInstructionBreakpoint();
+        }
+    }
+
+    private void addProgramCounterBreakpoint() {
+        try {
+            String value = TextInputDialog.showDialog(gui, "Add Program Counter Breakpoint", "Program Counter value to break on (0xXXXX)", "");
+            Pattern pattern = Pattern.compile("(0x)?([0-9A-F]{4})");
+            Matcher matcher = pattern.matcher(value);
+            if (!matcher.matches()) {
+                throw new IllegalArgumentException(value + " isn't a valid program counter");
+            }
+            String address = matcher.group(2);
+            debugger.addBreakpoint(Integer.parseInt(address, 16));
+            reloadBreakpoints();
+        } catch (Exception e) {
+            addProgramCounterBreakpoint();
+        }
+    }
+
+    private void removeBreakpoint(int index) {
+        debugger.removeBreakpoint(debugger.getBreakpoints().get(index));
+        reloadBreakpoints();
+    }
+
     private void quit() {
         System.exit(0);
+    }
+
+    private void reloadBreakpoints() {
+        breakPoints.clearItems();
+        for (Breakpoint breakpoint : debugger.getBreakpoints()) {
+            breakPoints.addItem(breakpoint.displayText(), true);
+        }
     }
 
     private void redrawComponents() {
@@ -139,6 +185,7 @@ public class DebugGUI {
         Panel middlePanel = new Panel();
         middlePanel.setLayoutManager(new LinearLayout());
         middlePanel.addComponent(createRegistersPanel());
+        middlePanel.addComponent(createBreakpointsPanel());
 
         Panel rightPanel = new Panel();
         rightPanel.setLayoutManager(new LinearLayout());
@@ -156,6 +203,8 @@ public class DebugGUI {
         panel.setLayoutManager(new LinearLayout());
         panel.addComponent(new Button("Break", this::pause));
         panel.addComponent(new Button("Step", this::step));
+        panel.addComponent(new Button("+Instr break", this::addInstructionBreakpoint));
+        panel.addComponent(new Button("+PC break", this::addProgramCounterBreakpoint));
         panel.addComponent(new Button("Quit", this::quit));
 
         return panel.withBorder(Borders.singleLine("Actions"));
@@ -179,6 +228,15 @@ public class DebugGUI {
         registerHL = readOnlyTextBox(panel, "HL");
 
         return panel.withBorder(Borders.singleLine("Registers"));
+    }
+
+    private Component createBreakpointsPanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new LinearLayout());
+        panel.addComponent(breakPoints = new CheckBoxList<>());
+        breakPoints.addListener((i, b) -> removeBreakpoint(i));
+
+        return panel.withBorder(Borders.singleLine("Breakpoints"));
     }
 
     private Component createInterruptsPanel() {
@@ -259,11 +317,11 @@ public class DebugGUI {
             BasicWindow window = new BasicWindow();
             window.setComponent(createPanel());
 
-            MultiWindowTextGUI gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
+            gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
             gui.setTheme(normalTheme);
             gui.addWindow(window);
             while (true) {
-                gui.processInput();
+                gui.getGUIThread().processEventsAndUpdate();
                 redrawComponents();
                 gui.updateScreen();
             }
