@@ -12,8 +12,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class DebuggableGameboy extends Gameboy {
-    private final Queue<EmulatorState> stateStack = new LinkedList<>();
-    private final DebugGUI debugGUI = new DebugGUI();
+    private final Debugger debugger = new Debugger();
+    private final DebugGUI debugGUI = new DebugGUI(debugger);
 
     public DebuggableGameboy(Screen screen, ColorPalette colorPalette, Controller controller, SerialConnection serial, SoundPlayback soundPlayback, ROM rom, Speed speed) {
         super(screen, colorPalette, controller, serial, soundPlayback, rom, speed);
@@ -28,11 +28,8 @@ public class DebuggableGameboy extends Gameboy {
     @Override
     protected Integer step() {
         EmulatorState state = new EmulatorState(cpu, memory);
-        stateStack.add(state);
-        while (stateStack.size() > 32) {
-            stateStack.remove();
-        }
-        debugGUI.update(state);
+        debugger.update(state);
+        debugGUI.update();
         return super.step();
     }
 }

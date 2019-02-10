@@ -13,12 +13,12 @@ import se.omfilm.gameboy.internal.Interrupts;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static se.omfilm.gameboy.util.DebugPrinter.hex;
 
 public class DebugGUI {
+    private final Debugger debugger;
+
     private TextBox programCounter;
     private TextBox instruction;
 
@@ -54,57 +54,29 @@ public class DebugGUI {
     private TextBox registerDE;
     private TextBox registerHL;
 
-    private EmulatorState currentState;
-
-    private boolean paused = false;
     private boolean needsRedraw = false;
-    private final ReentrantLock pauseLock = new ReentrantLock();
-    private final Condition pausedCondition = pauseLock.newCondition();
 
     private Theme normalTheme = LanternaThemes.getRegisteredTheme("blaster");
     private Theme highlightTheme = LanternaThemes.getRegisteredTheme("defrost");
+
+    public DebugGUI(Debugger debugger) {
+        this.debugger = debugger;
+    }
 
     public void start() {
         new Thread(this::run).start();
     }
 
-    public void update(EmulatorState state) {
-        currentState = state;
+    public void update() {
         needsRedraw = true;
-
-        if (paused) {
-            try {
-                pauseLock.lock();
-                pausedCondition.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } finally {
-                pauseLock.unlock();
-            }
-        }
     }
 
     private void pause() {
-        paused = !paused;
-        if (!paused) {
-            try {
-                pauseLock.lock();
-                pausedCondition.signalAll();
-            } finally {
-                pauseLock.unlock();
-            }
-        }
+        debugger.pause();
     }
 
     private void step() {
-        if (paused) {
-            try {
-                pauseLock.lock();
-                pausedCondition.signalAll();
-            } finally {
-                pauseLock.unlock();
-            }
-        }
+        debugger.step();
     }
 
     private void quit() {
@@ -116,6 +88,8 @@ public class DebugGUI {
             return;
         }
         needsRedraw = false;
+
+        EmulatorState currentState = debugger.getCurrentState();
 
         programCounter.setText(hex(currentState.programCounter().read(), 4));
         instruction.setText(Optional.ofNullable(currentState.instructionType()).map(Enum::name).orElse("")); //TODO: this may not be correct since it can return null
