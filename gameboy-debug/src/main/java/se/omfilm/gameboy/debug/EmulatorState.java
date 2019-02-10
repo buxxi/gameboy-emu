@@ -99,13 +99,19 @@ public class EmulatorState {
 
     private class RecordedFlags implements Flags {
         private final Map<Flag, Boolean> data;
+        private final boolean interruptsDisabled;
 
         public RecordedFlags(Flags delegate) {
             data = toMap(Flag.class, Flag.values(), delegate::isSet);
+            interruptsDisabled = delegate.isInterruptsDisabled();
         }
 
         public boolean isSet(Flag flag) {
             return data.getOrDefault(flag, false);
+        }
+
+        public boolean isInterruptsDisabled() {
+            return interruptsDisabled;
         }
 
         public void set(Flag flag, boolean set) {

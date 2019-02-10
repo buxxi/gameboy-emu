@@ -15,6 +15,8 @@ public interface Flags {
 
     void setInterruptsDisabled(boolean disabled);
 
+    boolean isInterruptsDisabled();
+
     /**
      * The allowed flags.
      * Each interrupt has a bit that can be masked against an int to see if that flag is enabled.

@@ -29,6 +29,7 @@ public class DebugGUI {
     private CheckBox carryFlag;
     private CheckBox halfCarryFlag;
 
+    private CheckBox interruptsEnabled;
     private CheckBox vblankEnabled;
     private CheckBox vblankRequested;
     private CheckBox lcdEnabled;
@@ -118,7 +119,6 @@ public class DebugGUI {
 
         programCounter.setText(hex(currentState.programCounter().read(), 4));
         instruction.setText(Optional.ofNullable(currentState.instructionType()).map(Enum::name).orElse("")); //TODO: this may not be correct since it can return null
-
         stackPointer.setText(hex(currentState.stackPointer().read(), 4));
 
         zeroFlag.setChecked(currentState.flags().isSet(Flags.Flag.ZERO));
@@ -126,6 +126,7 @@ public class DebugGUI {
         carryFlag.setChecked(currentState.flags().isSet(Flags.Flag.CARRY));
         halfCarryFlag.setChecked(currentState.flags().isSet(Flags.Flag.HALF_CARRY));
 
+        interruptsEnabled.setChecked(!currentState.flags().isInterruptsDisabled());
         vblankEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.VBLANK));
         vblankRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.VBLANK));
         lcdEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.LCD));
@@ -157,8 +158,7 @@ public class DebugGUI {
 
         Panel leftPanel = new Panel();
         leftPanel.setLayoutManager(new LinearLayout());
-        leftPanel.addComponent(createProgramCounterPanel());
-        leftPanel.addComponent(createStackPointerPanel());
+        leftPanel.addComponent(createGeneralCounterPanel());
         leftPanel.addComponent(createFlagsPanel());
         leftPanel.addComponent(createInterruptsPanel());
 
@@ -215,6 +215,8 @@ public class DebugGUI {
         panel.addComponent(new Label("Enabled"));
         panel.addComponent(new Label("Requested"));
 
+        interruptsEnabled = readOnlyCheckBox(panel, "MASTER");
+        panel.addComponent(new EmptySpace());
         vblankEnabled = readOnlyCheckBox(panel, "VBLANK");
         vblankRequested = readOnlyCheckBox(panel, null);
 
@@ -245,23 +247,15 @@ public class DebugGUI {
         return panel.withBorder(Borders.singleLine("Flags"));
     }
 
-    private Component createProgramCounterPanel() {
+    private Component createGeneralCounterPanel() {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
 
-        programCounter = readOnlyTextBox(panel, "Value");
+        programCounter = readOnlyTextBox(panel, "Program Counter");
         instruction = readOnlyTextBox(panel, "Instruction");
+        stackPointer = readOnlyTextBox(panel, "Stack Pointer");
 
-        return panel.withBorder(Borders.singleLine("Program Counter"));
-    }
-
-    private Component createStackPointerPanel() {
-        Panel panel = new Panel();
-        panel.setLayoutManager(new GridLayout(2));
-
-        stackPointer = readOnlyTextBox(panel, "Value");
-
-        return panel.withBorder(Borders.singleLine("Stack Pointer"));
+        return panel.withBorder(Borders.singleLine("General"));
     }
 
     private TextBox readOnlyTextBox(Panel panel, String label) {

@@ -122,6 +122,10 @@ public class CPU {
         public void setInterruptsDisabled(boolean disabled) {
             interrupts.setInterruptsDisabled(disabled);
         }
+
+        public boolean isInterruptsDisabled() {
+            return !interrupts.interruptMasterEnable;
+        }
     }
 
     private class RegistersImpl implements Registers {
