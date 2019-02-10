@@ -1,6 +1,8 @@
 package se.omfilm.gameboy.debug;
 
 import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.bundle.LanternaThemes;
+import com.googlecode.lanterna.graphics.Theme;
 import com.googlecode.lanterna.gui2.*;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
@@ -9,7 +11,7 @@ import com.googlecode.lanterna.terminal.Terminal;
 import se.omfilm.gameboy.internal.Flags;
 import se.omfilm.gameboy.internal.Interrupts;
 
-import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,18 +53,23 @@ public class DebugGUI {
     private TextBox registerDE;
     private TextBox registerHL;
 
-    private EmulatorState lastState;
+    private EmulatorState currentState;
 
     private boolean paused = false;
+    private boolean needsRedraw = false;
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition pausedCondition = pauseLock.newCondition();
+
+    private Theme normalTheme = LanternaThemes.getRegisteredTheme("blaster");
+    private Theme highlightTheme = LanternaThemes.getRegisteredTheme("defrost");
 
     public void start() {
         new Thread(this::run).start();
     }
 
     public void update(EmulatorState state) {
-        lastState = state;
+        currentState = state;
+        needsRedraw = true;
 
         if (paused) {
             try {
@@ -103,46 +110,45 @@ public class DebugGUI {
         System.exit(0);
     }
 
-    private void redraw(MultiWindowTextGUI gui) throws IOException {
-        if (lastState == null) {
+    private void redrawComponents() {
+        if (!needsRedraw) {
             return;
         }
+        needsRedraw = false;
 
-        programCounter.setText(hex(lastState.programCounter().read(), 4));
-        instruction.setText(Optional.ofNullable(lastState.instructionType()).map(Enum::name).orElse("")); //TODO: this may not be correct since it can return null
+        programCounter.setText(hex(currentState.programCounter().read(), 4));
+        instruction.setText(Optional.ofNullable(currentState.instructionType()).map(Enum::name).orElse("")); //TODO: this may not be correct since it can return null
 
-        stackPointer.setText(hex(lastState.stackPointer().read(), 4));
+        stackPointer.setText(hex(currentState.stackPointer().read(), 4));
 
-        zeroFlag.setChecked(lastState.flags().isSet(Flags.Flag.ZERO));
-        subtractFlag.setChecked(lastState.flags().isSet(Flags.Flag.SUBTRACT));
-        carryFlag.setChecked(lastState.flags().isSet(Flags.Flag.CARRY));
-        halfCarryFlag.setChecked(lastState.flags().isSet(Flags.Flag.HALF_CARRY));
+        zeroFlag.setChecked(currentState.flags().isSet(Flags.Flag.ZERO));
+        subtractFlag.setChecked(currentState.flags().isSet(Flags.Flag.SUBTRACT));
+        carryFlag.setChecked(currentState.flags().isSet(Flags.Flag.CARRY));
+        halfCarryFlag.setChecked(currentState.flags().isSet(Flags.Flag.HALF_CARRY));
 
-        vblankEnabled.setChecked(lastState.interrupts().enabled(Interrupts.Interrupt.VBLANK));
-        vblankRequested.setChecked(lastState.interrupts().requested(Interrupts.Interrupt.VBLANK));
-        lcdEnabled.setChecked(lastState.interrupts().enabled(Interrupts.Interrupt.LCD));
-        lcdRequested.setChecked(lastState.interrupts().requested(Interrupts.Interrupt.LCD));
-        timerEnabled.setChecked(lastState.interrupts().enabled(Interrupts.Interrupt.TIMER));
-        timerRequested.setChecked(lastState.interrupts().requested(Interrupts.Interrupt.TIMER));
-        serialEnabled.setChecked(lastState.interrupts().enabled(Interrupts.Interrupt.SERIAL));
-        serialRequested.setChecked(lastState.interrupts().requested(Interrupts.Interrupt.SERIAL));
-        joypadEnabled.setChecked(lastState.interrupts().enabled(Interrupts.Interrupt.JOYPAD));
-        joypadRequested.setChecked(lastState.interrupts().requested(Interrupts.Interrupt.JOYPAD));
+        vblankEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.VBLANK));
+        vblankRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.VBLANK));
+        lcdEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.LCD));
+        lcdRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.LCD));
+        timerEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.TIMER));
+        timerRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.TIMER));
+        serialEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.SERIAL));
+        serialRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.SERIAL));
+        joypadEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.JOYPAD));
+        joypadRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.JOYPAD));
 
-        registerA.setText(hex(lastState.registers().readA(), 2));
-        registerB.setText(hex(lastState.registers().readB(), 2));
-        registerC.setText(hex(lastState.registers().readC(), 2));
-        registerD.setText(hex(lastState.registers().readD(), 2));
-        registerE.setText(hex(lastState.registers().readE(), 2));
-        registerF.setText(hex(lastState.registers().readF(), 2));
-        registerH.setText(hex(lastState.registers().readH(), 2));
-        registerL.setText(hex(lastState.registers().readL(), 2));
-        registerAF.setText(hex(lastState.registers().readAF(), 4));
-        registerBC.setText(hex(lastState.registers().readBC(), 4));
-        registerDE.setText(hex(lastState.registers().readDE(), 4));
-        registerHL.setText(hex(lastState.registers().readHL(), 4));
-
-        gui.updateScreen();
+        registerA.setText(hex(currentState.registers().readA(), 2));
+        registerB.setText(hex(currentState.registers().readB(), 2));
+        registerC.setText(hex(currentState.registers().readC(), 2));
+        registerD.setText(hex(currentState.registers().readD(), 2));
+        registerE.setText(hex(currentState.registers().readE(), 2));
+        registerF.setText(hex(currentState.registers().readF(), 2));
+        registerH.setText(hex(currentState.registers().readH(), 2));
+        registerL.setText(hex(currentState.registers().readL(), 2));
+        registerAF.setText(hex(currentState.registers().readAF(), 4));
+        registerBC.setText(hex(currentState.registers().readBC(), 4));
+        registerDE.setText(hex(currentState.registers().readDE(), 4));
+        registerHL.setText(hex(currentState.registers().readHL(), 4));
     }
 
     private Component createPanel() {
@@ -185,41 +191,18 @@ public class DebugGUI {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
 
-        panel.addComponent(new Label("A"));
-        panel.addComponent(registerA = readOnlyTextBox());
-
-        panel.addComponent(new Label("B"));
-        panel.addComponent(registerB = readOnlyTextBox());
-
-        panel.addComponent(new Label("C"));
-        panel.addComponent(registerC = readOnlyTextBox());
-
-        panel.addComponent(new Label("D"));
-        panel.addComponent(registerD = readOnlyTextBox());
-
-        panel.addComponent(new Label("E"));
-        panel.addComponent(registerE = readOnlyTextBox());
-
-        panel.addComponent(new Label("F"));
-        panel.addComponent(registerF = readOnlyTextBox());
-
-        panel.addComponent(new Label("H"));
-        panel.addComponent(registerH = readOnlyTextBox());
-
-        panel.addComponent(new Label("L"));
-        panel.addComponent(registerL = readOnlyTextBox());
-
-        panel.addComponent(new Label("AF"));
-        panel.addComponent(registerAF = readOnlyTextBox());
-
-        panel.addComponent(new Label("BC"));
-        panel.addComponent(registerBC = readOnlyTextBox());
-
-        panel.addComponent(new Label("DE"));
-        panel.addComponent(registerDE = readOnlyTextBox());
-
-        panel.addComponent(new Label("HL"));
-        panel.addComponent(registerHL = readOnlyTextBox());
+        registerA = readOnlyTextBox(panel, "A");
+        registerB = readOnlyTextBox(panel, "B");
+        registerC = readOnlyTextBox(panel, "C");
+        registerD = readOnlyTextBox(panel, "D");
+        registerE = readOnlyTextBox(panel, "E");
+        registerF = readOnlyTextBox(panel, "F");
+        registerH = readOnlyTextBox(panel, "H");
+        registerL = readOnlyTextBox(panel, "L");
+        registerAF = readOnlyTextBox(panel, "AF");
+        registerBC = readOnlyTextBox(panel, "BC");
+        registerDE = readOnlyTextBox(panel, "DE");
+        registerHL = readOnlyTextBox(panel, "HL");
 
         return panel.withBorder(Borders.singleLine("Registers"));
     }
@@ -232,25 +215,20 @@ public class DebugGUI {
         panel.addComponent(new Label("Enabled"));
         panel.addComponent(new Label("Requested"));
 
-        panel.addComponent(new Label("VBLANK"));
-        panel.addComponent(vblankEnabled = readOnlyCheckBox());
-        panel.addComponent(vblankRequested = readOnlyCheckBox());
+        vblankEnabled = readOnlyCheckBox(panel, "VBLANK");
+        vblankRequested = readOnlyCheckBox(panel, null);
 
-        panel.addComponent(new Label("LCD"));
-        panel.addComponent(lcdEnabled = readOnlyCheckBox());
-        panel.addComponent(lcdRequested = readOnlyCheckBox());
+        lcdEnabled = readOnlyCheckBox(panel, "LCD");
+        lcdRequested = readOnlyCheckBox(panel, null);
 
-        panel.addComponent(new Label("TIMER"));
-        panel.addComponent(timerEnabled = readOnlyCheckBox());
-        panel.addComponent(timerRequested = readOnlyCheckBox());
+        timerEnabled = readOnlyCheckBox(panel, "TIMER");
+        timerRequested = readOnlyCheckBox(panel, null);
 
-        panel.addComponent(new Label("SERIAL"));
-        panel.addComponent(serialEnabled = readOnlyCheckBox());
-        panel.addComponent(serialRequested = readOnlyCheckBox());
+        serialEnabled = readOnlyCheckBox(panel, "SERIAL");
+        serialRequested = readOnlyCheckBox(panel, null);
 
-        panel.addComponent(new Label("JOYPAD"));
-        panel.addComponent(joypadEnabled = readOnlyCheckBox());
-        panel.addComponent(joypadRequested = readOnlyCheckBox());
+        joypadEnabled = readOnlyCheckBox(panel, "JOYPAD");
+        joypadRequested = readOnlyCheckBox(panel, null);
 
         return panel.withBorder(Borders.singleLine("Interrupts"));
     }
@@ -259,17 +237,10 @@ public class DebugGUI {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
 
-        panel.addComponent(new Label("ZERO"));
-        panel.addComponent(zeroFlag = readOnlyCheckBox());
-
-        panel.addComponent(new Label("SUBTRACT"));
-        panel.addComponent(subtractFlag = readOnlyCheckBox());
-
-        panel.addComponent(new Label("CARRY"));
-        panel.addComponent(carryFlag = readOnlyCheckBox());
-
-        panel.addComponent(new Label("HALF CARRY"));
-        panel.addComponent(halfCarryFlag = readOnlyCheckBox());
+        zeroFlag = readOnlyCheckBox(panel, "ZERO");
+        subtractFlag = readOnlyCheckBox(panel, "SUBTRACT");
+        carryFlag = readOnlyCheckBox(panel, "CARRY");
+        halfCarryFlag = readOnlyCheckBox(panel, "HALF CARRY");
 
         return panel.withBorder(Borders.singleLine("Flags"));
     }
@@ -278,11 +249,8 @@ public class DebugGUI {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
 
-        panel.addComponent(new Label("Value"));
-        panel.addComponent(programCounter = readOnlyTextBox());
-
-        panel.addComponent(new Label("Instruction"));
-        panel.addComponent(instruction = readOnlyTextBox());
+        programCounter = readOnlyTextBox(panel, "Value");
+        instruction = readOnlyTextBox(panel, "Instruction");
 
         return panel.withBorder(Borders.singleLine("Program Counter"));
     }
@@ -291,21 +259,26 @@ public class DebugGUI {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
 
-        panel.addComponent(new Label("Value"));
-        panel.addComponent(stackPointer = readOnlyTextBox());
+        stackPointer = readOnlyTextBox(panel, "Value");
 
         return panel.withBorder(Borders.singleLine("Stack Pointer"));
     }
 
-    private TextBox readOnlyTextBox() {
-        TextBox textBox = new TextBox();
+    private TextBox readOnlyTextBox(Panel panel, String label) {
+        TextBox textBox = new HighlightableTextBox();
         textBox.setEnabled(false);
+        panel.addComponent(new Label(label));
+        panel.addComponent(textBox);
         return textBox;
     }
 
-    private CheckBox readOnlyCheckBox() {
-        CheckBox checkBox = new CheckBox();
+    private CheckBox readOnlyCheckBox(Panel panel, String label) {
+        CheckBox checkBox = new HighlightableCheckBox();
         checkBox.setEnabled(false);
+        if (label != null) {
+            panel.addComponent(new Label(label));
+        }
+        panel.addComponent(checkBox);
         return checkBox;
     }
 
@@ -319,13 +292,37 @@ public class DebugGUI {
             window.setComponent(createPanel());
 
             MultiWindowTextGUI gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
+            gui.setTheme(normalTheme);
             gui.addWindow(window);
             while (true) {
                 gui.processInput();
-                redraw(gui);
+                redrawComponents();
+                gui.updateScreen();
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private class HighlightableTextBox extends TextBox {
+        public synchronized TextBox setText(String newText) {
+            if (getLineCount() == 0 || Objects.equals(getTextOrDefault(""), newText)) {
+                setTheme(normalTheme);
+            } else {
+                setTheme(highlightTheme);
+            }
+            return super.setText(newText);
+        }
+    }
+
+    private class HighlightableCheckBox extends CheckBox {
+        public synchronized CheckBox setChecked(boolean checked) {
+            if (checked != isChecked()) {
+                setTheme(highlightTheme);
+            } else {
+                setTheme(normalTheme);
+            }
+            return super.setChecked(checked);
         }
     }
 }
