@@ -72,6 +72,10 @@ public class Debugger {
 
     public void removeBreakpoint(Breakpoint breakpoint) {
         breakpoints.remove(breakpoint);
+        EmulatorState state = getCurrentState();
+        if (breakpoint.matches(state) && breakpoints.stream().noneMatch(bp -> bp.matches(state))) {
+            step();
+        }
     }
 
     private class AnyBreakpoint implements Breakpoint {

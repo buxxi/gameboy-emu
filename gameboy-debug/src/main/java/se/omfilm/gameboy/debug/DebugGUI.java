@@ -1,5 +1,6 @@
 package se.omfilm.gameboy.debug;
 
+import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.bundle.LanternaThemes;
 import com.googlecode.lanterna.graphics.Theme;
@@ -90,6 +91,9 @@ public class DebugGUI {
     private void addInstructionBreakpoint() {
         try {
             String name = TextInputDialog.showDialog(gui, "Add Instruction Breakpoint", "Name of the instruction to break on", "");
+            if (name == null) {
+                return;
+            }
             debugger.addBreakpoint(Instruction.InstructionType.valueOf(name));
             reloadBreakpoints();
         } catch (Exception e) {
@@ -100,6 +104,9 @@ public class DebugGUI {
     private void addProgramCounterBreakpoint() {
         try {
             String value = TextInputDialog.showDialog(gui, "Add Program Counter Breakpoint", "Program Counter value to break on (0xXXXX)", "");
+            if (value == null) {
+                return;
+            }
             Pattern pattern = Pattern.compile("(0x)?([0-9A-F]{4})");
             Matcher matcher = pattern.matcher(value);
             if (!matcher.matches()) {
@@ -185,11 +192,11 @@ public class DebugGUI {
         Panel middlePanel = new Panel();
         middlePanel.setLayoutManager(new LinearLayout());
         middlePanel.addComponent(createRegistersPanel());
-        middlePanel.addComponent(createBreakpointsPanel());
 
         Panel rightPanel = new Panel();
         rightPanel.setLayoutManager(new LinearLayout());
         rightPanel.addComponent(createButtonsPanel());
+        rightPanel.addComponent(createBreakpointsPanel());
 
         mainPanel.addComponent(leftPanel);
         mainPanel.addComponent(middlePanel);
@@ -310,7 +317,7 @@ public class DebugGUI {
 
     private void run() {
         try {
-            Terminal terminal = new DefaultTerminalFactory().createTerminal();
+            Terminal terminal = new DefaultTerminalFactory().setInitialTerminalSize(new TerminalSize(235, 60)).createTerminal();
             Screen screen = new TerminalScreen(terminal);
             screen.startScreen();
 
