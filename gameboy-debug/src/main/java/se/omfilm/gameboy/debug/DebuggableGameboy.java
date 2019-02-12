@@ -8,8 +8,8 @@ import se.omfilm.gameboy.io.screen.Screen;
 import se.omfilm.gameboy.io.serial.SerialConnection;
 import se.omfilm.gameboy.io.sound.SoundPlayback;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.io.OutputStream;
+import java.io.PrintStream;
 
 public class DebuggableGameboy extends Gameboy {
     private final Debugger debugger = new Debugger();
@@ -21,6 +21,7 @@ public class DebuggableGameboy extends Gameboy {
 
     @Override
     public void run() {
+        System.setErr(new PrintStream(new NullOutputStream())); //Running in debugging mode we don't want to print the logs and this seems to be the easiest way to do that
         debugGUI.start();
         super.run();
     }
@@ -31,5 +32,9 @@ public class DebuggableGameboy extends Gameboy {
         debugger.update(state);
         debugGUI.update();
         return super.step();
+    }
+
+    private static class NullOutputStream extends OutputStream {
+        public void write(int i) {}
     }
 }
