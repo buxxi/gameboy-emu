@@ -58,6 +58,10 @@ public class EmulatorState {
         return apu;
     }
 
+    public MemoryState memory() {
+        return memory;
+    }
+
     public Memory recordMemory(Memory memory) {
         return new RecordedMemory(this.memory, memory);
     }
@@ -88,6 +92,15 @@ public class EmulatorState {
 
         public void updateWrite(int address, int data) {
             writes.put(address, data);
+        }
+
+        public boolean isWritten(int address) {
+            return writes.containsKey(address);
+        }
+
+        public boolean isRead(int address) {
+            System.out.println(reads.size());
+            return reads.containsKey(address);
         }
     }
 

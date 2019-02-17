@@ -66,6 +66,14 @@ public class Debugger {
         breakpoints.add(new ProgramCounterBreakpoint(programCounter));
     }
 
+    public void addReadBreakpoint(int address) {
+        breakpoints.add(new MemoryReadBreakpoint(address));
+    }
+
+    public void addWriteBreakpoint(int address) {
+        breakpoints.add(new MemoryWriteBreakpoint(address));
+    }
+
     public List<Breakpoint> getBreakpoints() {
         return breakpoints;
     }
@@ -127,6 +135,38 @@ public class Debugger {
 
         public String displayText() {
             return "Instr: " + instruction.name();
+        }
+    }
+
+    private class MemoryWriteBreakpoint implements Breakpoint {
+        private final int address;
+
+        public MemoryWriteBreakpoint(int address) {
+            this.address = address;
+        }
+
+        public boolean matches(EmulatorState state) {
+            return state.memory().isWritten(address);
+        }
+
+        public String displayText() {
+            return "Write: " + DebugPrinter.hex(address, 4);
+        }
+    }
+
+    private class MemoryReadBreakpoint implements Breakpoint {
+        private final int address;
+
+        public MemoryReadBreakpoint(int address) {
+            this.address = address;
+        }
+
+        public boolean matches(EmulatorState state) {
+            return state.memory().isRead(address);
+        }
+
+        public String displayText() {
+            return "Read: " + DebugPrinter.hex(address, 4);
         }
     }
 }

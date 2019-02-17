@@ -90,6 +90,44 @@ public class DebugGUI {
         }
     }
 
+    private void addMemoryReadBreakpoint() {
+        try {
+            String value = TextInputDialog.showDialog(gui, "Add Memory Read Breakpoint", "Memory address break on (0xXXXX)", "");
+            if (value == null) {
+                return;
+            }
+            Pattern pattern = Pattern.compile("(0x)?([0-9A-F]{4})");
+            Matcher matcher = pattern.matcher(value);
+            if (!matcher.matches()) {
+                throw new IllegalArgumentException(value + " isn't a valid memory address");
+            }
+            String address = matcher.group(2);
+            debugger.addReadBreakpoint(Integer.parseInt(address, 16));
+            reloadBreakpoints();
+        } catch (Exception e) {
+            addProgramCounterBreakpoint();
+        }
+    }
+
+    private void addMemoryWriteBreakpoint() {
+        try {
+            String value = TextInputDialog.showDialog(gui, "Add Memory Write Breakpoint", "Memory address break on (0xXXXX)", "");
+            if (value == null) {
+                return;
+            }
+            Pattern pattern = Pattern.compile("(0x)?([0-9A-F]{4})");
+            Matcher matcher = pattern.matcher(value);
+            if (!matcher.matches()) {
+                throw new IllegalArgumentException(value + " isn't a valid memory address");
+            }
+            String address = matcher.group(2);
+            debugger.addWriteBreakpoint(Integer.parseInt(address, 16));
+            reloadBreakpoints();
+        } catch (Exception e) {
+            addProgramCounterBreakpoint();
+        }
+    }
+
     private void removeBreakpoint(int index) {
         debugger.removeBreakpoint(debugger.getBreakpoints().get(index));
         reloadBreakpoints();
@@ -219,6 +257,8 @@ public class DebugGUI {
         panel.addComponent(new Button("Step", this::step));
         panel.addComponent(new Button("+Instr break", this::addInstructionBreakpoint));
         panel.addComponent(new Button("+PC break", this::addProgramCounterBreakpoint));
+        panel.addComponent(new Button("+Read break", this::addMemoryReadBreakpoint));
+        panel.addComponent(new Button("+Write break", this::addMemoryWriteBreakpoint));
         panel.addComponent(new Button("Quit", this::quit));
 
         return panel.withBorder(Borders.singleLine("Actions"));
