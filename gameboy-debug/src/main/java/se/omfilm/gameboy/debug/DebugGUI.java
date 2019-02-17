@@ -16,6 +16,8 @@ import se.omfilm.gameboy.internal.Instruction;
 import se.omfilm.gameboy.internal.Interrupts;
 import se.omfilm.gameboy.util.DebugPrinter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -26,72 +28,7 @@ import static se.omfilm.gameboy.util.DebugPrinter.hex;
 public class DebugGUI {
     private final Debugger debugger;
 
-    private TextBox programCounter;
-    private TextBox instruction;
-
-    private TextBox stackPointer;
-
-    private CheckBox zeroFlag;
-    private CheckBox subtractFlag;
-    private CheckBox carryFlag;
-    private CheckBox halfCarryFlag;
-
-    private CheckBox interruptsEnabled;
-    private CheckBox vblankEnabled;
-    private CheckBox vblankRequested;
-    private CheckBox lcdEnabled;
-    private CheckBox lcdRequested;
-    private CheckBox timerEnabled;
-    private CheckBox timerRequested;
-    private CheckBox serialEnabled;
-    private CheckBox serialRequested;
-    private CheckBox joypadEnabled;
-    private CheckBox joypadRequested;
-
-    private TextBox registerA;
-    private TextBox registerB;
-    private TextBox registerC;
-    private TextBox registerD;
-    private TextBox registerE;
-    private TextBox registerF;
-    private TextBox registerH;
-    private TextBox registerL;
-    private TextBox registerAF;
-    private TextBox registerBC;
-    private TextBox registerDE;
-    private TextBox registerHL;
-
-    private TextBox soundEnabled;
-    private TextBox soundOutputTerminal;
-    private TextBox soundChannelControl;
-
-    private TextBox sound1Length;
-    private TextBox sound2Length;
-    private TextBox sound3Length;
-    private TextBox sound4Length;
-
-    private TextBox sound1Envelope;
-    private TextBox sound2Envelope;
-    private TextBox sound4Envelope;
-
-    private TextBox sound1LowFrequency;
-    private TextBox sound2LowFrequency;
-    private TextBox sound3LowFrequency;
-
-    private TextBox sound1HighFrequency;
-    private TextBox sound2HighFrequency;
-    private TextBox sound3HighFrequency;
-
-    private TextBox sound1Sweep;
-
-    private TextBox sound3OnOff;
-    private TextBox sound3OutputLevel;
-
-    private TextBox sound4Polynomial;
-    private TextBox sound4Initial;
-
-    private TextBox[] waveRAM;
-
+    private List<ValueChangeUpdaters<Void>> changeUpdaters = new ArrayList<>();
     private CheckBoxList<String> breakPoints;
 
     private boolean needsRedraw = false;
@@ -177,69 +114,8 @@ public class DebugGUI {
 
         EmulatorState currentState = debugger.getCurrentState();
 
-        programCounter.setText(hex(currentState.programCounter().read(), 4));
-        instruction.setText(Optional.ofNullable(currentState.instructionType()).map(Enum::name).orElse("")); //TODO: this may not be correct since it can return null
-        stackPointer.setText(hex(currentState.stackPointer().read(), 4));
-
-        zeroFlag.setChecked(currentState.flags().isSet(Flags.Flag.ZERO));
-        subtractFlag.setChecked(currentState.flags().isSet(Flags.Flag.SUBTRACT));
-        carryFlag.setChecked(currentState.flags().isSet(Flags.Flag.CARRY));
-        halfCarryFlag.setChecked(currentState.flags().isSet(Flags.Flag.HALF_CARRY));
-
-        interruptsEnabled.setChecked(!currentState.flags().isInterruptsDisabled());
-        vblankEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.VBLANK));
-        vblankRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.VBLANK));
-        lcdEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.LCD));
-        lcdRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.LCD));
-        timerEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.TIMER));
-        timerRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.TIMER));
-        serialEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.SERIAL));
-        serialRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.SERIAL));
-        joypadEnabled.setChecked(currentState.interrupts().enabled(Interrupts.Interrupt.JOYPAD));
-        joypadRequested.setChecked(currentState.interrupts().requested(Interrupts.Interrupt.JOYPAD));
-
-        registerA.setText(hex(currentState.registers().readA(), 2));
-        registerB.setText(hex(currentState.registers().readB(), 2));
-        registerC.setText(hex(currentState.registers().readC(), 2));
-        registerD.setText(hex(currentState.registers().readD(), 2));
-        registerE.setText(hex(currentState.registers().readE(), 2));
-        registerF.setText(hex(currentState.registers().readF(), 2));
-        registerH.setText(hex(currentState.registers().readH(), 2));
-        registerL.setText(hex(currentState.registers().readL(), 2));
-        registerAF.setText(hex(currentState.registers().readAF(), 4));
-        registerBC.setText(hex(currentState.registers().readBC(), 4));
-        registerDE.setText(hex(currentState.registers().readDE(), 4));
-        registerHL.setText(hex(currentState.registers().readHL(), 4));
-
-        soundEnabled.setText(ioString(currentState.apu().enabled()));
-        soundOutputTerminal.setText(ioString(currentState.apu().outputTerminal()));
-        soundChannelControl.setText(ioString(currentState.apu().channelControl()));
-
-        sound1Length.setText(ioString(currentState.apu().soundStates()[0].length()));
-        sound2Length.setText(ioString(currentState.apu().soundStates()[1].length()));
-        sound3Length.setText(ioString(currentState.apu().soundStates()[2].length()));
-        sound4Length.setText(ioString(currentState.apu().soundStates()[3].length()));
-
-        sound1Envelope.setText(ioString(currentState.apu().soundStates()[0].envelope()));
-        sound2Envelope.setText(ioString(currentState.apu().soundStates()[1].envelope()));
-        sound4Envelope.setText(ioString(currentState.apu().soundStates()[3].envelope()));
-
-        sound1LowFrequency.setText(ioString(currentState.apu().soundStates()[0].lowFrequency()));
-        sound2LowFrequency.setText(ioString(currentState.apu().soundStates()[1].lowFrequency()));
-        sound3LowFrequency.setText(ioString(currentState.apu().soundStates()[2].lowFrequency()));
-
-        sound1HighFrequency.setText(ioString(currentState.apu().soundStates()[0].highFrequency()));
-        sound2HighFrequency.setText(ioString(currentState.apu().soundStates()[1].highFrequency()));
-        sound3HighFrequency.setText(ioString(currentState.apu().soundStates()[2].highFrequency()));
-
-        sound1Sweep.setText(ioString(currentState.apu().soundStates()[0].sweep()));
-        sound3OnOff.setText(ioString(currentState.apu().soundStates()[2].onOff()));
-        sound3OutputLevel.setText(ioString(currentState.apu().soundStates()[2].outputLevel()));
-        sound4Polynomial.setText(ioString(currentState.apu().soundStates()[3].polynomial()));
-        sound4Initial.setText(ioString(currentState.apu().soundStates()[3].initial()));
-
-        for (int i = 0; i < waveRAM.length; i++) {
-            waveRAM[i].setText(hex(currentState.apu().waveRAM()[i], 2));
+        for (ValueChangeUpdaters updater : changeUpdaters) {
+            updater.update(currentState);
         }
     }
 
@@ -270,27 +146,28 @@ public class DebugGUI {
         Panel soundPanel = new Panel();
         soundPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
         Panel sound1Panel = createSoundPanel();
-        sound1Length = readOnlyTextBox(sound1Panel, "Length");
-        sound1Envelope = readOnlyTextBox(sound1Panel, "Envelope");
-        sound1LowFrequency = readOnlyTextBox(sound1Panel, "Low freq");
-        sound1HighFrequency = readOnlyTextBox(sound1Panel, "Hi freq");
-        sound1Sweep = readOnlyTextBox(sound1Panel, "Sweep");
+        readOnlyTextBox(sound1Panel, "Length", (currentState) -> ioString(currentState.apu().soundStates()[0].length()));
+        readOnlyTextBox(sound1Panel, "Envelope", (currentState) -> ioString(currentState.apu().soundStates()[0].envelope()));
+        readOnlyTextBox(sound1Panel, "Low freq", (currentState) -> ioString(currentState.apu().soundStates()[0].lowFrequency()));
+        readOnlyTextBox(sound1Panel, "Hi freq", (currentState) -> ioString(currentState.apu().soundStates()[0].highFrequency()));
+        readOnlyTextBox(sound1Panel, "Sweep", (currentState) -> ioString(currentState.apu().soundStates()[0].sweep()));
+
         Panel sound2Panel = createSoundPanel();
-        sound2Length = readOnlyTextBox(sound2Panel, "Length");
-        sound2Envelope = readOnlyTextBox(sound2Panel, "Envelope");
-        sound2LowFrequency = readOnlyTextBox(sound2Panel, "Low freq");
-        sound2HighFrequency = readOnlyTextBox(sound2Panel, "Hi freq");
+        readOnlyTextBox(sound2Panel, "Length", (currentState) -> ioString(currentState.apu().soundStates()[1].length()));
+        readOnlyTextBox(sound2Panel, "Envelope", (currentState) -> ioString(currentState.apu().soundStates()[1].envelope()));
+        readOnlyTextBox(sound2Panel, "Low freq", (currentState) -> ioString(currentState.apu().soundStates()[1].lowFrequency()));
+        readOnlyTextBox(sound2Panel, "Hi freq", (currentState) -> ioString(currentState.apu().soundStates()[1].highFrequency()));
         Panel sound3Panel = createSoundPanel();
-        sound3Length = readOnlyTextBox(sound3Panel, "Length");
-        sound3LowFrequency = readOnlyTextBox(sound3Panel, "Low freq");
-        sound3HighFrequency = readOnlyTextBox(sound3Panel, "Hi freq");
-        sound3OnOff = readOnlyTextBox(sound3Panel, "On/Off");
-        sound3OutputLevel = readOnlyTextBox(sound3Panel, "Out lvl");
+        readOnlyTextBox(sound3Panel, "Length", (currentState) -> ioString(currentState.apu().soundStates()[2].length()));
+        readOnlyTextBox(sound3Panel, "Low freq", (currentState) -> ioString(currentState.apu().soundStates()[2].lowFrequency()));
+        readOnlyTextBox(sound3Panel, "Hi freq", (currentState) -> ioString(currentState.apu().soundStates()[2].highFrequency()));
+        readOnlyTextBox(sound3Panel, "On/Off", (currentState) -> ioString(currentState.apu().soundStates()[2].onOff()));
+        readOnlyTextBox(sound3Panel, "Out lvl", (currentState) -> ioString(currentState.apu().soundStates()[2].outputLevel()));
         Panel sound4Panel = createSoundPanel();
-        sound4Length = readOnlyTextBox(sound4Panel, "Length");
-        sound4Envelope = readOnlyTextBox(sound4Panel, "Envelope");
-        sound4Polynomial = readOnlyTextBox(sound4Panel, "Poly");
-        sound4Initial = readOnlyTextBox(sound4Panel, "Initial");
+        readOnlyTextBox(sound4Panel, "Length", (currentState) -> ioString(currentState.apu().soundStates()[3].length()));
+        readOnlyTextBox(sound4Panel, "Envelope", (currentState) -> ioString(currentState.apu().soundStates()[3].envelope()));
+        readOnlyTextBox(sound4Panel, "Poly", (currentState) -> ioString(currentState.apu().soundStates()[3].polynomial()));
+        readOnlyTextBox(sound4Panel, "Initial", (currentState) -> ioString(currentState.apu().soundStates()[3].initial()));
         soundPanel.addComponent(sound1Panel.withBorder(Borders.singleLine("Sound 1")));
         soundPanel.addComponent(sound2Panel.withBorder(Borders.singleLine("Sound 2")));
         soundPanel.addComponent(sound3Panel.withBorder(Borders.singleLine("Sound 3")));
@@ -303,9 +180,9 @@ public class DebugGUI {
     private Component createWaveRAMPanel() {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(8));
-        waveRAM = new TextBox[16];
-        for (int i = 0; i < waveRAM.length; i++) {
-            waveRAM[i] = readOnlyTextBox(panel, DebugPrinter.hex(0xFF30 + i, 4));
+        for (int i = 0; i < 16; i++) {
+            final int j = i;
+            readOnlyTextBox(panel, DebugPrinter.hex(0xFF30 + i, 4), (currentState) -> hex(currentState.apu().waveRAM()[j], 2));
         }
         return panel.withBorder(Borders.singleLine("Wave RAM"));
     }
@@ -319,9 +196,9 @@ public class DebugGUI {
     private Component createGeneralAPUPanel() {
         Panel panel = new Panel();
         panel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
-        soundEnabled = readOnlyTextBox(panel, "Enabled (0xFF26)");
-        soundOutputTerminal = readOnlyTextBox(panel, "Terminal (0xFF25)");
-        soundChannelControl = readOnlyTextBox(panel, "Chn Ctrl (0xFF24)");
+        readOnlyTextBox(panel, "Enabled (0xFF26)", (currentState) -> ioString(currentState.apu().enabled()));
+        readOnlyTextBox(panel, "Terminal (0xFF25)", (currentState) -> ioString(currentState.apu().outputTerminal()));
+        readOnlyTextBox(panel, "Chn Ctrl (0xFF24)", (currentState) -> ioString(currentState.apu().channelControl()));
         return panel.withBorder(Borders.singleLine("General"));
     }
 
@@ -351,18 +228,18 @@ public class DebugGUI {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
 
-        registerA = readOnlyTextBox(panel, "A");
-        registerB = readOnlyTextBox(panel, "B");
-        registerC = readOnlyTextBox(panel, "C");
-        registerD = readOnlyTextBox(panel, "D");
-        registerE = readOnlyTextBox(panel, "E");
-        registerF = readOnlyTextBox(panel, "F");
-        registerH = readOnlyTextBox(panel, "H");
-        registerL = readOnlyTextBox(panel, "L");
-        registerAF = readOnlyTextBox(panel, "AF");
-        registerBC = readOnlyTextBox(panel, "BC");
-        registerDE = readOnlyTextBox(panel, "DE");
-        registerHL = readOnlyTextBox(panel, "HL");
+        readOnlyTextBox(panel, "A", (currentState) -> hex(currentState.registers().readA(), 2));
+        readOnlyTextBox(panel, "B", (currentState) -> hex(currentState.registers().readB(), 2));
+        readOnlyTextBox(panel, "C", (currentState) -> hex(currentState.registers().readC(), 2));
+        readOnlyTextBox(panel, "D", (currentState) -> hex(currentState.registers().readD(), 2));
+        readOnlyTextBox(panel, "E", (currentState) -> hex(currentState.registers().readE(), 2));
+        readOnlyTextBox(panel, "F", (currentState) -> hex(currentState.registers().readF(), 2));
+        readOnlyTextBox(panel, "H", (currentState) -> hex(currentState.registers().readH(), 2));
+        readOnlyTextBox(panel, "L", (currentState) -> hex(currentState.registers().readL(), 2));
+        readOnlyTextBox(panel, "AF", (currentState) -> hex(currentState.registers().readAF(), 4));
+        readOnlyTextBox(panel, "BC", (currentState) -> hex(currentState.registers().readBC(), 4));
+        readOnlyTextBox(panel, "DE", (currentState) -> hex(currentState.registers().readDE(), 4));
+        readOnlyTextBox(panel, "HL", (currentState) -> hex(currentState.registers().readHL(), 4));
 
         return panel.withBorder(Borders.singleLine("Registers"));
     }
@@ -384,22 +261,22 @@ public class DebugGUI {
         panel.addComponent(new Label("Enabled"));
         panel.addComponent(new Label("Requested"));
 
-        interruptsEnabled = readOnlyCheckBox(panel, "MASTER");
+        readOnlyCheckBox(panel, "MASTER", (currentState) -> !currentState.flags().isInterruptsDisabled());
         panel.addComponent(new EmptySpace());
-        vblankEnabled = readOnlyCheckBox(panel, "VBLANK");
-        vblankRequested = readOnlyCheckBox(panel, null);
+        readOnlyCheckBox(panel, "VBLANK", (currentState) -> currentState.interrupts().enabled(Interrupts.Interrupt.VBLANK));
+        readOnlyCheckBox(panel, null, (currentState) -> currentState.interrupts().requested(Interrupts.Interrupt.VBLANK));
 
-        lcdEnabled = readOnlyCheckBox(panel, "LCD");
-        lcdRequested = readOnlyCheckBox(panel, null);
+        readOnlyCheckBox(panel, "LCD", (currentState) -> currentState.interrupts().enabled(Interrupts.Interrupt.LCD));
+        readOnlyCheckBox(panel, null, (currentState) -> currentState.interrupts().requested(Interrupts.Interrupt.LCD));
 
-        timerEnabled = readOnlyCheckBox(panel, "TIMER");
-        timerRequested = readOnlyCheckBox(panel, null);
+        readOnlyCheckBox(panel, "TIMER", (currentState) -> currentState.interrupts().enabled(Interrupts.Interrupt.TIMER));
+        readOnlyCheckBox(panel, null, (currentState) -> currentState.interrupts().requested(Interrupts.Interrupt.TIMER));
 
-        serialEnabled = readOnlyCheckBox(panel, "SERIAL");
-        serialRequested = readOnlyCheckBox(panel, null);
+        readOnlyCheckBox(panel, "SERIAL", (currentState) -> currentState.interrupts().enabled(Interrupts.Interrupt.SERIAL));
+        readOnlyCheckBox(panel, null, (currentState) -> currentState.interrupts().requested(Interrupts.Interrupt.SERIAL));
 
-        joypadEnabled = readOnlyCheckBox(panel, "JOYPAD");
-        joypadRequested = readOnlyCheckBox(panel, null);
+        readOnlyCheckBox(panel, "JOYPAD", (currentState) -> currentState.interrupts().enabled(Interrupts.Interrupt.JOYPAD));
+        readOnlyCheckBox(panel, null, (currentState) -> currentState.interrupts().requested(Interrupts.Interrupt.JOYPAD));
 
         return panel.withBorder(Borders.singleLine("Interrupts"));
     }
@@ -408,10 +285,10 @@ public class DebugGUI {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
 
-        zeroFlag = readOnlyCheckBox(panel, "ZERO");
-        subtractFlag = readOnlyCheckBox(panel, "SUBTRACT");
-        carryFlag = readOnlyCheckBox(panel, "CARRY");
-        halfCarryFlag = readOnlyCheckBox(panel, "HALF CARRY");
+        readOnlyCheckBox(panel, "ZERO", (currentState) -> currentState.flags().isSet(Flags.Flag.ZERO));
+        readOnlyCheckBox(panel, "SUBTRACT", (currentState) -> currentState.flags().isSet(Flags.Flag.SUBTRACT));
+        readOnlyCheckBox(panel, "CARRY", (currentState) -> currentState.flags().isSet(Flags.Flag.CARRY));
+        readOnlyCheckBox(panel, "HALF CARRY", (currentState) -> currentState.flags().isSet(Flags.Flag.HALF_CARRY));
 
         return panel.withBorder(Borders.singleLine("Flags"));
     }
@@ -420,29 +297,35 @@ public class DebugGUI {
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
 
-        programCounter = readOnlyTextBox(panel, "Program Counter");
-        instruction = readOnlyTextBox(panel, "Instruction");
-        stackPointer = readOnlyTextBox(panel, "Stack Pointer");
+        readOnlyTextBox(panel, "Program Counter", (currentState) -> hex(currentState.programCounter().read(), 4));
+        readOnlyTextBox(panel, "Instruction", (currentState) -> Optional.ofNullable(currentState.instructionType()).map(Enum::name).orElse("")); //TODO: this may not be correct since it can return null
+        readOnlyTextBox(panel, "Stack Pointer", (currentState) -> hex(currentState.stackPointer().read(), 4));
 
         return panel.withBorder(Borders.singleLine("General"));
     }
 
-    private TextBox readOnlyTextBox(Panel panel, String label) {
+    private void readOnlyTextBox(Panel panel, String label, ValueChangeUpdaters<String> listener) {
         TextBox textBox = new HighlightableTextBox();
         textBox.setEnabled(false);
         panel.addComponent(new Label(label));
         panel.addComponent(textBox);
-        return textBox;
+        changeUpdaters.add((currentState) -> {
+            textBox.setText(listener.update(currentState));
+            return null;
+        });
     }
 
-    private CheckBox readOnlyCheckBox(Panel panel, String label) {
+    private void readOnlyCheckBox(Panel panel, String label, ValueChangeUpdaters<Boolean> listener) {
         CheckBox checkBox = new HighlightableCheckBox();
         checkBox.setEnabled(false);
         if (label != null) {
             panel.addComponent(new Label(label));
         }
         panel.addComponent(checkBox);
-        return checkBox;
+        changeUpdaters.add((currentState) -> {
+           checkBox.setChecked(listener.update(currentState));
+           return null;
+        });
     }
 
     private void run() {
@@ -487,5 +370,9 @@ public class DebugGUI {
             }
             return super.setChecked(checked);
         }
+    }
+
+    private interface ValueChangeUpdaters<T> {
+        T update(EmulatorState state);
     }
 }
