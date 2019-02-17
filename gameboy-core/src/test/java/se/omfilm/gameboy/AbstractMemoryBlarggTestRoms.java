@@ -46,14 +46,14 @@ public class AbstractMemoryBlarggTestRoms {
             while (true) {
                 step();
                 //Verify that the tests even has begun to run
-                if (memory.readByte(0xA001) == 0xDE && memory.readByte(0xA002) == 0xB0 && memory.readByte(0xA003) == 0x61) {
+                if (mmu.readByte(0xA001) == 0xDE && mmu.readByte(0xA002) == 0xB0 && mmu.readByte(0xA003) == 0x61) {
 
-                    if (prev != memory.readByte(0xA000)) {
+                    if (prev != mmu.readByte(0xA000)) {
                         //If the previous value was 0x80 (that the test was running) it should now be done
                         if (prev == 0x80) {
                             break;
                         }
-                        prev = memory.readByte(0xA000);
+                        prev = mmu.readByte(0xA000);
                     }
                 }
             }
@@ -62,8 +62,8 @@ public class AbstractMemoryBlarggTestRoms {
         public String result() {
             StringBuilder result = new StringBuilder();
             int pos = 0xA004;
-            while (memory.readByte(pos) != 0) {
-                result.append((char) memory.readByte(pos++));
+            while (mmu.readByte(pos) != 0) {
+                result.append((char) mmu.readByte(pos++));
             }
             return result.toString();
         }

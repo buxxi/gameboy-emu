@@ -1,6 +1,7 @@
 package se.omfilm.gameboy;
 
 import se.omfilm.gameboy.internal.*;
+import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.controller.Controller;
@@ -10,7 +11,7 @@ import se.omfilm.gameboy.io.sound.SoundPlayback;
 import se.omfilm.gameboy.util.Runner;
 
 public class Gameboy {
-    protected final MMU memory;
+    protected final MMU mmu;
     protected final CPU cpu;
     protected final PPU ppu;
     protected final APU apu;
@@ -26,12 +27,12 @@ public class Gameboy {
         this.apu = new APU(soundPlayback);
         this.timer = new Timer();
         input = new Input(controller);
-        this.memory = new MMU(rom, ppu, apu, cpu.interrupts(), timer, serial, input);
+        this.mmu = new MMU(rom, ppu, apu, cpu.interrupts(), timer, serial, input);
         this.speed = speed;
     }
 
     public Gameboy withBootData(byte[] boot) {
-        memory.withBootData(boot);
+        mmu.withBootData(boot);
         return this;
     }
 
@@ -66,13 +67,17 @@ public class Gameboy {
 
     protected Integer step() {
         Interrupts interrupts = cpu.interrupts();
-        int cycles = cpu.step(memory);
+        int cycles = cpu.step(memory());
         input.step(cycles, interrupts);
         timer.step(cycles, interrupts);
         ppu.step(cycles, interrupts);
         apu.step(cycles);
-        memory.step(cycles);
+        mmu.step(cycles);
         return cycles;
+    }
+
+    protected Memory memory() {
+        return mmu;
     }
 
     public enum Speed {

@@ -1,6 +1,7 @@
 package se.omfilm.gameboy.debug;
 
 import se.omfilm.gameboy.Gameboy;
+import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.internal.memory.ROM;
 import se.omfilm.gameboy.io.color.ColorPalette;
 import se.omfilm.gameboy.io.controller.Controller;
@@ -28,10 +29,15 @@ public class DebuggableGameboy extends Gameboy {
 
     @Override
     protected Integer step() {
-        EmulatorState state = new EmulatorState(cpu, memory);
+        EmulatorState state = new EmulatorState(cpu, mmu);
         debugger.update(state);
         debugGUI.update();
         return super.step();
+    }
+
+    @Override
+    protected Memory memory() {
+        return debugger.getCurrentState().recordMemory(mmu);
     }
 
     private static class NullOutputStream extends OutputStream {

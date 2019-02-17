@@ -10,9 +10,11 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
+import se.omfilm.gameboy.debug.EmulatorState.IORegisterState;
 import se.omfilm.gameboy.internal.Flags;
 import se.omfilm.gameboy.internal.Instruction;
 import se.omfilm.gameboy.internal.Interrupts;
+import se.omfilm.gameboy.util.DebugPrinter;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -58,6 +60,37 @@ public class DebugGUI {
     private TextBox registerBC;
     private TextBox registerDE;
     private TextBox registerHL;
+
+    private TextBox soundEnabled;
+    private TextBox soundOutputTerminal;
+    private TextBox soundChannelControl;
+
+    private TextBox sound1Length;
+    private TextBox sound2Length;
+    private TextBox sound3Length;
+    private TextBox sound4Length;
+
+    private TextBox sound1Envelope;
+    private TextBox sound2Envelope;
+    private TextBox sound4Envelope;
+
+    private TextBox sound1LowFrequency;
+    private TextBox sound2LowFrequency;
+    private TextBox sound3LowFrequency;
+
+    private TextBox sound1HighFrequency;
+    private TextBox sound2HighFrequency;
+    private TextBox sound3HighFrequency;
+
+    private TextBox sound1Sweep;
+
+    private TextBox sound3OnOff;
+    private TextBox sound3OutputLevel;
+
+    private TextBox sound4Polynomial;
+    private TextBox sound4Initial;
+
+    private TextBox[] waveRAM;
 
     private CheckBoxList<String> breakPoints;
 
@@ -177,32 +210,129 @@ public class DebugGUI {
         registerBC.setText(hex(currentState.registers().readBC(), 4));
         registerDE.setText(hex(currentState.registers().readDE(), 4));
         registerHL.setText(hex(currentState.registers().readHL(), 4));
+
+        soundEnabled.setText(ioString(currentState.apu().enabled()));
+        soundOutputTerminal.setText(ioString(currentState.apu().outputTerminal()));
+        soundChannelControl.setText(ioString(currentState.apu().channelControl()));
+
+        sound1Length.setText(ioString(currentState.apu().soundStates()[0].length()));
+        sound2Length.setText(ioString(currentState.apu().soundStates()[1].length()));
+        sound3Length.setText(ioString(currentState.apu().soundStates()[2].length()));
+        sound4Length.setText(ioString(currentState.apu().soundStates()[3].length()));
+
+        sound1Envelope.setText(ioString(currentState.apu().soundStates()[0].envelope()));
+        sound2Envelope.setText(ioString(currentState.apu().soundStates()[1].envelope()));
+        sound4Envelope.setText(ioString(currentState.apu().soundStates()[3].envelope()));
+
+        sound1LowFrequency.setText(ioString(currentState.apu().soundStates()[0].lowFrequency()));
+        sound2LowFrequency.setText(ioString(currentState.apu().soundStates()[1].lowFrequency()));
+        sound3LowFrequency.setText(ioString(currentState.apu().soundStates()[2].lowFrequency()));
+
+        sound1HighFrequency.setText(ioString(currentState.apu().soundStates()[0].highFrequency()));
+        sound2HighFrequency.setText(ioString(currentState.apu().soundStates()[1].highFrequency()));
+        sound3HighFrequency.setText(ioString(currentState.apu().soundStates()[2].highFrequency()));
+
+        sound1Sweep.setText(ioString(currentState.apu().soundStates()[0].sweep()));
+        sound3OnOff.setText(ioString(currentState.apu().soundStates()[2].onOff()));
+        sound3OutputLevel.setText(ioString(currentState.apu().soundStates()[2].outputLevel()));
+        sound4Polynomial.setText(ioString(currentState.apu().soundStates()[3].polynomial()));
+        sound4Initial.setText(ioString(currentState.apu().soundStates()[3].initial()));
+
+        for (int i = 0; i < waveRAM.length; i++) {
+            waveRAM[i].setText(hex(currentState.apu().waveRAM()[i], 2));
+        }
+    }
+
+    private String ioString(IORegisterState state) {
+        return hex(state.written(), 2) + "/" + hex(state.read(), 2);
     }
 
     private Component createPanel() {
         Panel mainPanel = new Panel();
-        mainPanel.setLayoutManager(new GridLayout(3));
-
-        Panel leftPanel = new Panel();
-        leftPanel.setLayoutManager(new LinearLayout());
-        leftPanel.addComponent(createGeneralCounterPanel());
-        leftPanel.addComponent(createFlagsPanel());
-        leftPanel.addComponent(createInterruptsPanel());
-
-        Panel middlePanel = new Panel();
-        middlePanel.setLayoutManager(new LinearLayout());
-        middlePanel.addComponent(createRegistersPanel());
+        mainPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
 
         Panel rightPanel = new Panel();
         rightPanel.setLayoutManager(new LinearLayout());
         rightPanel.addComponent(createButtonsPanel());
         rightPanel.addComponent(createBreakpointsPanel());
 
-        mainPanel.addComponent(leftPanel);
-        mainPanel.addComponent(middlePanel);
+        mainPanel.addComponent(createCPUPanel());
+        mainPanel.addComponent(createAPUPanel());
         mainPanel.addComponent(rightPanel);
 
         return mainPanel;
+    }
+
+    private Component createAPUPanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new LinearLayout());
+        panel.addComponent(createGeneralAPUPanel());
+        Panel soundPanel = new Panel();
+        soundPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+        Panel sound1Panel = createSoundPanel();
+        sound1Length = readOnlyTextBox(sound1Panel, "Length");
+        sound1Envelope = readOnlyTextBox(sound1Panel, "Envelope");
+        sound1LowFrequency = readOnlyTextBox(sound1Panel, "Low freq");
+        sound1HighFrequency = readOnlyTextBox(sound1Panel, "Hi freq");
+        sound1Sweep = readOnlyTextBox(sound1Panel, "Sweep");
+        Panel sound2Panel = createSoundPanel();
+        sound2Length = readOnlyTextBox(sound2Panel, "Length");
+        sound2Envelope = readOnlyTextBox(sound2Panel, "Envelope");
+        sound2LowFrequency = readOnlyTextBox(sound2Panel, "Low freq");
+        sound2HighFrequency = readOnlyTextBox(sound2Panel, "Hi freq");
+        Panel sound3Panel = createSoundPanel();
+        sound3Length = readOnlyTextBox(sound3Panel, "Length");
+        sound3LowFrequency = readOnlyTextBox(sound3Panel, "Low freq");
+        sound3HighFrequency = readOnlyTextBox(sound3Panel, "Hi freq");
+        sound3OnOff = readOnlyTextBox(sound3Panel, "On/Off");
+        sound3OutputLevel = readOnlyTextBox(sound3Panel, "Out lvl");
+        Panel sound4Panel = createSoundPanel();
+        sound4Length = readOnlyTextBox(sound4Panel, "Length");
+        sound4Envelope = readOnlyTextBox(sound4Panel, "Envelope");
+        sound4Polynomial = readOnlyTextBox(sound4Panel, "Poly");
+        sound4Initial = readOnlyTextBox(sound4Panel, "Initial");
+        soundPanel.addComponent(sound1Panel.withBorder(Borders.singleLine("Sound 1")));
+        soundPanel.addComponent(sound2Panel.withBorder(Borders.singleLine("Sound 2")));
+        soundPanel.addComponent(sound3Panel.withBorder(Borders.singleLine("Sound 3")));
+        soundPanel.addComponent(sound4Panel.withBorder(Borders.singleLine("Sound 4")));
+        panel.addComponent(soundPanel);
+        panel.addComponent(createWaveRAMPanel());
+        return panel.withBorder(Borders.singleLine("APU"));
+    }
+
+    private Component createWaveRAMPanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new GridLayout(8));
+        waveRAM = new TextBox[16];
+        for (int i = 0; i < waveRAM.length; i++) {
+            waveRAM[i] = readOnlyTextBox(panel, DebugPrinter.hex(0xFF30 + i, 4));
+        }
+        return panel.withBorder(Borders.singleLine("Wave RAM"));
+    }
+
+    private Panel createSoundPanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new GridLayout(2));
+        return panel;
+    }
+
+    private Component createGeneralAPUPanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+        soundEnabled = readOnlyTextBox(panel, "Enabled (0xFF26)");
+        soundOutputTerminal = readOnlyTextBox(panel, "Terminal (0xFF25)");
+        soundChannelControl = readOnlyTextBox(panel, "Chn Ctrl (0xFF24)");
+        return panel.withBorder(Borders.singleLine("General"));
+    }
+
+    private Component createCPUPanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new LinearLayout());
+        panel.addComponent(createGeneralCounterPanel());
+        panel.addComponent(createFlagsPanel());
+        panel.addComponent(createInterruptsPanel());
+        panel.addComponent(createRegistersPanel());
+        return panel.withBorder(Borders.singleLine("CPU"));
     }
 
     private Component createButtonsPanel() {
