@@ -16,10 +16,7 @@ import se.omfilm.gameboy.internal.Instruction;
 import se.omfilm.gameboy.internal.Interrupts;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +26,8 @@ public class DebugGUI {
     private final Debugger debugger;
 
     private List<ValueChangeUpdaters<Void>> changeUpdaters = new ArrayList<>();
-    private CheckBoxList<String> breakPoints;
+    private ActionListBox breakPoints;
+    private ActionListBox callTrace;
 
     private boolean needsRedraw = false;
 
@@ -128,8 +126,8 @@ public class DebugGUI {
         }
     }
 
-    private void removeBreakpoint(int index) {
-        debugger.removeBreakpoint(debugger.getBreakpoints().get(index));
+    private void removeBreakpoint(Breakpoint breakpoint) {
+        debugger.removeBreakpoint(breakpoint);
         reloadBreakpoints();
     }
 
@@ -140,7 +138,18 @@ public class DebugGUI {
     private void reloadBreakpoints() {
         breakPoints.clearItems();
         for (Breakpoint breakpoint : debugger.getBreakpoints()) {
-            breakPoints.addItem(breakpoint.displayText(), true);
+            breakPoints.addItem(breakpoint.displayText(), () ->  removeBreakpoint(breakpoint));
+        }
+    }
+
+    private void reloadCalltrace() {
+        callTrace.clearItems();
+        Iterator<EmulatorState> callTraceIterator = debugger.getCallTrace();
+        while (callTraceIterator.hasNext()) {
+            EmulatorState state = callTraceIterator.next();
+            callTrace.addItem(state.instructionType().name() + " @ " + hex(state.programCounter().read(), 4), () -> {
+                displayState(state);
+            });
         }
     }
 
@@ -150,8 +159,13 @@ public class DebugGUI {
         }
         needsRedraw = false;
 
-        EmulatorState currentState = debugger.getCurrentState();
+        displayState(debugger.getCurrentState());
+        if (debugger.isPaused()) {
+            reloadCalltrace();
+        }
+    }
 
+    private void displayState(EmulatorState currentState) {
         for (ValueChangeUpdaters updater : changeUpdaters) {
             updater.update(currentState);
         }
@@ -169,6 +183,7 @@ public class DebugGUI {
         rightPanel.setLayoutManager(new LinearLayout());
         rightPanel.addComponent(createButtonsPanel());
         rightPanel.addComponent(createBreakpointsPanel());
+        rightPanel.addComponent(createTracePanel());
 
         mainPanel.addComponent(createCPUPanel());
         mainPanel.addComponent(createAPUPanel());
@@ -287,11 +302,18 @@ public class DebugGUI {
     private Component createBreakpointsPanel() {
         Panel panel = new Panel();
         panel.setLayoutManager(new LinearLayout());
-        panel.addComponent(breakPoints = new CheckBoxList<>());
-        breakPoints.addListener((i, b) -> removeBreakpoint(i));
+        panel.addComponent(breakPoints = new ActionListBox());
         reloadBreakpoints();
 
         return panel.withBorder(Borders.singleLine("Breakpoints"));
+    }
+
+    private Component createTracePanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new LinearLayout());
+        panel.addComponent(callTrace = new ActionListBox());
+
+        return panel.withBorder(Borders.singleLine("Call trace"));
     }
 
     private Component createInterruptsPanel() {

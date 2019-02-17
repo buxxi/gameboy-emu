@@ -11,6 +11,7 @@ public class Debugger {
     private final Deque<EmulatorState> stateStack = new LinkedList<>();
     private final List<Breakpoint> breakpoints = new ArrayList<>();
 
+    private boolean paused = false;
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition pausedCondition = pauseLock.newCondition();
 
@@ -31,11 +32,13 @@ public class Debugger {
         try {
             pauseLock.lock();
             if (breakpoints.stream().anyMatch(bp -> bp.matches(currentState))) {
+                paused = true;
                 pausedCondition.await();
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
+            paused = false;
             pauseLock.unlock();
         }
     }
@@ -61,6 +64,10 @@ public class Debugger {
         } finally {
             pauseLock.unlock();
         }
+    }
+
+    public boolean isPaused() {
+        return paused;
     }
 
     public void addBreakpoint(InstructionType instruction) {
@@ -90,6 +97,10 @@ public class Debugger {
         if (breakpoint.matches(currentState) && breakpoints.stream().noneMatch(bp -> bp.matches(currentState))) {
             step();
         }
+    }
+
+    public Iterator<EmulatorState> getCallTrace() {
+        return stateStack.descendingIterator();
     }
 
 
