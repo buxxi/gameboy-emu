@@ -99,7 +99,6 @@ public class EmulatorState {
         }
 
         public boolean isRead(int address) {
-            System.out.println(reads.size());
             return reads.containsKey(address);
         }
     }

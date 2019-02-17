@@ -31,8 +31,10 @@ public class DebuggableGameboy extends Gameboy {
     protected Integer step() {
         EmulatorState state = new EmulatorState(cpu, mmu);
         debugger.update(state);
+        Integer result = super.step();
+        debugger.checkBreakpoints();
         debugGUI.update();
-        return super.step();
+        return result;
     }
 
     @Override

@@ -3,10 +3,7 @@ package se.omfilm.gameboy.debug;
 import se.omfilm.gameboy.internal.Instruction.InstructionType;
 import se.omfilm.gameboy.util.DebugPrinter;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -17,15 +14,23 @@ public class Debugger {
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition pausedCondition = pauseLock.newCondition();
 
-    public void update(EmulatorState state) {
-        stateStack.add(state);
+    public Debugger() {
+        pause();
+    }
+
+    public void update(EmulatorState currentState) {
+        stateStack.add(currentState);
+
         while (stateStack.size() > 32) {
             stateStack.remove();
         }
+    }
 
+    public void checkBreakpoints() {
+        EmulatorState currentState = getCurrentState();
         try {
             pauseLock.lock();
-            if (breakpoints.stream().anyMatch(bp -> bp.matches(state))) {
+            if (breakpoints.stream().anyMatch(bp -> bp.matches(currentState))) {
                 pausedCondition.await();
             }
         } catch (InterruptedException e) {
@@ -80,14 +85,16 @@ public class Debugger {
 
     public void removeBreakpoint(Breakpoint breakpoint) {
         breakpoints.remove(breakpoint);
-        EmulatorState state = getCurrentState();
-        if (breakpoint.matches(state) && breakpoints.stream().noneMatch(bp -> bp.matches(state))) {
+
+        EmulatorState currentState = getCurrentState();
+        if (breakpoint.matches(currentState) && breakpoints.stream().noneMatch(bp -> bp.matches(currentState))) {
             step();
         }
     }
 
+
     private class AnyBreakpoint implements Breakpoint {
-        public boolean matches(EmulatorState state) {
+        public boolean matches(EmulatorState currentState) {
             return true;
         }
 
@@ -113,8 +120,8 @@ public class Debugger {
             this.programCounter = programCounter;
         }
 
-        public boolean matches(EmulatorState state) {
-            return state.programCounter().read() == programCounter;
+        public boolean matches(EmulatorState currentState) {
+            return currentState.programCounter().read() == programCounter;
         }
 
         public String displayText() {
@@ -129,8 +136,8 @@ public class Debugger {
             this.instruction = instruction;
         }
 
-        public boolean matches(EmulatorState state) {
-            return state.instructionType() == instruction;
+        public boolean matches(EmulatorState currentState) {
+            return currentState.instructionType() == instruction;
         }
 
         public String displayText() {
@@ -145,8 +152,8 @@ public class Debugger {
             this.address = address;
         }
 
-        public boolean matches(EmulatorState state) {
-            return state.memory().isWritten(address);
+        public boolean matches(EmulatorState currentState) {
+            return currentState.memory().isWritten(address);
         }
 
         public String displayText() {
@@ -161,8 +168,8 @@ public class Debugger {
             this.address = address;
         }
 
-        public boolean matches(EmulatorState state) {
-            return state.memory().isRead(address);
+        public boolean matches(EmulatorState currentState) {
+            return currentState.memory().isRead(address);
         }
 
         public String displayText() {

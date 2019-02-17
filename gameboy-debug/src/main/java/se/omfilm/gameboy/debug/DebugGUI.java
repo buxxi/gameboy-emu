@@ -289,6 +289,7 @@ public class DebugGUI {
         panel.setLayoutManager(new LinearLayout());
         panel.addComponent(breakPoints = new CheckBoxList<>());
         breakPoints.addListener((i, b) -> removeBreakpoint(i));
+        reloadBreakpoints();
 
         return panel.withBorder(Borders.singleLine("Breakpoints"));
     }
