@@ -17,6 +17,7 @@ public class EmulatorState {
     private final Interrupts interrupts;
     private final Registers registers;
     private final APUState apu;
+    private final PPUState ppu;
     private final MemoryState memory;
 
     public EmulatorState(CPU cpu, Memory memory) {
@@ -28,6 +29,7 @@ public class EmulatorState {
         registers = new RecordedRegisters(cpu.registers());
         this.memory = new MemoryState();
         this.apu = new APUState(this.memory, memory);
+        this.ppu = new PPUState(this.memory, memory);
     }
 
     public InstructionType instructionType() {
@@ -56,6 +58,10 @@ public class EmulatorState {
 
     public APUState apu() {
         return apu;
+    }
+
+    public PPUState ppu() {
+        return ppu;
     }
 
     public MemoryState memory() {
@@ -100,6 +106,78 @@ public class EmulatorState {
 
         public boolean isRead(int address) {
             return reads.containsKey(address);
+        }
+    }
+
+    public class PPUState {
+        private final IORegisterState lcdControl;
+        private final IORegisterState lcdStatus;
+        private final IORegisterState scrollY;
+        private final IORegisterState scrollX;
+        private final IORegisterState scanline;
+        private final IORegisterState scanlineCompare;
+        private final IORegisterState backgroundPalette;
+        private final IORegisterState objectPalette0;
+        private final IORegisterState objectPalette1;
+        private final IORegisterState windowY;
+        private final IORegisterState windowX;
+
+        public PPUState(MemoryState state, Memory memory) {
+            lcdControl = new IORegisterState(0xFF40, state, memory);
+            lcdStatus = new IORegisterState(0xFF41, state, memory);
+            scrollY = new IORegisterState(0xFF42, state, memory);
+            scrollX = new IORegisterState(0xFF43, state, memory);
+            scanline = new IORegisterState(0xFF44, state, memory);
+            scanlineCompare = new IORegisterState(0xFF45, state, memory);
+            backgroundPalette = new IORegisterState(0xFF47, state, memory);
+            objectPalette0 = new IORegisterState(0xFF48, state, memory);
+            objectPalette1 = new IORegisterState(0xFF49, state, memory);
+            windowY = new IORegisterState(0xFF4A, state, memory);
+            windowX = new IORegisterState(0xFF4B, state, memory);
+        }
+
+        public IORegisterState lcdControl() {
+            return lcdControl;
+        }
+
+        public IORegisterState lcdStatus() {
+            return lcdStatus;
+        }
+
+        public IORegisterState scrollY() {
+            return scrollY;
+        }
+
+        public IORegisterState scrollX() {
+            return scrollX;
+        }
+
+        public IORegisterState scanline() {
+            return scanline;
+        }
+
+        public IORegisterState scanlineCompare() {
+            return scanlineCompare;
+        }
+
+        public IORegisterState backgroundPalette() {
+            return backgroundPalette;
+        }
+
+        public IORegisterState objectPalette0() {
+            return objectPalette0;
+        }
+
+        public IORegisterState objectPalette1() {
+            return objectPalette1;
+        }
+
+        public IORegisterState windowY() {
+            return windowY;
+        }
+
+        public IORegisterState windowX() {
+            return windowX;
         }
     }
 

@@ -185,11 +185,33 @@ public class DebugGUI {
         rightPanel.addComponent(createBreakpointsPanel());
         rightPanel.addComponent(createTracePanel());
 
+        Panel middlePanel = new Panel();
+        middlePanel.setLayoutManager(new LinearLayout());
+        middlePanel.addComponent(createAPUPanel());
+        middlePanel.addComponent(createPPUPanel());
+
         mainPanel.addComponent(createCPUPanel());
-        mainPanel.addComponent(createAPUPanel());
+        mainPanel.addComponent(middlePanel);
         mainPanel.addComponent(rightPanel);
 
         return mainPanel;
+    }
+
+    private Component createPPUPanel() {
+        Panel panel = new Panel();
+        panel.setLayoutManager(new GridLayout(8));
+        readOnlyTextBox(panel, "LCD Control (0xFF40)", (currentState) -> ioString(currentState.ppu().lcdControl()));
+        readOnlyTextBox(panel, "LCD Status (0xFF41)", (currentState) -> ioString(currentState.ppu().lcdStatus()));
+        readOnlyTextBox(panel, "Scroll Y (0xFF42)", (currentState) -> ioString(currentState.ppu().scrollY()));
+        readOnlyTextBox(panel, "Scroll X (0xFF43)", (currentState) -> ioString(currentState.ppu().scrollX()));
+        readOnlyTextBox(panel, "Scanline (0xFF44)", (currentState) -> ioString(currentState.ppu().scanline()));
+        readOnlyTextBox(panel, "Scan compare (0xFF45)", (currentState) -> ioString(currentState.ppu().scanlineCompare()));
+        readOnlyTextBox(panel, "Window Y (0xFF4A)", (currentState) -> ioString(currentState.ppu().windowY()));
+        readOnlyTextBox(panel, "Window X (0xFF4B)", (currentState) -> ioString(currentState.ppu().windowX()));
+        readOnlyTextBox(panel, "Background (0xFF47)", (currentState) -> ioString(currentState.ppu().backgroundPalette()));
+        readOnlyTextBox(panel, "Object 0 (0xFF48)", (currentState) -> ioString(currentState.ppu().objectPalette0()));
+        readOnlyTextBox(panel, "Object 1 (0xFF49)", (currentState) -> ioString(currentState.ppu().objectPalette1()));
+        return panel.withBorder(Borders.singleLine("PPU"));
     }
 
     private Component createAPUPanel() {
