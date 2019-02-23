@@ -260,9 +260,9 @@ public class MMU implements Memory {
                 (mmu, reg) -> mmu.apu.polynomialCounter(APU.SoundId.SOUND4_NOISE),
                 (mmu, reg, data) -> mmu.apu.polynomialCounter(APU.SoundId.SOUND4_NOISE, data)
         ),
-        SOUND_4_COUNTER_CONSECUTIVE(0xFF23,
-                (mmu, reg) -> mmu.apu.soundMode(APU.SoundId.SOUND4_NOISE),
-                (mmu, reg, data) -> mmu.apu.soundMode(APU.SoundId.SOUND4_NOISE, data)
+        SOUND_4_COUNTER_CONSECUTIVE(0xFF23, //TODO: rename
+                (mmu, reg) -> mmu.apu.highFrequency(APU.SoundId.SOUND4_NOISE),
+                (mmu, reg, data) -> mmu.apu.highFrequency(APU.SoundId.SOUND4_NOISE, data)
         ),
         SOUND_CHANNEL_CONTROL(0xFF24,
                 (mmu, reg) -> mmu.apu.channelControl(),

@@ -85,5 +85,9 @@ public class Runner {
                 runnable.run();
             }
         }
+
+        public boolean isFirstHalf() {
+            return counter > (interval / 2);
+        }
     }
 }
