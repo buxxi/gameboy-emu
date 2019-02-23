@@ -5,6 +5,8 @@ import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.bundle.LanternaThemes;
 import com.googlecode.lanterna.graphics.Theme;
 import com.googlecode.lanterna.gui2.*;
+import com.googlecode.lanterna.gui2.dialogs.FileDialog;
+import com.googlecode.lanterna.gui2.dialogs.FileDialogBuilder;
 import com.googlecode.lanterna.gui2.dialogs.TextInputDialog;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
@@ -16,6 +18,8 @@ import se.omfilm.gameboy.internal.Instruction;
 import se.omfilm.gameboy.internal.Interrupts;
 import se.omfilm.gameboy.util.DebugPrinter;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,6 +58,19 @@ public class DebugGUI {
 
     private void step() {
         debugger.step();
+    }
+
+    private void toggleLogWriting() {
+        try {
+            FileDialog dialog = new FileDialogBuilder().setTitle("Write log to file").setSelectedFile(new File(System.getProperty("user.home"))).setActionLabel("Create").build();
+            File selectedFile = dialog.showDialog(gui);
+            if (selectedFile == null) {
+                return;
+            }
+            debugger.writeLogFile(selectedFile);
+        } catch (IOException e) {
+            toggleLogWriting();
+        }
     }
 
     private void addInstructionBreakpoint() {
@@ -290,12 +307,13 @@ public class DebugGUI {
     private Component createButtonsPanel() {
         Panel panel = new Panel();
         panel.setLayoutManager(new LinearLayout());
-        panel.addComponent(new Button("Break", this::pause));
-        panel.addComponent(new Button("Step", this::step));
-        panel.addComponent(new Button("+Instr break", this::addInstructionBreakpoint));
-        panel.addComponent(new Button("+PC break", this::addProgramCounterBreakpoint));
-        panel.addComponent(new Button("+Read break", this::addMemoryReadBreakpoint));
-        panel.addComponent(new Button("+Write break", this::addMemoryWriteBreakpoint));
+        panel.addComponent(new Button("Continue", this::step));
+        panel.addComponent(new Button("+/- Any break", this::pause));
+        panel.addComponent(new Button("+ Instr break", this::addInstructionBreakpoint));
+        panel.addComponent(new Button("+ PC break", this::addProgramCounterBreakpoint));
+        panel.addComponent(new Button("+ Read break", this::addMemoryReadBreakpoint));
+        panel.addComponent(new Button("+ Write break", this::addMemoryWriteBreakpoint));
+        panel.addComponent(new Button("Write log", this::toggleLogWriting));
         panel.addComponent(new Button("Quit", this::quit));
 
         return panel.withBorder(Borders.singleLine("Actions"));

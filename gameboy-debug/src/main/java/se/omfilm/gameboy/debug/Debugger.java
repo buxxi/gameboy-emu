@@ -3,13 +3,17 @@ package se.omfilm.gameboy.debug;
 import se.omfilm.gameboy.internal.Instruction.InstructionType;
 import se.omfilm.gameboy.util.DebugPrinter;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 public class Debugger {
     private final Deque<EmulatorState> stateStack = new LinkedList<>();
     private final List<Breakpoint> breakpoints = new ArrayList<>();
+    private final List<Consumer<EmulatorState>> listeners = new ArrayList<>();
 
     private boolean paused = false;
     private final ReentrantLock pauseLock = new ReentrantLock();
@@ -21,6 +25,8 @@ public class Debugger {
 
     public void update(EmulatorState currentState) {
         stateStack.add(currentState);
+
+        listeners.forEach(c -> c.accept(currentState));
 
         while (stateStack.size() > 32) {
             stateStack.remove();
@@ -103,6 +109,9 @@ public class Debugger {
         return stateStack.descendingIterator();
     }
 
+    public void writeLogFile(File logFile) throws FileNotFoundException {
+        listeners.add(new LogFileWriter(logFile));
+    }
 
     private class AnyBreakpoint implements Breakpoint {
         public boolean matches(EmulatorState currentState) {
