@@ -63,6 +63,8 @@ public class PPU {
     private boolean vblankInterrupt = false;
     private boolean hblankInterrupt = false;
 
+    private int lastDMAWrite = 0;
+
     public PPU(Screen screen, ColorPalette colorPalette) {
         this.colorPalette = colorPalette;
         this.screen = screen;
@@ -306,10 +308,17 @@ public class PPU {
         this.compareWithScanline = compareWithScanline;
     }
 
-    public void transferDMA(int offset, Memory ram) {
+    public void transferDMA(int offset, Memory mmu) {
         for (int i = 0; i < MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.size(); i++) {
-            objectAttributeMemory.writeByte(MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.from + i, ram.readByte(offset + i));
+            int sourceAddress = (offset << 8) + i;
+            int targetAddress = MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.from + i;
+            objectAttributeMemory.writeByte(targetAddress, mmu.readByte(sourceAddress));
+            lastDMAWrite = offset;
         }
+    }
+
+    public int readDMA() {
+        return lastDMAWrite;
     }
 
     public Memory videoRAM() {
@@ -413,6 +422,8 @@ public class PPU {
     }
 
     private class ObjectAttributeMemory implements Memory {
+        private int[] unusedData = new int[SPRITE_COUNT]; //Contains all the unused data that still can be read from the MMU
+
         public int readByte(int address) {
             int virtualAddress = address - MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.from;
             int spriteNumber = virtualAddress / SPRITE_BYTE_SIZE;
@@ -430,7 +441,8 @@ public class PPU {
                     return  (!sprite.prioritizeSprite ?                     0b1000_0000 : 0) |
                             (sprite.flipY ?                                 0b0100_0000 : 0) |
                             (sprite.flipX ?                                 0b0010_0000 : 0) |
-                            (sprite.palette == objectPalette1 ?         0b0001_0000 : 0);
+                            (sprite.palette == objectPalette1 ?             0b0001_0000 : 0) |
+                            unusedData[spriteNumber];
             }
             throw new IllegalArgumentException("Unreachable code");
         }
@@ -457,6 +469,7 @@ public class PPU {
                     sprite.flipY =              (data & 0b0100_0000) != 0;
                     sprite.flipX =              (data & 0b0010_0000) != 0;
                     sprite.palette =            (data & 0b0001_0000) == 0 ? objectPalette0 : objectPalette1;
+                    unusedData[spriteNumber] = data & 0b0000_1111;
             }
         }
     }
