@@ -1,0 +1,10 @@
+.idea
+gameboy-core/src/main/resources/*.[gG][bB]
+gameboy-core/src/main/resources/*.[gG][bB].[sS][aA][vV]
+gameboy-core/src/main/resources/*.gbc
+gameboy-core/src/main/resources/*.gbc.sav
+gameboy-core/src/main/resources/*.bin
+**/target
+*.iml
+*.ipr
+*.iws
