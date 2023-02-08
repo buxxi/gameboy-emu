@@ -36,10 +36,10 @@
 	- [ ] 03-modify_timing
  - [ ] oam_bug:
 	- [ ] 1-lcd sync
-	- [x] 2-causes
-	- [ ] 3-non_causes
+	- [ ] 2-causes
+	- [x] 3-non_causes
 	- [ ] 4-scanline_timing
-	- [x] 5-timing_bug
+	- [ ] 5-timing_bug
 	- [ ] 6-timing_no_bug
 	- [ ] 7-timing_effect
 	- [ ] 8-instr_effect

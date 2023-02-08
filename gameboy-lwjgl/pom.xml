@@ -12,7 +12,7 @@
     </parent>
 
     <properties>
-        <lwjgl.version>3.3.0</lwjgl.version>
+        <lwjgl.version>3.3.1</lwjgl.version>
     </properties>
 
     <dependencies>

@@ -35,7 +35,7 @@ public class AbstractMemoryBlarggTestRoms {
         target.reset();
     }
 
-    public class BlarggGameboy extends Gameboy {
+    public static class BlarggGameboy extends Gameboy {
         public BlarggGameboy(byte[] rom) {
             super(new NullScreen(), FixedColorPalette.PRESET.MONOCHROME.getPalette(), new NullController(), new NullSerialConnection(), new NullSoundPlayback(), ROM.load(rom), Speed.UNLIMITED);
         }
@@ -43,7 +43,7 @@ public class AbstractMemoryBlarggTestRoms {
         @Override
         public void run() {
             int prev = 0;
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 step();
                 //Verify that the tests even has begun to run
                 if (mmu.readByte(0xA001) == 0xDE && mmu.readByte(0xA002) == 0xB0 && mmu.readByte(0xA003) == 0x61) {

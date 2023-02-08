@@ -1,28 +1,27 @@
 package se.omfilm.gameboy;
 
-import org.junit.runner.Description;
-import org.junit.runner.JUnitCore;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunListener;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.launcher.*;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.junit.platform.engine.TestExecutionResult.Status.SUCCESSFUL;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 public class BlarggCompabilityReport {
-    public static void main(String[] args) throws FileNotFoundException {
-        File reportFile = resolveFile();
+    public static void main(String[] args) throws IOException {
+        Path reportFile = resolveFile();
         Map<String, Boolean> success = collectResult();
 
         List<String> strings = new ArrayList<>(success.keySet());
@@ -30,7 +29,7 @@ public class BlarggCompabilityReport {
 
         String group = "";
 
-        try (PrintStream out = new PrintStream(new FileOutputStream(reportFile))) {
+        try (PrintStream out = new PrintStream(Files.newOutputStream(reportFile))) {
             out.println("### Blargg Test ROMS result");
             for (String test : strings) {
                 String currentGroup = test.substring(0, test.indexOf('/'));
@@ -45,11 +44,11 @@ public class BlarggCompabilityReport {
         }
     }
 
-    private static File resolveFile() {
+    private static Path resolveFile() {
         Path path = Paths.get("").toAbsolutePath();
         do {
-            File file = path.resolve("COMPABILITY.md").toFile();
-            if (file.exists()) {
+            Path file = path.resolve("COMPABILITY.md");
+            if (Files.exists(file)) {
                 return file;
             }
             path = path.getParent();
@@ -60,32 +59,36 @@ public class BlarggCompabilityReport {
     private static Map<String, Boolean> collectResult() {
         Map<String, Boolean> success = new HashMap<>();
 
-        JUnitCore runner = new JUnitCore();
-        runner.addListener(new RunListener() {
-            @Override
-            public void testFinished(Description description) {
-                String name = description.getAnnotation(ReportName.class).value();
-                if (!success.containsKey(name)) {
-                    success.put(name, true);
-                }
-            }
+        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(
+                        selectClass(CPUInstructionTests.class),
+                        selectClass(CPUInstructionTimingTests.class),
+                        selectClass(HaltBugTest.class),
+                        selectClass(InterruptTimeTest.class),
+                        selectClass(MemoryTimingTests.class),
+                        selectClass(SoundTests.class),
+                        selectClass(OAMBugTests.class))
+                .build();
 
-            @Override
-            public void testFailure(Failure failure) {
-                success.put(failure.getDescription().getAnnotation(ReportName.class).value(), false);
+        Launcher launcher = LauncherFactory.create();
+
+        launcher.registerTestExecutionListeners(new TestExecutionListener() {
+            public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+                resolveReportName(testIdentifier).ifPresent(reportName -> success.put(reportName, testExecutionResult.getStatus() == SUCCESSFUL));
             }
         });
+        launcher.execute(request);
 
-        runner.run(
-                CPUInstructionTests.class,
-                CPUInstructionTimingTests.class,
-                HaltBugTest.class,
-                InterruptTimeTest.class,
-                MemoryTimingTests.class,
-                SoundTests.class,
-                OAMBugTests.class
-        );
         return success;
+    }
+
+    private static Optional<String> resolveReportName(TestIdentifier testIdentifier) {
+        return testIdentifier.getSource()
+                .filter(s -> s instanceof MethodSource)
+                .map(s -> (MethodSource) s)
+                .map(MethodSource::getJavaMethod)
+                .map(method -> method.getAnnotation(ReportName.class))
+                .map(ReportName::value);
     }
 
     private static boolean checkAllOk(Map<String, Boolean> success, String currentGroup) {

@@ -1,16 +1,18 @@
 package se.omfilm.gameboy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import se.omfilm.gameboy.BlarggCompabilityReport.ReportName;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Timeout(2)
 public class MemoryTimingTests extends AbstractMemoryBlarggTestRoms {
-    @Test(timeout = 2000)
+    @Test
     @ReportName("mem_timing/01-read_timing")
-    public void itShouldTestMemoryReadTimings() throws IOException {
+    void itShouldTestMemoryReadTimings() throws IOException {
         loadROM("mem_timing-2.zip", "mem_timing-2/rom_singles/01-read_timing.gb");
 
         target.run();
@@ -18,9 +20,9 @@ public class MemoryTimingTests extends AbstractMemoryBlarggTestRoms {
         assertEquals("01-read_timing\n\n\nPassed\n", target.result());
     }
 
-    @Test(timeout = 2000)
+    @Test
     @ReportName("mem_timing/02-write_timing")
-    public void itShouldTestMemoryWriteTimings() throws IOException {
+    void itShouldTestMemoryWriteTimings() throws IOException {
         loadROM("mem_timing-2.zip", "mem_timing-2/rom_singles/02-write_timing.gb");
 
         target.run();
@@ -28,9 +30,9 @@ public class MemoryTimingTests extends AbstractMemoryBlarggTestRoms {
         assertEquals("02-write_timing\n\n\nPassed\n", target.result());
     }
 
-    @Test(timeout = 2000)
+    @Test
     @ReportName("mem_timing/03-modify_timing")
-    public void itShouldTestMemoryModifyTimings() throws IOException {
+    void itShouldTestMemoryModifyTimings() throws IOException {
         loadROM("mem_timing-2.zip", "mem_timing-2/rom_singles/03-modify_timing.gb");
 
         target.run();
