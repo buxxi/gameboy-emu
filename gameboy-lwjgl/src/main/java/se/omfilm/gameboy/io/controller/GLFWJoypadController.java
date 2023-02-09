@@ -16,27 +16,16 @@ public class GLFWJoypadController implements Controller, WindowChangeListener {
     }
 
     public boolean isPressed(Button button) {
-
-        switch (button) {
-            case UP:
-                return checkAxis(GLFW_GAMEPAD_AXIS_LEFT_Y, -1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_UP);
-            case DOWN:
-                return checkAxis(GLFW_GAMEPAD_AXIS_LEFT_Y, 1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_DOWN);
-            case LEFT:
-                return checkAxis(GLFW_GAMEPAD_AXIS_LEFT_X, -1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_LEFT);
-            case RIGHT:
-                return checkAxis(GLFW_GAMEPAD_AXIS_LEFT_X, 1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_RIGHT);
-            case START:
-                return checkButton(GLFW_GAMEPAD_BUTTON_START);
-            case SELECT:
-                return checkButton(GLFW_GAMEPAD_BUTTON_BACK);
-            case A:
-                return checkButton(GLFW_GAMEPAD_BUTTON_A);
-            case B:
-                return checkButton(GLFW_GAMEPAD_BUTTON_X) || checkButton(GLFW_GAMEPAD_BUTTON_B);
-            default:
-                return false;
-        }
+        return switch (button) {
+            case UP -> checkAxis(GLFW_GAMEPAD_AXIS_LEFT_Y, -1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_UP);
+            case DOWN -> checkAxis(GLFW_GAMEPAD_AXIS_LEFT_Y, 1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_DOWN);
+            case LEFT -> checkAxis(GLFW_GAMEPAD_AXIS_LEFT_X, -1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_LEFT);
+            case RIGHT -> checkAxis(GLFW_GAMEPAD_AXIS_LEFT_X, 1) || checkButton(GLFW_GAMEPAD_BUTTON_DPAD_RIGHT);
+            case START -> checkButton(GLFW_GAMEPAD_BUTTON_START);
+            case SELECT -> checkButton(GLFW_GAMEPAD_BUTTON_BACK);
+            case A -> checkButton(GLFW_GAMEPAD_BUTTON_A);
+            case B -> checkButton(GLFW_GAMEPAD_BUTTON_X) || checkButton(GLFW_GAMEPAD_BUTTON_B);
+        };
     }
 
     public void update() {

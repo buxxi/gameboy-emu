@@ -23,7 +23,7 @@ public class GLFWScreen implements Screen {
     private volatile boolean turnedOn = false;
     private long window;
 
-    private ReadWriteLock bufferLock = new ReentrantReadWriteLock();
+    private final ReadWriteLock bufferLock = new ReentrantReadWriteLock();
     private byte[] pixelBuffer = new byte[Screen.WIDTH * Screen.HEIGHT * 3];
     private byte[] offscreenBuffer = new byte[pixelBuffer.length];
 
@@ -182,6 +182,7 @@ public class GLFWScreen implements Screen {
             protected long monitor() {
                 return glfwGetPrimaryMonitor();
             }
+
 
             protected int height() {
                 return glfwGetVideoMode(monitor()).height();

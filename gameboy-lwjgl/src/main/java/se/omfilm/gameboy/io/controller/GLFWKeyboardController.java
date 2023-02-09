@@ -13,26 +13,16 @@ public class GLFWKeyboardController implements Controller, WindowChangeListener 
     }
 
     public boolean isPressed(Button button) {
-        switch (button) {
-            case UP:
-                return checkKey(GLFW.GLFW_KEY_W);
-            case DOWN:
-                return checkKey(GLFW.GLFW_KEY_S);
-            case LEFT:
-                return checkKey(GLFW.GLFW_KEY_A);
-            case RIGHT:
-                return checkKey(GLFW.GLFW_KEY_D);
-            case START:
-                return checkKey(GLFW.GLFW_KEY_ENTER);
-            case SELECT:
-                return checkKey(GLFW.GLFW_KEY_RIGHT_SHIFT);
-            case A:
-                return checkKey(GLFW.GLFW_KEY_O);
-            case B:
-                return checkKey(GLFW.GLFW_KEY_P);
-            default:
-                return false;
-        }
+        return switch (button) {
+            case UP -> checkKey(GLFW.GLFW_KEY_W);
+            case DOWN -> checkKey(GLFW.GLFW_KEY_S);
+            case LEFT -> checkKey(GLFW.GLFW_KEY_A);
+            case RIGHT -> checkKey(GLFW.GLFW_KEY_D);
+            case START -> checkKey(GLFW.GLFW_KEY_ENTER);
+            case SELECT -> checkKey(GLFW.GLFW_KEY_RIGHT_SHIFT);
+            case A -> checkKey(GLFW.GLFW_KEY_O);
+            case B -> checkKey(GLFW.GLFW_KEY_P);
+        };
     }
 
     public void update() {
