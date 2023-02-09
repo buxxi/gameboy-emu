@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
     @Test
     @ReportName("cpu_instrs/01-special")
-    public void itShouldHandleSpecialInstructions() throws IOException {
+    void itShouldHandleSpecialInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/01-special.gb");
 
         target.run();
@@ -22,7 +22,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/02-interrupts")
-    public void itShouldHandleInterruptInstructions() throws IOException, InterruptedException {
+    void itShouldHandleInterruptInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/02-interrupts.gb");
 
         target.run();
@@ -32,7 +32,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/03-op sp,hl")
-    public void itShouldHandleSPHLInstructions() throws IOException, InterruptedException {
+    void itShouldHandleSPHLInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/03-op sp,hl.gb");
 
         target.run();
@@ -42,7 +42,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/04-op r,imm")
-    public void itShouldHandleRIMMInstructions() throws IOException, InterruptedException {
+    void itShouldHandleRIMMInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/04-op r,imm.gb");
 
         target.run();
@@ -52,7 +52,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/05 op rp")
-    public void itShouldHandleRPInstructions() throws IOException, InterruptedException {
+    void itShouldHandleRPInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/05-op rp.gb");
 
         target.run();
@@ -62,7 +62,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/06-ld r,r")
-    public void itShouldHandleLDRRInstructions() throws IOException, InterruptedException {
+    void itShouldHandleLDRRInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/06-ld r,r.gb");
 
         target.run();
@@ -72,7 +72,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/07-jr,jp,call,ret,rst")
-    public void itShouldHandleCallsInstructions() throws IOException, InterruptedException {
+    void itShouldHandleCallsInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/07-jr,jp,call,ret,rst.gb");
 
         target.run();
@@ -82,7 +82,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/08-misc instrs")
-    public void itShouldHandleMiscInstructions() throws IOException, InterruptedException {
+    void itShouldHandleMiscInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/08-misc instrs.gb");
 
         target.run();
@@ -92,7 +92,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/09-op r,r")
-    public void itShouldHandleRRInstructions() throws IOException, InterruptedException {
+    void itShouldHandleRRInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/09-op r,r.gb");
 
         target.run();
@@ -102,7 +102,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/10-bit ops")
-    public void itShouldHandleBitInstructions() throws IOException, InterruptedException {
+    void itShouldHandleBitInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/10-bit ops.gb");
 
         target.run();
@@ -112,7 +112,7 @@ public class CPUInstructionTests extends AbstractSerialBlarggTestRoms {
 
     @Test
     @ReportName("cpu_instrs/11-op a,(hl)")
-    public void itShouldHandleAHLInstructions() throws IOException, InterruptedException {
+    void itShouldHandleAHLInstructions() throws IOException {
         loadROM("cpu_instrs.zip", "cpu_instrs/individual/11-op a,(hl).gb");
  
         target.run();

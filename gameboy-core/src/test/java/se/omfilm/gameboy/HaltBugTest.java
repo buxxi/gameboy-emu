@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class HaltBugTest extends AbstractMemoryBlarggTestRoms {
     @Test
     @ReportName("halt_bug/halt bug")
-    public void itShouldHandleHaltBug() throws IOException {
+    void itShouldHandleHaltBug() throws IOException {
         loadROM("halt_bug.zip", "halt_bug.gb");
 
         target.run();

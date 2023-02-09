@@ -7,27 +7,13 @@ import se.omfilm.gameboy.io.screen.NullScreen;
 import se.omfilm.gameboy.io.serial.NullSerialConnection;
 import se.omfilm.gameboy.io.sound.NullSoundPlayback;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class AbstractMemoryBlarggTestRoms {
     protected BlarggGameboy target;
 
     protected void loadROM(String zipName, String romName) throws IOException {
-        ZipInputStream zipFile = new ZipInputStream(getClass().getClassLoader().getResourceAsStream(zipName));
-        ZipEntry entry;
-        do {
-            entry = zipFile.getNextEntry();
-            if (entry != null && romName.equals(entry.getName())) {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                zipFile.transferTo(out);
-                loadROM(out.toByteArray());
-                return;
-            }
-        } while (entry != null);
-        throw new IllegalArgumentException(romName + " not found in " + zipName);
+        loadROM(ZipUtils.readClassPathZipFile(zipName, romName));
     }
 
     private void loadROM(byte[] rom) {

@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CPUInstructionTimingTests extends AbstractSerialBlarggTestRoms {
     @Test
     @ReportName("instr_timing/instr_timing")
-    public void itShouldTestInstructionTimings() throws IOException {
+    void itShouldTestInstructionTimings() throws IOException {
         loadROM("instr_timing.zip", "instr_timing/instr_timing.gb");
 
         target.run();
