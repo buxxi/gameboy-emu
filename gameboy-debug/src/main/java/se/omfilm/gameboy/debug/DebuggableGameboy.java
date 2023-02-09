@@ -22,7 +22,7 @@ public class DebuggableGameboy extends Gameboy {
 
     @Override
     public void run() {
-        System.setErr(new PrintStream(new NullOutputStream())); //Running in debugging mode we don't want to print the logs and this seems to be the easiest way to do that
+        System.setErr(new PrintStream(OutputStream.nullOutputStream())); //Running in debugging mode we don't want to print the logs and this seems to be the easiest way to do that
         debugGUI.start();
         super.run();
     }
@@ -40,9 +40,5 @@ public class DebuggableGameboy extends Gameboy {
     @Override
     protected Memory memory() {
         return debugger.getCurrentState().recordMemory(mmu);
-    }
-
-    private static class NullOutputStream extends OutputStream {
-        public void write(int i) {}
     }
 }

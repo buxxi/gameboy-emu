@@ -80,7 +80,7 @@ public class EmulatorState {
         return type;
     }
 
-    private <T extends Enum<T>> Map<T, Boolean> toMap(Class<T> type, T[] values, Function<T, Boolean> func) {
+    private static <T extends Enum<T>> Map<T, Boolean> toMap(Class<T> type, T[] values, Function<T, Boolean> func) {
         Map<T, Boolean> result = new EnumMap<>(type);
         for (T value : values) {
             result.put(value, func.apply(value));
@@ -88,9 +88,9 @@ public class EmulatorState {
         return result;
     }
 
-    public class MemoryState {
-        private Map<Integer, Integer> reads = new HashMap<>();
-        private Map<Integer, Integer> writes = new HashMap<>();
+    public static class MemoryState {
+        private final Map<Integer, Integer> reads = new HashMap<>();
+        private final Map<Integer, Integer> writes = new HashMap<>();
 
         public void updateRead(int address, int data) {
             reads.put(address, data);
@@ -109,7 +109,7 @@ public class EmulatorState {
         }
     }
 
-    public class PPUState {
+    public static class PPUState {
         private final IORegisterState lcdControl;
         private final IORegisterState lcdStatus;
         private final IORegisterState scrollY;
@@ -181,7 +181,7 @@ public class EmulatorState {
         }
     }
 
-    public class APUState {
+    public static class APUState {
         private final IORegisterState enabled;
         private final IORegisterState outputTerminal;
         private final IORegisterState channelControl;
@@ -266,7 +266,7 @@ public class EmulatorState {
         }
     }
 
-    public class SoundState {
+    public static class SoundState {
         private final IORegisterState length;
         private final IORegisterState envelope;
         private final IORegisterState lowFrequency;
@@ -326,7 +326,7 @@ public class EmulatorState {
         }
     }
 
-    public class IORegisterState {
+    public static class IORegisterState {
         private final int address;
         private final MemoryState state;
         private final Memory memory;
@@ -346,7 +346,7 @@ public class EmulatorState {
         }
     }
 
-    private class RecordedProgramCounter implements ProgramCounter {
+    private static class RecordedProgramCounter implements ProgramCounter {
         private final int value;
 
         public RecordedProgramCounter(ProgramCounter delegate) {
@@ -362,7 +362,7 @@ public class EmulatorState {
         }
     }
 
-    private class RecordedStackPointer implements StackPointer {
+    private static class RecordedStackPointer implements StackPointer {
         private final int value;
 
         public RecordedStackPointer(StackPointer delegate) {
@@ -378,7 +378,7 @@ public class EmulatorState {
         }
     }
 
-    private class RecordedFlags implements Flags {
+    private static class RecordedFlags implements Flags {
         private final Map<Flag, Boolean> data;
         private final boolean interruptsDisabled;
 
@@ -404,7 +404,7 @@ public class EmulatorState {
         }
     }
 
-    private class RecordedInterrupts implements Interrupts {
+    private static class RecordedInterrupts implements Interrupts {
         private final Map<Interrupt, Boolean> enabled;
         private final Map<Interrupt, Boolean> requested;
 
@@ -430,7 +430,7 @@ public class EmulatorState {
         }
     }
 
-    private class RecordedRegisters implements Registers {
+    private static class RecordedRegisters implements Registers {
         private final int a;
         private final int b;
         private final int c;
@@ -516,7 +516,7 @@ public class EmulatorState {
         }
     }
 
-    private class RecordedMemory implements Memory {
+    private static class RecordedMemory implements Memory {
         private final MemoryState state;
         private final Memory delegate;
 

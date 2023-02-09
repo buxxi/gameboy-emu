@@ -27,16 +27,17 @@ import java.util.regex.Pattern;
 import static se.omfilm.gameboy.util.DebugPrinter.hex;
 
 public class DebugGUI {
-    private final Debugger debugger;
+    private static final Theme NORMAL_THEME = LanternaThemes.getRegisteredTheme("blaster");
+    private static final Theme HIGHLIGHT_THEME = LanternaThemes.getRegisteredTheme("defrost");
 
-    private List<ValueChangeUpdaters<Void>> changeUpdaters = new ArrayList<>();
+    private final Debugger debugger;
+    private final List<ValueChangeUpdaters<Void>> changeUpdaters = new ArrayList<>();
+
     private ActionListBox breakPoints;
     private ActionListBox callTrace;
 
     private boolean needsRedraw = false;
 
-    private Theme normalTheme = LanternaThemes.getRegisteredTheme("blaster");
-    private Theme highlightTheme = LanternaThemes.getRegisteredTheme("defrost");
     private MultiWindowTextGUI gui;
 
     public DebugGUI(Debugger debugger) {
@@ -183,7 +184,7 @@ public class DebugGUI {
     }
 
     private void displayState(EmulatorState currentState) {
-        for (ValueChangeUpdaters updater : changeUpdaters) {
+        for (ValueChangeUpdaters<?> updater : changeUpdaters) {
             updater.update(currentState);
         }
     }
@@ -441,7 +442,7 @@ public class DebugGUI {
             window.setComponent(createPanel());
 
             gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
-            gui.setTheme(normalTheme);
+            gui.setTheme(NORMAL_THEME);
             gui.addWindow(window);
             while (true) {
                 gui.getGUIThread().processEventsAndUpdate();
@@ -453,23 +454,23 @@ public class DebugGUI {
         }
     }
 
-    private class HighlightableTextBox extends TextBox {
+    private static class HighlightableTextBox extends TextBox {
         public synchronized TextBox setText(String newText) {
             if (getLineCount() == 0 || Objects.equals(getTextOrDefault(""), newText)) {
-                setTheme(normalTheme);
+                setTheme(NORMAL_THEME);
             } else {
-                setTheme(highlightTheme);
+                setTheme(HIGHLIGHT_THEME);
             }
             return super.setText(newText);
         }
     }
 
-    private class HighlightableCheckBox extends CheckBox {
+    private static class HighlightableCheckBox extends CheckBox {
         public synchronized CheckBox setChecked(boolean checked) {
             if (checked != isChecked()) {
-                setTheme(highlightTheme);
+                setTheme(HIGHLIGHT_THEME);
             } else {
-                setTheme(normalTheme);
+                setTheme(NORMAL_THEME);
             }
             return super.setChecked(checked);
         }

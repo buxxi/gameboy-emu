@@ -113,7 +113,7 @@ public class Debugger {
         listeners.add(new LogFileWriter(logFile));
     }
 
-    private class AnyBreakpoint implements Breakpoint {
+    private static class AnyBreakpoint implements Breakpoint {
         public boolean matches(EmulatorState currentState) {
             return true;
         }
@@ -133,7 +133,7 @@ public class Debugger {
         }
     }
 
-    private class ProgramCounterBreakpoint implements Breakpoint {
+    private static class ProgramCounterBreakpoint implements Breakpoint {
         private final int programCounter;
 
         public ProgramCounterBreakpoint(int programCounter) {
@@ -149,7 +149,7 @@ public class Debugger {
         }
     }
 
-    private class InstructionBreakpoint implements Breakpoint {
+    private static class InstructionBreakpoint implements Breakpoint {
         private final InstructionType instruction;
 
         public InstructionBreakpoint(InstructionType instruction) {
@@ -165,7 +165,7 @@ public class Debugger {
         }
     }
 
-    private class MemoryWriteBreakpoint implements Breakpoint {
+    private static class MemoryWriteBreakpoint implements Breakpoint {
         private final int address;
 
         public MemoryWriteBreakpoint(int address) {
@@ -181,7 +181,7 @@ public class Debugger {
         }
     }
 
-    private class MemoryReadBreakpoint implements Breakpoint {
+    private static class MemoryReadBreakpoint implements Breakpoint {
         private final int address;
 
         public MemoryReadBreakpoint(int address) {
