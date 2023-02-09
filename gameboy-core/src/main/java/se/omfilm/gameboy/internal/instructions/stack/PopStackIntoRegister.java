@@ -4,7 +4,7 @@ import se.omfilm.gameboy.internal.*;
 import se.omfilm.gameboy.internal.memory.Memory;
 
 public class PopStackIntoRegister implements Instruction {
-    private RegisterWriter target;
+    private final RegisterWriter target;
 
     private PopStackIntoRegister(RegisterWriter target) {
         this.target = target;

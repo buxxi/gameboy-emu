@@ -128,7 +128,7 @@ public class CPU {
         }
     }
 
-    private class RegistersImpl implements Registers {
+    private static class RegistersImpl implements Registers {
         private int a = 0;
         private int f = 0;
         private int b = 0;
@@ -224,13 +224,11 @@ public class CPU {
 
         private int step(Memory memory) {
             switch (enableDelay) {
-                case 2:
-                    enableDelay--;
-                    break;
-                case 1:
+                case 2 -> enableDelay--;
+                case 1 -> {
                     interruptMasterEnable = true;
                     enableDelay--;
-                    break;
+                }
             }
 
             if ((requestedInterrupts & enabledInterrupts) == 0) {

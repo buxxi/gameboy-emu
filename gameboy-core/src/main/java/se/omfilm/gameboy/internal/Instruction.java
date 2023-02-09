@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 /**
  * A common interface for all the instructions the CPU can execute.
  * The CPU keeps a cache of these for each InstructionType so they should all be stateless.
- *
+ * <p>
  * This is made as a functional interface so it can be used as a lambda for simple instructions.
  */
 @FunctionalInterface
@@ -29,7 +29,7 @@ public interface Instruction {
     /**
      * Execute the instruction and return the number of cycles that instruction took.
      * This should NEVER throw an Exception, so that needs to be handled in the the instruction.
-     *
+     * <p>
      * The lowest value that it can return is 4
      */
     int execute(Memory memory, Registers registers, Flags flags, ProgramCounter programCounter, StackPointer stackPointer);
@@ -55,10 +55,10 @@ public interface Instruction {
     /**
      * A full list of all the instructions that the CPU can execute with a mapping between the opcode
      * and a method reference that serves as a factory for the instruction.
-     *
+     * <p>
      * STOP and HALT needs to be overridden as they don't operate on the provided parameters
-     *
-     * See this file for reference: http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
+     * <p>
+     * See this file for reference: <a href="http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf">...</a>
      * (where the instructions can be found is commented on each enum value)
      */
     enum InstructionType implements EnumByValue.ComparableByInt {
@@ -613,8 +613,8 @@ public interface Instruction {
             return valuesCache.fromValue(opcode);
         }
 
-        public static Throwable missing(int opcode) {
-            return new IllegalArgumentException("No such instruction " + DebugPrinter.hex(opcode, 4));
+        public static void missing(int opcode) {
+            throw new IllegalArgumentException("No such instruction " + DebugPrinter.hex(opcode, 4));
         }
 
         @Override

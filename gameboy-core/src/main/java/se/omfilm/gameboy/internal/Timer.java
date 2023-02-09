@@ -111,8 +111,8 @@ public class Timer {
             return valuesCache.fromValue(input);
         }
 
-        public static Throwable missing(int input) {
-            return new IllegalArgumentException("No " + Frequency.class.getSimpleName() + " for bits " + DebugPrinter.hex(input, 4));
+        public static void missing(int input) {
+            throw new IllegalArgumentException("No " + Frequency.class.getSimpleName() + " for bits " + DebugPrinter.hex(input, 4));
         }
 
         public int compareTo(int value) {

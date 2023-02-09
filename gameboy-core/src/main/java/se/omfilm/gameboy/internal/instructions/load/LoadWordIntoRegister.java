@@ -4,7 +4,7 @@ import se.omfilm.gameboy.internal.*;
 import se.omfilm.gameboy.internal.memory.Memory;
 
 public class LoadWordIntoRegister implements Instruction {
-    private RegisterWriter target;
+    private final RegisterWriter target;
 
     private LoadWordIntoRegister(RegisterWriter target) {
         this.target = target;

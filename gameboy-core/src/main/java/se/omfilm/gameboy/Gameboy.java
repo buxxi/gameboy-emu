@@ -13,10 +13,10 @@ import se.omfilm.gameboy.util.Runner;
 public class Gameboy {
     protected final MMU mmu;
     protected final CPU cpu;
-    protected final PPU ppu;
-    protected final APU apu;
-    protected final Timer timer;
-    protected final Input input;
+    private final PPU ppu;
+    private final APU apu;
+    private final Timer timer;
+    private final Input input;
 
     private final Speed speed;
     private boolean running = false;

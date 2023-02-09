@@ -16,16 +16,12 @@ public class FixedColorPalette implements ColorPalette {
     }
 
     public Color background(Shade shade) {
-        switch (shade) {
-            case DARKEST:
-                return darkest;
-            case DARK:
-                return dark;
-            case LIGHT:
-                return light;
-            default:
-                return lightest;
-        }
+        return switch (shade) {
+            case DARKEST -> darkest;
+            case DARK -> dark;
+            case LIGHT -> light;
+            default -> lightest;
+        };
     }
 
     public Color sprite(Shade shade, int index) {

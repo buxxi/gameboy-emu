@@ -11,7 +11,7 @@ public class Runner {
 
     /**
      * Schedules a callable to be called at a fixed fps until it return false.
-     *
+     * <p>
      * This method blocks the current thread and no parallel calls should be made.
      */
     public static void atFrequency(Callable<Boolean> callable, int fps) throws Exception {

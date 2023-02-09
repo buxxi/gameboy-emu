@@ -122,20 +122,13 @@ public class MBC3 implements Cartridge {
             if (!enabled) {
                 return 0xFF;
             }
-            switch (selectedRegister) {
-                case HALT_AND_DAYS_UPPER:
-                    return readHalt();
-                case DAYS_LOWER:
-                    return readDays();
-                case HOURS:
-                    return readHours();
-                case MINUTES:
-                    return readMinutes();
-                case SECONDS:
-                    return readSeconds();
-                default:
-                    throw new UnsupportedOperationException("Not implemented for " + selectedRegister);
-            }
+            return switch (selectedRegister) {
+                case HALT_AND_DAYS_UPPER -> readHalt();
+                case DAYS_LOWER -> readDays();
+                case HOURS -> readHours();
+                case MINUTES -> readMinutes();
+                case SECONDS -> readSeconds();
+            };
         }
 
         public void write(int data) {
@@ -143,23 +136,12 @@ public class MBC3 implements Cartridge {
                 return;
             }
             switch (selectedRegister) {
-                case HALT_AND_DAYS_UPPER:
-                    writeHalt(data);
-                    break;
-                case DAYS_LOWER:
-                    writeDays(data);
-                    break;
-                case HOURS:
-                    writeHours(data);
-                    break;
-                case MINUTES:
-                    writeMinutes(data);
-                    break;
-                case SECONDS:
-                    writeSeconds(data);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Not implemented for " + selectedRegister + ": " + DebugPrinter.hex(data, 2));
+                case HALT_AND_DAYS_UPPER -> writeHalt(data);
+                case DAYS_LOWER -> writeDays(data);
+                case HOURS -> writeHours(data);
+                case MINUTES -> writeMinutes(data);
+                case SECONDS -> writeSeconds(data);
+                default -> throw new UnsupportedOperationException("Not implemented for " + selectedRegister + ": " + DebugPrinter.hex(data, 2));
             }
             persistClockRAM();
         }

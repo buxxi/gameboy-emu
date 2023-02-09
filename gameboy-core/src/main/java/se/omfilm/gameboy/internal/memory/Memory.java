@@ -3,7 +3,7 @@ package se.omfilm.gameboy.internal.memory;
 /**
  * Represents a part of the memory model in the gameboy.
  * It can read/write unsigned bytes and words, so underlying implementations should make signed byte -> unsigned int conversion.
- *
+ * <p>
  * If the address is not writable it should do nothing and if it's not readable it should return 0xFF.
  */
 public interface Memory {

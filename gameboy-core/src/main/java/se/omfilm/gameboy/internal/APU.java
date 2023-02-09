@@ -184,15 +184,9 @@ public class APU {
         Frequency frequency = frequencyFromId(soundId);
         int mergedData = (frequency.value & ~0xFF) | data;
         switch (soundId) {
-            case SOUND1_SQUARE_WAVE:
-                sound1.frequency = new Frequency(mergedData, 32);
-                break;
-            case SOUND2_SQUARE_WAVE:
-                sound2.frequency = new Frequency(mergedData, 32);
-                break;
-            case SOUND3_WAVE:
-                sound3.frequency = new Frequency(mergedData, 64);
-                break;
+            case SOUND1_SQUARE_WAVE -> sound1.frequency = new Frequency(mergedData, 32);
+            case SOUND2_SQUARE_WAVE -> sound2.frequency = new Frequency(mergedData, 32);
+            case SOUND3_WAVE -> sound3.frequency = new Frequency(mergedData, 64);
         }
     }
 
@@ -213,15 +207,9 @@ public class APU {
         duration.trigger(trigger, enabled);
 
         switch (soundId) {
-            case SOUND1_SQUARE_WAVE:
-                sound1.frequency = new Frequency(mergedData, 32);
-                break;
-            case SOUND2_SQUARE_WAVE:
-                sound2.frequency = new Frequency(mergedData, 32);
-                break;
-            case SOUND3_WAVE:
-                sound3.frequency = new Frequency(mergedData, 64);
-                break;
+            case SOUND1_SQUARE_WAVE -> sound1.frequency = new Frequency(mergedData, 32);
+            case SOUND2_SQUARE_WAVE -> sound2.frequency = new Frequency(mergedData, 32);
+            case SOUND3_WAVE -> sound3.frequency = new Frequency(mergedData, 64);
         }
     }
 
@@ -242,27 +230,27 @@ public class APU {
         Envelope envelope = new Envelope(initialVolume, direction, steps);
 
         switch (soundId) {
-            case SOUND1_SQUARE_WAVE:
+            case SOUND1_SQUARE_WAVE -> {
                 sound1.dacEnabled = dacEnabled;
                 sound1.envelope = envelope;
                 if (!sound1.dacEnabled) {
                     sound1.enabled = false;
                 }
-                break;
-            case SOUND2_SQUARE_WAVE:
+            }
+            case SOUND2_SQUARE_WAVE -> {
                 sound2.dacEnabled = dacEnabled;
                 sound2.envelope = envelope;
                 if (!sound2.dacEnabled) {
                     sound2.enabled = false;
                 }
-                break;
-            case SOUND4_NOISE:
+            }
+            case SOUND4_NOISE -> {
                 sound4.dacEnabled = dacEnabled;
                 sound4.envelope = envelope;
                 if (!sound4.dacEnabled) {
                     sound4.enabled = false;
                 }
-                break;
+            }
         }
     }
 
@@ -281,29 +269,18 @@ public class APU {
         Duration duration = durationFromId(soundId);
         duration.set(duration.mode == DurationMode.LONG ? data : (data & 0b0011_1111));
 
-        switch(soundId) {
-            case SOUND1_SQUARE_WAVE:
-                sound1.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
-                break;
-            case SOUND2_SQUARE_WAVE:
-                sound2.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
-                break;
+        switch (soundId) {
+            case SOUND1_SQUARE_WAVE -> sound1.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
+            case SOUND2_SQUARE_WAVE -> sound2.waveDutyMode = WaveDutyMode.fromValue(data >> 6);
         }
     }
 
     public int length(SoundId soundId) {
-        switch (soundId) {
-            case SOUND1_SQUARE_WAVE:
-                return sound1.waveDutyMode.bits << 6 | 0b0011_1111;
-            case SOUND2_SQUARE_WAVE:
-                return sound2.waveDutyMode.bits << 6 | 0b0011_1111;
-            case SOUND3_WAVE:
-                return 0b1111_1111;
-            case SOUND4_NOISE:
-                return 0b1111_1111;
-            default:
-                throw new IllegalArgumentException("Sound " + soundId + " has no length");
-        }
+        return switch (soundId) {
+            case SOUND1_SQUARE_WAVE -> sound1.waveDutyMode.bits << 6 | 0b0011_1111;
+            case SOUND2_SQUARE_WAVE -> sound2.waveDutyMode.bits << 6 | 0b0011_1111;
+            case SOUND3_WAVE, SOUND4_NOISE -> 0b1111_1111;
+        };
     }
 
     public int sweep(SoundId soundId) {
@@ -392,31 +369,21 @@ public class APU {
     }
 
     private Envelope envelopeFromId(SoundId soundId) {
-        switch (soundId) {
-            case SOUND1_SQUARE_WAVE:
-                return sound1.envelope;
-            case SOUND2_SQUARE_WAVE:
-                return sound2.envelope;
-            case SOUND4_NOISE:
-                return sound4.envelope;
-            default:
-                throw new IllegalArgumentException("Sound " + soundId + " has no envelope");
-        }
+        return switch (soundId) {
+            case SOUND1_SQUARE_WAVE -> sound1.envelope;
+            case SOUND2_SQUARE_WAVE -> sound2.envelope;
+            case SOUND4_NOISE -> sound4.envelope;
+            default -> throw new IllegalArgumentException("Sound " + soundId + " has no envelope");
+        };
     }
 
     private Frequency frequencyFromId(SoundId soundId) {
-        switch (soundId) {
-            case SOUND1_SQUARE_WAVE:
-                return sound1.frequency;
-            case SOUND2_SQUARE_WAVE:
-                return sound2.frequency;
-            case SOUND3_WAVE:
-                return sound3.frequency;
-            case SOUND4_NOISE:
-                return new Frequency(1, 1); //TODO
-            default:
-                throw new IllegalArgumentException("Sound " + soundId + " has no frequency");
-        }
+        return switch (soundId) {
+            case SOUND1_SQUARE_WAVE -> sound1.frequency;
+            case SOUND2_SQUARE_WAVE -> sound2.frequency;
+            case SOUND3_WAVE -> sound3.frequency;
+            case SOUND4_NOISE -> new Frequency(1, 1); //TODO
+        };
     }
 
     private Sound soundFromId(SoundId soundId) {
@@ -463,17 +430,12 @@ public class APU {
 
         private int waveData() {
             int phase = frequency.phase;
-            switch (waveDutyMode) {
-                case HALF:
-                    return phase < 16 ? 1 : 0;
-                case EIGHT:
-                    return phase < 4 ? 1 : 0;
-                case QUARTER:
-                    return phase < 8 ? 1 : 0;
-                case THREE_QUARTERS:
-                    return phase < 24 ? 1 : 0;
-            }
-            return 0;
+            return switch (waveDutyMode) {
+                case HALF -> phase < 16 ? 1 : 0;
+                case EIGHT -> phase < 4 ? 1 : 0;
+                case QUARTER -> phase < 8 ? 1 : 0;
+                case THREE_QUARTERS -> phase < 24 ? 1 : 0;
+            };
         }
     }
 
@@ -489,17 +451,12 @@ public class APU {
             if (disabledFor(terminal)) {
                 return 0;
             }
-            switch (wavePatternMode) {
-                case MUTE:
-                    return 0;
-                case NORMAL:
-                    return wavePatternRAM.getNibble(frequency.phase);
-                case SHIFTED_ONCE:
-                    return wavePatternRAM.getNibble(frequency.phase) >> 1;
-                case SHIFTED_TWICE:
-                    return wavePatternRAM.getNibble(frequency.phase) >> 2;
-            }
-            return 0;
+            return switch (wavePatternMode) {
+                case MUTE -> 0;
+                case NORMAL -> wavePatternRAM.getNibble(frequency.phase);
+                case SHIFTED_ONCE -> wavePatternRAM.getNibble(frequency.phase) >> 1;
+                case SHIFTED_TWICE -> wavePatternRAM.getNibble(frequency.phase) >> 2;
+            };
         }
 
         public void stepEnvelope() {
@@ -674,7 +631,7 @@ public class APU {
         }
     }
 
-    private class Channel {
+    private static class Channel {
         private final Terminal terminal;
         private boolean voiceInEnabled = false;
         private int volume = 0;
@@ -689,7 +646,7 @@ public class APU {
         }
     }
 
-    private class Frequency {
+    private static class Frequency {
         private final int value;
 
         private final Counter counter;
@@ -717,7 +674,7 @@ public class APU {
         }
     }
 
-    private class Envelope {
+    private static class Envelope {
         private final int initialVolume;
         private final EnvelopeDirection direction;
         private final int steps;
@@ -754,12 +711,12 @@ public class APU {
         }
     }
 
-    private class Polynomial {
+    private static class Polynomial {
         private final int shiftClock;
         private final PolynomialStep step;
         private final int dividingRatio;
 
-        private Counter counter;
+        private final Counter counter;
         private int lfsr = 0b0111_1111_1111_1111;
 
         public Polynomial(int shiftClock, PolynomialStep steps, int dividingRatio) {
@@ -794,16 +751,16 @@ public class APU {
         }
 
         private int resolveDivisor() {
-            switch (dividingRatio) {
-                case 1: return 16;
-                case 2: return 32;
-                case 3: return 48;
-                case 4: return 64;
-                case 5: return 80;
-                case 6: return 96;
-                case 7: return 112;
-                default: return 8;
-            }
+            return switch (dividingRatio) {
+                case 1 -> 16;
+                case 2 -> 32;
+                case 3 -> 48;
+                case 4 -> 64;
+                case 5 -> 80;
+                case 6 -> 96;
+                case 7 -> 112;
+                default -> 8;
+            };
         }
     }
 
@@ -936,7 +893,7 @@ public class APU {
      * The wave table samples is only 4 bit and is written with a whole byte representing 2 samples.
      * So reuse the ByteArrayMemory and make it twice as big so the nibbles can be accessed without bitshifting.
      */
-    private class NibbleArrayMemory extends ByteArrayMemory {
+    private static class NibbleArrayMemory extends ByteArrayMemory {
         public NibbleArrayMemory(int offset, byte[] data) {
             super(offset, data);
         }

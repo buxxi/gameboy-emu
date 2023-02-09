@@ -3,12 +3,13 @@ package se.omfilm.gameboy.internal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.omfilm.gameboy.internal.memory.ByteArrayMemory;
+import se.omfilm.gameboy.internal.memory.Cartridge;
 import se.omfilm.gameboy.internal.memory.Memory;
 import se.omfilm.gameboy.internal.memory.ROM;
-import se.omfilm.gameboy.internal.memory.Cartridge;
 import se.omfilm.gameboy.io.serial.SerialConnection;
-import se.omfilm.gameboy.util.DebugPrinter;
 import se.omfilm.gameboy.util.EnumByValue;
+
+import static se.omfilm.gameboy.util.DebugPrinter.hex;
 
 public class MMU implements Memory {
     private static final Logger log = LoggerFactory.getLogger(MMU.class);
@@ -42,66 +43,44 @@ public class MMU implements Memory {
     public int readByte(int address) {
         MemoryType type = MemoryType.fromAddress(address);
         int virtualAddress = address - type.from;
-        switch (type) {
-            case ROM_BANK0:
-            case ROM_SWITCHABLE_BANKS:
-            case RAM_BANKS:
-                return rom.readByte(address);
-            case RAM:
-            case ECHO_RAM:
-                return ram.readByte(virtualAddress);
-            case ZERO_PAGE:
-                return zeroPage.readByte(virtualAddress);
-            case VIDEO_RAM:
-                return ppu.videoRAM().readByte(address);
-            case OBJECT_ATTRIBUTE_MEMORY:
-                return ppu.objectAttributeMemory().readByte(address);
-            case INTERRUPT_ENABLE:
-            case IO_REGISTERS:
+        return switch (type) {
+            case ROM_BANK0, ROM_SWITCHABLE_BANKS, RAM_BANKS -> rom.readByte(address);
+            case RAM, ECHO_RAM -> ram.readByte(virtualAddress);
+            case ZERO_PAGE -> zeroPage.readByte(virtualAddress);
+            case VIDEO_RAM -> ppu.videoRAM().readByte(address);
+            case OBJECT_ATTRIBUTE_MEMORY -> ppu.objectAttributeMemory().readByte(address);
+            case INTERRUPT_ENABLE, IO_REGISTERS -> {
                 try {
-                    return IORegister.fromAddress(address).read(MMU.this);
+                    yield IORegister.fromAddress(address).read(MMU.this);
                 } catch (Exception e) {
                     log.warn(e.getMessage());
-                    return 0xFF;
+                    yield 0xFF;
                 }
-            default:
-                log.warn("Reading from " + type + " at address " + DebugPrinter.hex(address, 4));
-                return 0xFF;
-        }
+            }
+            default -> {
+                log.warn("Reading from " + type + " at address " + hex(address, 4));
+                yield 0xFF;
+            }
+        };
     }
 
     public void writeByte(int address, int data) {
         MemoryType type = MemoryType.fromAddress(address);
         int virtualAddress = address - type.from;
         switch (type) {
-            case ROM_BANK0:
-            case ROM_SWITCHABLE_BANKS:
-            case RAM_BANKS:
-                rom.writeByte(address, data);
-                return;
-            case VIDEO_RAM:
-                ppu.videoRAM().writeByte(address, data);
-                return;
-            case OBJECT_ATTRIBUTE_MEMORY:
-                ppu.objectAttributeMemory().writeByte(address, data);
-                return;
-            case ZERO_PAGE:
-                zeroPage.writeByte(virtualAddress, data);
-                return;
-            case IO_REGISTERS:
-            case INTERRUPT_ENABLE:
+            case ROM_BANK0, ROM_SWITCHABLE_BANKS, RAM_BANKS -> rom.writeByte(address, data);
+            case VIDEO_RAM -> ppu.videoRAM().writeByte(address, data);
+            case OBJECT_ATTRIBUTE_MEMORY -> ppu.objectAttributeMemory().writeByte(address, data);
+            case ZERO_PAGE -> zeroPage.writeByte(virtualAddress, data);
+            case IO_REGISTERS, INTERRUPT_ENABLE -> {
                 try {
                     IORegister.fromAddress(address).write(MMU.this, data);
                 } catch (Exception e) {
                     log.warn(e.getMessage());
                 }
-                return;
-            case RAM:
-            case ECHO_RAM:
-                ram.writeByte(virtualAddress, data);
-                return;
-            default:
-                log.warn("Writing " + DebugPrinter.hex(data, 2) + " to " + MemoryType.UNUSABLE_MEMORY + " at " + DebugPrinter.hex(address, 4));
+            }
+            case RAM, ECHO_RAM -> ram.writeByte(virtualAddress, data);
+            default -> log.warn("Writing " + hex(data, 2) + " to " + MemoryType.UNUSABLE_MEMORY + " at " + hex(address, 4));
         }
     }
 
@@ -123,7 +102,7 @@ public class MMU implements Memory {
     }
 
     private void invalidWrite(IORegister reg, int data) {
-        log.warn("Writing " + DebugPrinter.hex(data, 2) + " to " + reg + " is not supported");
+        log.warn("Writing " + hex(data, 2) + " to " + reg + " is not supported");
     }
 
     private int requestedInterrupts() {
@@ -370,7 +349,7 @@ public class MMU implements Memory {
 
         @Override
         public String toString() {
-            return super.toString() + " (" + DebugPrinter.hex(address, 4) + ")";
+            return super.toString() + " (" + hex(address, 4) + ")";
         }
 
         public static IORegister fromAddress(int address) {
@@ -378,7 +357,7 @@ public class MMU implements Memory {
         }
 
         public static void missing(int address) {
-            throw new IllegalArgumentException("No " + IORegister.class.getSimpleName() + " for address " + DebugPrinter.hex(address, 4));
+            throw new IllegalArgumentException("No " + IORegister.class.getSimpleName() + " for address " + hex(address, 4));
         }
 
         public int compareTo(int value) {
@@ -422,12 +401,12 @@ public class MMU implements Memory {
         }
 
         public static void missing(int address) {
-            throw new IllegalArgumentException("No such memory mapped " + DebugPrinter.hex(address, 4));
+            throw new IllegalArgumentException("No such memory mapped " + hex(address, 4));
         }
 
         @Override
         public String toString() {
-            return super.toString() + " (" + DebugPrinter.hex(from, 4) + "-" + DebugPrinter.hex(to, 4) + ")";
+            return super.toString() + " (" + hex(from, 4) + "-" + hex(to, 4) + ")";
         }
 
         public int compareTo(int value) {

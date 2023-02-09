@@ -36,8 +36,8 @@ public class PPU {
     private final Tile[] tiles = IntStream.range(0, TILE_COUNT).mapToObj(Tile::new).toArray(Tile[]::new);
     private final Sprite[] sprites = IntStream.range(0, SPRITE_COUNT).mapToObj(Sprite::new).toArray(Sprite[]::new);
     private int tileOffset = 0;
-    private int[][] tileMap0 = new int[TILE_MAP_HEIGHT][TILE_MAP_WIDTH];
-    private int[][] tileMap1 = new int[TILE_MAP_HEIGHT][TILE_MAP_WIDTH];
+    private final int[][] tileMap0 = new int[TILE_MAP_HEIGHT][TILE_MAP_WIDTH];
+    private final int[][] tileMap1 = new int[TILE_MAP_HEIGHT][TILE_MAP_WIDTH];
     private int[][] windowTileMap = tileMap0;
     private int[][] backgroundTileMap = tileMap0;
 
@@ -50,7 +50,7 @@ public class PPU {
     private int cycleCounter = 0;
     private int scanline = 0;
     private int compareWithScanline = 0;
-    private BitSet backgroundMask = new BitSet(Screen.WIDTH);
+    private final BitSet backgroundMask = new BitSet(Screen.WIDTH);
 
     private boolean lcdDisplay = false;
     private boolean windowDisplay = false;
@@ -254,13 +254,13 @@ public class PPU {
     }
 
     public void control(int data) {
-        lcdDisplay =        (data & 0b1000_0000) != 0;
-        windowTileMap =     (data & 0b0100_0000) != 0 ? tileMap1 : tileMap0;
-        windowDisplay =     (data & 0b0010_0000) != 0;
-        tileOffset =        (data & 0b0001_0000) != 0 ? 0 : (0xFF + 1);
+        lcdDisplay = (data & 0b1000_0000) != 0;
+        windowTileMap = (data & 0b0100_0000) != 0 ? tileMap1 : tileMap0;
+        windowDisplay = (data & 0b0010_0000) != 0;
+        tileOffset = (data & 0b0001_0000) != 0 ? 0 : (0xFF + 1);
         backgroundTileMap = (data & 0b0000_1000) != 0 ? tileMap1 : tileMap0;
-        largeSprites =      (data & 0b0000_0100) != 0;
-        spriteDisplay =     (data & 0b0000_0010) != 0;
+        largeSprites = (data & 0b0000_0100) != 0;
+        spriteDisplay = (data & 0b0000_0010) != 0;
         backgroundDisplay = (data & 0b0000_0001) != 0;
 
         if (lcdDisplay) {
@@ -269,30 +269,30 @@ public class PPU {
     }
 
     public int control() {
-        return  (lcdDisplay ?                       0b1000_0000 : 0) |
-                (windowTileMap == tileMap1 ?        0b0100_0000 : 0) |
-                (windowDisplay ?                    0b0010_0000 : 0) |
-                (tileOffset == 0 ?                  0b0001_0000 : 0) |
-                (backgroundTileMap == tileMap1 ?    0b0000_1000 : 0) |
-                (largeSprites ?                     0b0000_0100 : 0) |
-                (spriteDisplay ?                    0b0000_0010 : 0) |
-                (backgroundDisplay ?                0b0000_0001 : 0);
+        return (lcdDisplay ? 0b1000_0000 : 0) |
+                (windowTileMap == tileMap1 ? 0b0100_0000 : 0) |
+                (windowDisplay ? 0b0010_0000 : 0) |
+                (tileOffset == 0 ? 0b0001_0000 : 0) |
+                (backgroundTileMap == tileMap1 ? 0b0000_1000 : 0) |
+                (largeSprites ? 0b0000_0100 : 0) |
+                (spriteDisplay ? 0b0000_0010 : 0) |
+                (backgroundDisplay ? 0b0000_0001 : 0);
 
     }
 
     public void interruptEnables(int data) {
-        coincidence =       (data & 0b0100_0000) != 0;
-        oamInterrupt =      (data & 0b0010_0000) != 0;
-        vblankInterrupt =   (data & 0b0001_0000) != 0;
-        hblankInterrupt =   (data & 0b0000_1000) != 0;
+        coincidence = (data & 0b0100_0000) != 0;
+        oamInterrupt = (data & 0b0010_0000) != 0;
+        vblankInterrupt = (data & 0b0001_0000) != 0;
+        hblankInterrupt = (data & 0b0000_1000) != 0;
     }
 
     public int status() {
-        return  (coincidence ?                      0b0100_0000 : 0) |
-                (oamInterrupt ?                     0b0010_0000 : 0) |
-                (vblankInterrupt ?                  0b0001_0000 : 0) |
-                (hblankInterrupt ?                  0b0000_1000 : 0) |
-                (scanline == compareWithScanline ?  0b0000_0100 : 0) |
+        return (coincidence ? 0b0100_0000 : 0) |
+                (oamInterrupt ? 0b0010_0000 : 0) |
+                (vblankInterrupt ? 0b0001_0000 : 0) |
+                (hblankInterrupt ? 0b0000_1000 : 0) |
+                (scanline == compareWithScanline ? 0b0000_0100 : 0) |
                 mode.id;
     }
 
@@ -422,7 +422,7 @@ public class PPU {
     }
 
     private class ObjectAttributeMemory implements Memory {
-        private int[] unusedData = new int[SPRITE_COUNT]; //Contains all the unused data that still can be read from the MMU
+        private final int[] unusedData = new int[SPRITE_COUNT]; //Contains all the unused data that still can be read from the MMU
 
         public int readByte(int address) {
             int virtualAddress = address - MMU.MemoryType.OBJECT_ATTRIBUTE_MEMORY.from;
@@ -430,21 +430,17 @@ public class PPU {
             int type = virtualAddress % SPRITE_BYTE_SIZE;
 
             Sprite sprite = sprites[spriteNumber];
-            switch (type) {
-                case 0:
-                    return sprite.y + SPRITE_HEIGHT;
-                case 1:
-                    return sprite.x + SPRITE_WIDTH;
-                case 2:
-                    return sprite.tileNumber;
-                case 3:
-                    return  (!sprite.prioritizeSprite ?                     0b1000_0000 : 0) |
-                            (sprite.flipY ?                                 0b0100_0000 : 0) |
-                            (sprite.flipX ?                                 0b0010_0000 : 0) |
-                            (sprite.palette == objectPalette1 ?             0b0001_0000 : 0) |
-                            unusedData[spriteNumber];
-            }
-            throw new IllegalArgumentException("Unreachable code");
+            return switch (type) {
+                case 0 -> sprite.y + SPRITE_HEIGHT;
+                case 1 -> sprite.x + SPRITE_WIDTH;
+                case 2 -> sprite.tileNumber;
+                case 3 -> (!sprite.prioritizeSprite ? 0b1000_0000 : 0) |
+                        (sprite.flipY ? 0b0100_0000 : 0) |
+                        (sprite.flipX ? 0b0010_0000 : 0) |
+                        (sprite.palette == objectPalette1 ? 0b0001_0000 : 0) |
+                        unusedData[spriteNumber];
+                default -> throw new IllegalArgumentException("Unreachable code");
+            };
         }
 
         public void writeByte(int address, int data) {
@@ -455,26 +451,21 @@ public class PPU {
 
             Sprite sprite = sprites[spriteNumber];
             switch (type) {
-                case 0:
-                    sprite.y = data - SPRITE_HEIGHT;
-                    break;
-                case 1:
-                    sprite.x = data - SPRITE_WIDTH;
-                    break;
-                case 2:
-                    sprite.tileNumber = data;
-                    break;
-                case 3:
-                    sprite.prioritizeSprite =   (data & 0b1000_0000) == 0;
-                    sprite.flipY =              (data & 0b0100_0000) != 0;
-                    sprite.flipX =              (data & 0b0010_0000) != 0;
-                    sprite.palette =            (data & 0b0001_0000) == 0 ? objectPalette0 : objectPalette1;
+                case 0 -> sprite.y = data - SPRITE_HEIGHT;
+                case 1 -> sprite.x = data - SPRITE_WIDTH;
+                case 2 -> sprite.tileNumber = data;
+                case 3 -> {
+                    sprite.prioritizeSprite = (data & 0b1000_0000) == 0;
+                    sprite.flipY = (data & 0b0100_0000) != 0;
+                    sprite.flipX = (data & 0b0010_0000) != 0;
+                    sprite.palette = (data & 0b0001_0000) == 0 ? objectPalette0 : objectPalette1;
                     unusedData[spriteNumber] = data & 0b0000_1111;
+                }
             }
         }
     }
 
-    private class Tile {
+    private static class Tile {
         private final int tileNumber;
 
         private final int[][] graphics = new int[TILE_HEIGHT][TILE_WIDTH];
@@ -573,8 +564,8 @@ public class PPU {
         LIGHTEST
     }
 
-    private class Palette {
-        private int palette;
+    private static class Palette {
+        private final int palette;
 
         private Palette(int palette) {
             this.palette = palette;
@@ -585,17 +576,12 @@ public class PPU {
             int mask = (0b0000_0011 << offset);
             int result = (palette & mask) >> offset;
 
-            switch (result) {
-                case 0:
-                default:
-                    return Shade.LIGHTEST;
-                case 1:
-                    return Shade.LIGHT;
-                case 2:
-                    return Shade.DARK;
-                case 3:
-                    return Shade.DARKEST;
-            }
+            return switch (result) {
+                default -> Shade.LIGHTEST;
+                case 1 -> Shade.LIGHT;
+                case 2 -> Shade.DARK;
+                case 3 -> Shade.DARKEST;
+            };
         }
     }
 
@@ -606,7 +592,7 @@ public class PPU {
         VRAM(3, 172);
 
         private final int id;
-        private int minimumCycles;
+        private final int minimumCycles;
 
         GPUMode(int id, int minimumCycles) {
             this.id = id;

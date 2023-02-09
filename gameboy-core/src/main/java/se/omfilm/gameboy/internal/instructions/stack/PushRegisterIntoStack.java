@@ -4,7 +4,7 @@ import se.omfilm.gameboy.internal.*;
 import se.omfilm.gameboy.internal.memory.Memory;
 
 public class PushRegisterIntoStack implements Instruction {
-    private RegisterReader source;
+    private final RegisterReader source;
 
     private PushRegisterIntoStack(RegisterReader source) {
         this.source = source;

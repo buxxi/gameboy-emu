@@ -2,10 +2,10 @@ package se.omfilm.gameboy.internal;
 
 /**
  * Represents the flags for the CPU.
- *
+ * <p>
  * The flags are set and read in different instructions.
  * They can also be read from Register#readF where the byte returned contains the bits for flags set.
- *
+ * <p>
  * It can also enable/disable all interrupts, se Interrupts.
  */
 public interface Flags {
