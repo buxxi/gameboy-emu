@@ -35,7 +35,7 @@ public class MBC1 implements Cartridge {
         if (address < 0x2000) {
             ramBanks.enable((data & 0b0000_1010) != 0);
         } else if (address < 0x4000) {
-            currentROMBank = currentROMBank & 0b0110_0000 + (data & 0b0001_1111);
+            currentROMBank = (currentROMBank & 0b0110_0000) + (data & 0b0001_1111);
             if (currentROMBank == 0 || currentROMBank == 0x20 || currentROMBank == 0x40 || currentROMBank == 0x60) {
                 currentROMBank += 1;
             }
