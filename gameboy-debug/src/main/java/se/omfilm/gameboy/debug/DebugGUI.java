@@ -165,9 +165,8 @@ public class DebugGUI {
         Iterator<EmulatorState> callTraceIterator = debugger.getCallTrace();
         while (callTraceIterator.hasNext()) {
             EmulatorState state = callTraceIterator.next();
-            callTrace.addItem(state.instructionType().name() + " @ " + hex(state.programCounter().read(), 4), () -> {
-                displayState(state);
-            });
+            String label = state.instructionType().name() + " @ " + hex(state.programCounter().read(), 4);
+            callTrace.addItem(label, () -> displayState(state));
         }
     }
 

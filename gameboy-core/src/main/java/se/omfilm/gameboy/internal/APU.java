@@ -512,7 +512,7 @@ public class APU {
         boolean enabled = false;
         boolean dacEnabled = false;
         Terminal terminal = Terminal.NONE;
-        Duration duration;
+        final Duration duration;
 
         public Sound(DurationMode durationMode) {
             duration = new Duration(0, this, durationMode);
