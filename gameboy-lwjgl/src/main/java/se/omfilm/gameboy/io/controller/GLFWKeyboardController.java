@@ -1,13 +1,15 @@
 package se.omfilm.gameboy.io.controller;
 
 import org.lwjgl.glfw.GLFW;
+import se.omfilm.gameboy.io.screen.Window;
 import se.omfilm.gameboy.io.screen.WindowChangeListener;
 
+
 public class GLFWKeyboardController implements Controller, WindowChangeListener {
-    private long window;
+    private Window window;
     private boolean windowSet = false;
 
-    public void windowChanged(long window) {
+    public void windowChanged(Window window) {
         this.window = window;
         windowSet = true;
     }
@@ -30,6 +32,6 @@ public class GLFWKeyboardController implements Controller, WindowChangeListener 
     }
 
     private boolean checkKey(int keyId) {
-        return windowSet && GLFW.glfwGetKey(window, keyId) == 1;
+        return windowSet && GLFW.glfwGetKey(window.id(), keyId) == 1;
     }
 }

@@ -2,7 +2,9 @@ package se.omfilm.gameboy.io.controller;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWGamepadState;
+import se.omfilm.gameboy.io.screen.Window;
 import se.omfilm.gameboy.io.screen.WindowChangeListener;
+
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -40,6 +42,6 @@ public class GLFWJoypadController implements Controller, WindowChangeListener {
         return state.buttons(buttonIndex) == 1;
     }
 
-    public void windowChanged(long window) {
+    public void windowChanged(Window window) {
     }
 }

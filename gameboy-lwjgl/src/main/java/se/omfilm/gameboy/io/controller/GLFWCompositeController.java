@@ -2,6 +2,7 @@ package se.omfilm.gameboy.io.controller;
 
 import org.lwjgl.glfw.GLFW;
 import se.omfilm.gameboy.io.screen.Screen;
+import se.omfilm.gameboy.io.screen.Window;
 import se.omfilm.gameboy.io.screen.WindowChangeListener;
 
 import java.util.stream.IntStream;
@@ -38,7 +39,7 @@ public class GLFWCompositeController implements Controller, WindowChangeListener
         lastCheck = System.currentTimeMillis();
     }
 
-    public void windowChanged(long window) {
+    public void windowChanged(Window window) {
         keyboard.windowChanged(window);
         joypads = IntStream.range(GLFW.GLFW_JOYSTICK_1, GLFW.GLFW_JOYSTICK_LAST + 1).
                 filter(GLFW::glfwJoystickPresent).

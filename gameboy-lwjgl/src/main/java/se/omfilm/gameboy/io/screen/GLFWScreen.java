@@ -1,17 +1,20 @@
 package se.omfilm.gameboy.io.screen;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
 import se.omfilm.gameboy.io.color.Color;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL12.*;
 
 public class GLFWScreen implements Screen {
     private static final int UPDATE_FPS_INTERVAL_SECONDS = 2;
@@ -20,12 +23,11 @@ public class GLFWScreen implements Screen {
     private final WindowChangeListener windowChangeListener;
     private final Mode mode;
 
-    private volatile boolean turnedOn = false;
-    private long window;
+    private final AtomicBoolean turnedOn = new AtomicBoolean(false);
+    private Window window;
 
-    private final ReadWriteLock bufferLock = new ReentrantReadWriteLock();
-    private byte[] pixelBuffer = new byte[Screen.WIDTH * Screen.HEIGHT * 3];
-    private byte[] offscreenBuffer = new byte[pixelBuffer.length];
+    private final byte[] pixelBuffer = new byte[Screen.WIDTH * Screen.HEIGHT * 3];
+    private final AtomicReference<byte[]> pixelBufferTransfer = new AtomicReference<>();
 
     private final FPSCounter fps = new FPSCounter();
 
@@ -36,146 +38,166 @@ public class GLFWScreen implements Screen {
     }
 
     public void turnOn() {
-        if (turnedOn) {
+        if (turnedOn.get()) {
             return;
         }
         if (!glfwInit()) {
             throw new IllegalStateException("Could not initialize GL");
         }
 
-        turnedOn = true;
-        Executors.newSingleThreadExecutor().execute(() -> {
-            initializeWindow();
-            initializeGL();
-            while (turnedOn) {
-                render();
-            }
-        });
+        turnedOn.set(true);
+        Executors.newSingleThreadExecutor().execute(new GLWindowRenderer());
     }
 
     public void turnOff() {
         glfwTerminate();
-        turnedOn = false;
+        turnedOn.set(false);
     }
 
     public void setPixel(int x, int y, Color color) {
-        int index = index(x, y);
-        offscreenBuffer[index] = color.getRed();
-        offscreenBuffer[index + 1] = color.getGreen();
-        offscreenBuffer[index + 2] = color.getBlue();
+        pixelBuffer[index(x, y)] = color.getRed();
+        pixelBuffer[index(x, y) + 1] = color.getGreen();
+        pixelBuffer[index(x, y) + 2] = color.getBlue();
     }
 
     public void draw() {
-        fps.engineCounter++;
+        fps.incrementEngine();
         fps.update();
-
-        bufferLock.writeLock().lock();
-        try {
-            switchBuffer();
-        } finally {
-            bufferLock.writeLock().unlock();
-        }
-    }
-
-    private void switchBuffer() {
-        byte[] tmp = pixelBuffer;
-        pixelBuffer = offscreenBuffer;
-        offscreenBuffer = tmp;
-    }
-
-    private void render() {
-        if (glfwWindowShouldClose(window)) {
-            turnOff();
-
-            System.exit(0);
-        }
-
-        fps.renderedCounter++;
-
-        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-
-        bufferLock.readLock().lock();
-        try {
-            renderToGL();
-        } finally {
-            bufferLock.readLock().unlock();
-        }
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
-
-    private void renderToGL() {
-        GL11.glBegin(GL11.GL_QUADS);
-        for (int y = 0; y < Screen.HEIGHT; y++) {
-            for (int x = 0; x < Screen.WIDTH; x++) {
-                int index = index(x, y);
-                GL11.glColor3ub(pixelBuffer[index], pixelBuffer[index + 1], pixelBuffer[index + 2]);
-                GL11.glVertex2f(x, y);
-                GL11.glVertex2f(x, y + 1);
-                GL11.glVertex2f(x + 1, y + 1);
-                GL11.glVertex2f(x + 1, y);
-            }
-        }
-        GL11.glEnd();
-    }
-
-    private void initializeGL() {
-        GL.createCapabilities();
-        GL11.glClearColor(0f, 0f, 0f, 1f);
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glLoadIdentity();
-        GL11.glOrtho(-mode.borderSize(), Screen.WIDTH + mode.borderSize(), Screen.HEIGHT, 0, 1, -1);
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-    }
-
-    private void initializeWindow() {
-        glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-        int windowWidth = mode.width();
-        int windowHeight = mode.height();
-        long monitor = mode.monitor();
-
-        window = GLFW.glfwCreateWindow(windowWidth, windowHeight, title, monitor, MemoryUtil.NULL);
-        if (window == MemoryUtil.NULL) {
-            throw new IllegalStateException("Could not initialize GLFW Window");
-        }
-        windowChangeListener.windowChanged(window);
-        if (monitor == MemoryUtil.NULL) {
-            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-            glfwSetWindowPos(window, (vidmode.width() - mode.width()) / 2, (vidmode.height() - mode.height()) / 2);
-        }
-
-        glfwMakeContextCurrent(window);
-        glfwSwapInterval(1);
-        glfwShowWindow(window);
+        pixelBufferTransfer.set(pixelBuffer);
     }
 
     private int index(int x, int y) {
         return 3 * ((y * Screen.WIDTH) + x);
     }
 
+    private class GLWindowRenderer implements Runnable {
+        public void run() {
+            window = initializeWindow();
+            initializeGL();
+            Texture texture = initializeTexture();
+            while (turnedOn.get()) {
+                render(texture);
+            }
+        }
+
+        private void render(Texture texture) {
+            if (glfwWindowShouldClose(window.id())) {
+                turnOff();
+
+                System.exit(0);
+            }
+
+            fps.incrementRendered();
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            updateTextureBufferIfNeeded(texture);
+            renderTextureToQuad();
+
+            glfwSwapBuffers(window.id());
+            glfwPollEvents();
+        }
+
+        private void updateTextureBufferIfNeeded(Texture texture) {
+            byte[] transferredBuffer = pixelBufferTransfer.getAndSet(null);
+            if (transferredBuffer != null) {
+                texture.buffer().put(transferredBuffer);
+                texture.buffer().flip();
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Screen.WIDTH, Screen.HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, texture.buffer());
+            }
+        }
+
+        private void renderTextureToQuad() {
+            glBegin(GL_QUADS);
+            glTexCoord2f(0, 0);
+            glVertex2f(0, 0);
+            glTexCoord2f(0, 1);
+            glVertex2f(0, Screen.HEIGHT);
+            glTexCoord2f(1, 1);
+            glVertex2f(Screen.WIDTH, Screen.HEIGHT);
+            glTexCoord2f(1, 0);
+            glVertex2f(Screen.WIDTH, 0);
+            glEnd();
+        }
+
+        private Window initializeWindow() {
+            glfwDefaultWindowHints();
+            glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+            glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+            int windowWidth = mode.width();
+            int windowHeight = mode.height();
+            long monitor = mode.monitor();
+
+            Window window = new Window(GLFW.glfwCreateWindow(windowWidth, windowHeight, title, monitor, MemoryUtil.NULL));
+            if (window.id() == MemoryUtil.NULL) {
+                throw new IllegalStateException("Could not initialize GLFW Window");
+            }
+            windowChangeListener.windowChanged(window);
+            if (monitor == MemoryUtil.NULL) {
+                GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+                glfwSetWindowPos(window.id(), (vidmode.width() - mode.width()) / 2, (vidmode.height() - mode.height()) / 2);
+            }
+
+            glfwMakeContextCurrent(window.id());
+            glfwSwapInterval(1);
+            glfwShowWindow(window.id());
+            return window;
+        }
+
+        private void initializeGL() {
+            GL.createCapabilities();
+            glClearColor(0f, 0f, 0f, 1f);
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+            glOrtho(-mode.borderSize(), Screen.WIDTH + mode.borderSize(), Screen.HEIGHT, 0, 1, -1);
+            glMatrixMode(GL_MODELVIEW);
+        }
+
+        private static Texture initializeTexture() {
+            Texture texture = new Texture(glGenTextures(), BufferUtils.createByteBuffer(Screen.WIDTH * Screen.HEIGHT * 3));
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, texture.id());
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Screen.WIDTH, Screen.HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, texture.buffer());
+            return texture;
+        }
+    }
+
     private class FPSCounter {
         private long lastFPSUpdate = System.currentTimeMillis();
-        private volatile int engineCounter = 0;
-        private volatile int renderedCounter = 0;
+        private final AtomicInteger engineCounter = new AtomicInteger();
+        private final AtomicInteger renderedCounter = new AtomicInteger();
 
         public void update() {
             long now = System.currentTimeMillis();
             if ((now - (UPDATE_FPS_INTERVAL_SECONDS * 1000)) > lastFPSUpdate) {
-                GLFW.glfwSetWindowTitle(window, title + ", engine fps: " + fps(engineCounter) + ", display fps: " + (fps(renderedCounter)));
+                GLFW.glfwSetWindowTitle(window.id(), title + ", engine fps: " + fps(engineCounter.get()) + ", display fps: " + (fps(renderedCounter.get())));
                 lastFPSUpdate = now;
-                engineCounter = 0;
-                renderedCounter = 0;
+                engineCounter.set(0);
+                renderedCounter.set(0);
             }
+        }
+
+        public void incrementEngine() {
+            engineCounter.incrementAndGet();
+        }
+
+        public void incrementRendered() {
+            renderedCounter.incrementAndGet();
         }
 
         private int fps(int counter) {
             return counter / UPDATE_FPS_INTERVAL_SECONDS;
         }
     }
+
+    private record Texture(int id, ByteBuffer buffer) {}
 
     public enum Mode {
         FULLSCREEN(0) {
